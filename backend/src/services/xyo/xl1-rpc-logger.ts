@@ -1,0 +1,291 @@
+/**
+ * XL1 RPC Request/Response Logger
+ * Intercepts and logs all XL1 RPC HTTP requests/responses with pretty-printed JSON
+ * Handles both axios and fetch-based HTTP clients
+ */
+
+import axios from 'axios';
+import { env } from '../../lib/env.js';
+
+let interceptorInstalled = false;
+let fetchInterceptorInstalled = false;
+
+/**
+ * Install axios interceptor to log all XL1 RPC requests/responses
+ * This intercepts HTTP calls made by the SDK's HttpRpcXyoConnection
+ */
+export function installXl1RpcLogger(): void {
+  if (interceptorInstalled) {
+    return;
+  }
+
+  const rpcUrl = env.xyoChainRpcUrl;
+  if (!rpcUrl) {
+    // eslint-disable-next-line no-console
+    console.warn('XL1 RPC URL not configured, cannot install logger');
+    return;
+  }
+
+  // Normalize RPC URL for matching (remove trailing slashes, ensure /rpc suffix)
+  const normalizedRpcUrl = rpcUrl.replace(/\/+$/, '').replace(/\/rpc$/, '');
+  
+  // Request interceptor
+  axios.interceptors.request.use(
+    (config) => {
+      // Check if this request is going to the XL1 RPC endpoint
+      const requestUrl = config.url || '';
+      const baseURL = config.baseURL || '';
+      const fullUrl = requestUrl.startsWith('http') ? requestUrl : `${baseURL}${requestUrl}`;
+      
+      if (fullUrl.includes(normalizedRpcUrl) || fullUrl.includes('/rpc')) {
+        // eslint-disable-next-line no-console
+        console.log('\n=== XL1 RPC REQUEST ===');
+        // eslint-disable-next-line no-console
+        console.log('Method:', config.method?.toUpperCase() || 'UNKNOWN');
+        // eslint-disable-next-line no-console
+        console.log('URL:', fullUrl);
+        
+        if (config.headers) {
+          // eslint-disable-next-line no-console
+          console.log('Headers:', JSON.stringify(config.headers, null, 2));
+        }
+        
+        if (config.data) {
+          try {
+            // Try to parse and pretty print JSON
+            const data = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+            // eslint-disable-next-line no-console
+            console.log('Request Body:', JSON.stringify(data, null, 2));
+          } catch {
+            // If not JSON, log as-is
+            // eslint-disable-next-line no-console
+            console.log('Request Body:', config.data);
+          }
+        }
+        
+        // eslint-disable-next-line no-console
+        console.log('========================\n');
+      }
+      
+      return config;
+    },
+    (error) => {
+      // eslint-disable-next-line no-console
+      console.error('=== XL1 RPC REQUEST ERROR ===');
+      // eslint-disable-next-line no-console
+      console.error('Error:', JSON.stringify(error, null, 2));
+      return Promise.reject(error);
+    }
+  );
+
+  // Response interceptor
+  axios.interceptors.response.use(
+    (response) => {
+      const requestUrl = response.config.url || '';
+      const baseURL = response.config.baseURL || '';
+      const fullUrl = requestUrl.startsWith('http') ? requestUrl : `${baseURL}${requestUrl}`;
+      
+      if (fullUrl.includes(normalizedRpcUrl) || fullUrl.includes('/rpc')) {
+        // eslint-disable-next-line no-console
+        console.log('\n=== XL1 RPC RESPONSE ===');
+        // eslint-disable-next-line no-console
+        console.log('Status:', response.status, response.statusText);
+        // eslint-disable-next-line no-console
+        console.log('URL:', fullUrl);
+        
+        if (response.headers) {
+          // eslint-disable-next-line no-console
+          console.log('Headers:', JSON.stringify(response.headers, null, 2));
+        }
+        
+        if (response.data) {
+          try {
+            // Pretty print JSON response
+            // eslint-disable-next-line no-console
+            console.log('Response Body:', JSON.stringify(response.data, null, 2));
+          } catch {
+            // eslint-disable-next-line no-console
+            console.log('Response Body:', response.data);
+          }
+        }
+        
+        // eslint-disable-next-line no-console
+        console.log('========================\n');
+      }
+      
+      return response;
+    },
+    (error) => {
+      const requestUrl = error.config?.url || '';
+      const baseURL = error.config?.baseURL || '';
+      const fullUrl = requestUrl.startsWith('http') ? requestUrl : `${baseURL}${requestUrl}`;
+      
+      if (fullUrl.includes(normalizedRpcUrl) || fullUrl.includes('/rpc')) {
+        // eslint-disable-next-line no-console
+        console.error('\n=== XL1 RPC RESPONSE ERROR ===');
+        // eslint-disable-next-line no-console
+        console.error('Status:', error.response?.status || 'NO RESPONSE');
+        // eslint-disable-next-line no-console
+        console.error('URL:', fullUrl);
+        
+        if (error.response?.data) {
+          try {
+            // eslint-disable-next-line no-console
+            console.error('Error Response Body:', JSON.stringify(error.response.data, null, 2));
+          } catch {
+            // eslint-disable-next-line no-console
+            console.error('Error Response Body:', error.response.data);
+          }
+        }
+        
+        if (error.message) {
+          // eslint-disable-next-line no-console
+          console.error('Error Message:', error.message);
+        }
+        
+        // eslint-disable-next-line no-console
+        console.error('========================\n');
+      }
+      
+      return Promise.reject(error);
+    }
+  );
+
+  interceptorInstalled = true;
+  // eslint-disable-next-line no-console
+  console.log('XL1 RPC axios logger installed - all axios requests/responses will be logged');
+}
+
+/**
+ * Install global fetch interceptor to log all XL1 RPC requests/responses
+ * This catches requests made by SDKs that use fetch instead of axios
+ */
+export function installFetchInterceptor(): void {
+  if (fetchInterceptorInstalled) {
+    return;
+  }
+
+  const rpcUrl = env.xyoChainRpcUrl;
+  if (!rpcUrl) {
+    // eslint-disable-next-line no-console
+    console.warn('XL1 RPC URL not configured, cannot install fetch logger');
+    return;
+  }
+
+  // Normalize RPC URL for matching
+  const normalizedRpcUrl = rpcUrl.replace(/\/+$/, '').replace(/\/rpc$/, '');
+  
+  // Store original fetch
+  const originalFetch = globalThis.fetch;
+
+  // Override global fetch
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const fullUrl = url.startsWith('http') ? url : (init?.baseURL ? `${init.baseURL}${url}` : url);
+    
+    // Check if this is an XL1 RPC request
+    const isXl1RpcRequest = fullUrl.includes(normalizedRpcUrl) || fullUrl.includes('/rpc');
+    
+    if (isXl1RpcRequest) {
+      // eslint-disable-next-line no-console
+      console.log('\n=== XL1 RPC REQUEST (fetch) ===');
+      // eslint-disable-next-line no-console
+      console.log('Method:', init?.method || 'GET');
+      // eslint-disable-next-line no-console
+      console.log('URL:', fullUrl);
+      
+      if (init?.headers) {
+        // eslint-disable-next-line no-console
+        console.log('Headers:', JSON.stringify(init.headers, null, 2));
+      }
+      
+      if (init?.body) {
+        try {
+          const body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+          // eslint-disable-next-line no-console
+          console.log('Request Body:', JSON.stringify(body, null, 2));
+        } catch {
+          // eslint-disable-next-line no-console
+          console.log('Request Body:', init.body);
+        }
+      }
+      
+      // eslint-disable-next-line no-console
+      console.log('========================\n');
+      
+      try {
+        const response = await originalFetch(input, init);
+        
+        // Clone response so we can read body without consuming it
+        const clonedResponse = response.clone();
+        
+        // eslint-disable-next-line no-console
+        console.log('\n=== XL1 RPC RESPONSE (fetch) ===');
+        // eslint-disable-next-line no-console
+        console.log('Status:', response.status, response.statusText);
+        // eslint-disable-next-line no-console
+        console.log('URL:', fullUrl);
+        
+        if (response.headers) {
+          const headersObj: Record<string, string> = {};
+          response.headers.forEach((value, key) => {
+            headersObj[key] = value;
+          });
+          // eslint-disable-next-line no-console
+          console.log('Headers:', JSON.stringify(headersObj, null, 2));
+        }
+        
+        // Try to read response body as JSON
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const jsonData = await clonedResponse.json();
+            // eslint-disable-next-line no-console
+            console.log('Response Body:', JSON.stringify(jsonData, null, 2));
+          } else {
+            const textData = await clonedResponse.text();
+            // eslint-disable-next-line no-console
+            console.log('Response Body:', textData.substring(0, 500)); // Limit to first 500 chars
+          }
+        } catch (bodyError) {
+          // eslint-disable-next-line no-console
+          console.log('Response Body: (could not read)');
+        }
+        
+        // eslint-disable-next-line no-console
+        console.log('========================\n');
+        
+        return response;
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('\n=== XL1 RPC ERROR (fetch) ===');
+        // eslint-disable-next-line no-console
+        console.error('URL:', fullUrl);
+        // eslint-disable-next-line no-console
+        console.error('Error:', error instanceof Error ? error.message : String(error));
+        if (error instanceof Error && error.stack) {
+          // eslint-disable-next-line no-console
+          console.error('Stack:', error.stack);
+        }
+        try {
+          // eslint-disable-next-line no-console
+          console.error('Error Details:', JSON.stringify(error, null, 2));
+        } catch {
+          // eslint-disable-next-line no-console
+          console.error('Error Details:', error);
+        }
+        // eslint-disable-next-line no-console
+        console.error('========================\n');
+        throw error;
+      }
+    }
+    
+    // Not an XL1 RPC request, pass through to original fetch
+    return originalFetch(input, init);
+  };
+
+  fetchInterceptorInstalled = true;
+  // eslint-disable-next-line no-console
+  console.log('XL1 RPC fetch logger installed - all fetch requests/responses will be logged');
+}
+

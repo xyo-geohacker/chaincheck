@@ -1,0 +1,217 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+.next/
+out/
+web/.next/
+web/out/
+
+# Environment variables (user-created, keep .example files)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env*.local
+backend/.env
+web/.env.local
+mobile/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+.vitest/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE - VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IDE - Cursor
+.cursor/
+
+# IDE - JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IDE - Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# IDE - Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# IDE - Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+
+# Expo
+mobile/.expo/
+.expo/
+.expo-shared/
+
+# React Native
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/ios/build/
+mobile/ios/Pods/
+mobile/ios/*.xcworkspace
+mobile/ios/*.xcuserdata
+
+# Prisma
+# Note: migrations are kept (referenced in docs)
+# Only ignore generated client
+backend/prisma/migrations/.migrate/
+
+# MongoDB key file (sensitive, generated)
+archivist/mongodb.key
+mongodb.key
+
+# Package manager
+.npm
+.npm-cache
+.yarn-integrity
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.parcel-cache
+
+# Next.js
+.next/
+out/
+.vercel
+
+# Nuxt.js
+.nuxt
+.output
+
+# Gatsby
+.cache/
+public
+
+# Storybook
+storybook-static
+
+# Temporary folders
+.tmp/
+.temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Sample code and documentation directories (not committed to source control)
+backend/xyo-sample-projects/
+docs/
+
+# Keep these files (referenced in README/DEVELOPMENT_GUIDE):
+# - env.example files (kept - users copy these)
+# - mongo-init-replica-set.sh (kept - required script)
+# - docker-compose.yml files (kept - required for setup)
+# - diviner/ directory (kept - required for Diviner setup, contains api-diviner-nodejs/)
+# - archivist/ directory (kept - required for Archivist setup)
+# - prisma/migrations/ (kept - database migrations)
+#
+# Note: All required Diviner files are in diviner/api-diviner-nodejs/
+# All required Archivist files are in archivist/
+# Sample code and documentation will be manually included in separate locations prior to commit

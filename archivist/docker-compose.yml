@@ -1,0 +1,106 @@
+services:
+  mongo:
+    container_name: mongo
+    hostname: mongo
+    image: mongo:8.2.1
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: archivist
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/usr/bin/mongosh",
+          "-u",
+          "root",
+          "-p",
+          "example",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping')"
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - mongo_data:/data/db
+      - ./mongodb.key:/etc/mongodb.key:ro
+    command:
+      [
+        "--auth",
+        "--bind_ip_all",
+        "--keyFile",
+        "/etc/mongodb.key",
+        "--replSet",
+        "dbrs",
+      ]
+    networks:
+      - archivist-network
+
+  archivist:
+    build:
+      context: ./api-archivist-nodejs
+      dockerfile: Dockerfile
+    container_name: archivist
+    restart: always
+    ports:
+      - "8888:8888"
+    environment:
+      # API Configuration
+      API_KEY: "12345678-1234-5678-90ab-1234567890ab"
+      APP_PORT: "8888"
+      ACCOUNT_SEED: "default insecure account seed"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:4000"
+      JWT_SECRET: "4e48921999ef5c3612dce0fb20e887a68b66496657d40dda4cdb9d38d341715db166347dd9bdc50cb8ad8d7960bd8a850189c1cbf73a162bf3d94e033a28b094"
+      
+      # Logging Configuration
+      # Set to "debug" or "DEBUG" for verbose logging, "info" for normal logging
+      LOG_LEVEL: "verbose"
+      # Alternative: Enable Node.js debug module (use wildcard for all modules or specific module names)
+      DEBUG: "*"
+      NODE_ENV: "development"
+      LOGLEVEL: "verbose"
+      
+      # MongoDB Configuration
+      # IMPORTANT: MONGO_CONNECTION_STRING must be set to use direct connection string
+      # The SDK will use MONGO_CONNECTION_STRING if provided, otherwise constructs Atlas URL from MONGO_DOMAIN
+      MONGO_CONNECTION_STRING: "mongodb://root:example@mongo:27017/archivist?authSource=admin&retryWrites=true&w=1"
+      # SDK requires these individual variables even when connection string is provided
+      # MONGO_DOMAIN is required by SDK's getBaseMongoSdkPrivateConfig() even when using connection string
+      # Agenda module configuration - try to use connection string directly
+      AGENDA_DB_URI: "mongodb://root:example@mongo:27017/archivist?authSource=admin&retryWrites=true&w=1"
+      AGENDA_COLLECTION: "agendaJobs"
+      # If agenda still fails, we can disable it by setting this (if supported by SDK)
+      # AGENDA_DISABLED: "true"
+      MONGO_DATABASE: "archivist"
+      # MONGO_DOMAIN is required by SDK's getBaseMongoSdkPrivateConfig() for MongoDB Archivist
+      # Set to Docker service name so agenda can connect if it constructs URL from this
+      # Agenda should prefer AGENDA_DB_URI/MONGODB_URI, but if it uses MONGO_DOMAIN, "mongo" is correct
+      MONGO_DOMAIN: "mongo"  # Docker service name - required by SDK for MongoDB Archivist
+      MONGO_PASSWORD: "example"
+      MONGO_USERNAME: "root"
+      
+      # Wallet Configuration
+      MNEMONIC: "sand patient donkey rude degree lady wheel cabin opera relax foil chaos lion shrimp repeat"
+      
+      # Optional: Infura Configuration
+      INFURA_PROJECT_ID: "xxx"
+      INFURA_PROJECT_SECRET: "xxx"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - archivist-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  archivist-network:
+    driver: bridge

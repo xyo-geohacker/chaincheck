@@ -1,0 +1,66 @@
+/**
+ * Builds transaction payloads for XL1 transactions
+ */
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - Shared types outside rootDir
+import type { DeliveryVerificationPayload } from '../../../../shared/types/delivery.types.js';
+import { XyoSdkLoader } from './sdk-loader.js';
+
+export class Xl1TransactionBuilder {
+  /**
+   * Build on-chain and off-chain payloads for delivery verification
+   * Adds storage metadata to payloads for proper handling (following explore project pattern)
+   */
+  async buildPayloads(payload: DeliveryVerificationPayload): Promise<{
+    onChainPayloads: unknown[];
+    offChainPayloads: unknown[];
+  }> {
+    const { PayloadBuilder } = await XyoSdkLoader.payloadBuilder();
+    const PayloadBuilderClass = PayloadBuilder as any;
+
+    // Create delivery payload (off-chain)
+    const deliveryPayload = {
+      schema: 'network.xyo.chaincheck',
+      timestamp: payload.timestamp ?? Date.now(),
+      message: `successfully delivered order ID ${payload.metadata?.orderId || 'UNKNOWN'}`,
+      data: {
+        name: 'ChainCheck',
+        schema: 'network.xyo.chaincheck',
+        status: payload.metadata?.status || 'VERIFIED',
+        orderId: payload.metadata?.orderId || 'UNKNOWN',
+        driverId: payload.driverId,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        timestamp: new Date(payload.timestamp ?? Date.now()).toISOString(),
+        deliveryId: payload.deliveryId,
+        recipientName: payload.metadata?.recipientName || '',
+        destinationLat: payload.metadata?.destinationLat ?? payload.latitude,
+        destinationLon: payload.metadata?.destinationLon ?? payload.longitude,
+        recipientPhone: payload.metadata?.recipientPhone || '',
+        deliveryAddress: payload.metadata?.deliveryAddress || '',
+        // Include NFC data if available
+        xyoNfcUserRecord: payload.metadata?.xyoNfcUserRecord as string | undefined,
+        xyoNfcSerialNumber: payload.metadata?.xyoNfcSerialNumber as string | undefined
+      }
+    };
+
+    // Create hash payload for on-chain reference
+    const hash = await PayloadBuilderClass.hash(deliveryPayload);
+    const hashPayload = {
+      schema: 'network.xyo.hash',
+      hash
+    };
+
+    // Add storage metadata to payloads (following explore project pattern)
+    // This ensures proper payload handling and retrieval
+    const deliveryPayloadWithMeta = await PayloadBuilderClass.addStorageMeta(deliveryPayload);
+    const hashPayloadWithMeta = await PayloadBuilderClass.addStorageMeta(hashPayload);
+
+    return {
+      onChainPayloads: [hashPayloadWithMeta],
+      offChainPayloads: [deliveryPayloadWithMeta]
+    };
+  }
+}
+
