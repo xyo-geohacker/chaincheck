@@ -1,0 +1,64 @@
+diff --git a/node_modules/@xyo-network/hash/dist/node/index.mjs b/node_modules/@xyo-network/hash/dist/node/index.mjs
+index 330f405..e9ec71f 100644
+--- a/node_modules/@xyo-network/hash/dist/node/index.mjs
++++ b/node_modules/@xyo-network/hash/dist/node/index.mjs
+@@ -21,26 +21,15 @@ var hasEmptyFields = (obj) => {
+ };
+ 
+ // src/createNodeWorker.ts
+-import { Worker } from "@xylabs/threads/master";
+-var createNodeWorker = (func) => {
+-  try {
+-    const code = func?.toString().slice(6) ?? "";
+-    return new Worker(
+-      code,
+-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-      { fromSource: true }
+-    );
+-  } catch {
+-    throw new Error("Unable to create worker");
+-  }
+-};
++var createNodeWorker = () => void 0;
+ 
+ // src/ObjectHasher.ts
+ import { assertEx } from "@xylabs/assert";
+ import { asHash, hexFromArrayBuffer } from "@xylabs/hex";
+ import { ObjectWrapper, omitBy } from "@xylabs/object";
+ import { subtle } from "@xylabs/platform";
+-import { Pool, spawn } from "@xylabs/threads/master";
++var spawn = () => null;
++var Pool = () => null;
+ import { WasmSupport } from "@xyo-network/wasm";
+ import { sha256 } from "hash-wasm";
+ 
+@@ -145,7 +134,12 @@ var ObjectHasher = class _ObjectHasher extends ObjectWrapper {
+   }
+   static createWorker(url, func) {
+     if (url) console.debug(`createWorker: ${url}`);
+-    return assertEx(this.createBrowserWorker?.(url) ?? this.createNodeWorker?.(func), () => "Unable to create worker");
++    const worker = this.createBrowserWorker?.(url) ?? this.createNodeWorker?.(func);
++    if (!worker) {
++      this.allowHashPooling = false;
++      return void 0;
++    }
++    return worker;
+   }
+   static async filterExcludeByHash(objs = [], hash) {
+     const hashes = Array.isArray(hash) ? hash : [hash];
+@@ -244,8 +238,13 @@ var ObjectHasher = class _ObjectHasher extends ObjectWrapper {
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   static createWorkerPool(url, func, size = 8) {
+     if (url) console.debug(`createWorkerPool: ${url}`);
+-    const createFunc = () => spawn(this.createWorker(url, func));
+-    return Pool(createFunc, size);
++    const createFunc = () => {
++      const worker = this.createWorker(url, func);
++      return worker ? spawn(worker) : null;
++    };
++    const pool = Pool(createFunc, size);
++    this.allowHashPooling = false;
++    return null;
+   }
+   async hash() {
+     return await _ObjectHasher.hash(this.obj);

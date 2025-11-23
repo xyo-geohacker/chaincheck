@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Driver {
+  id                  String   @id @default(uuid())
+  driverId            String   @unique
+  passwordHash        String
+  xyoNfcUserRecord    String?  // NFC Record 1 (user record)
+  xyoNfcSerialNumber  String?  // NFC Serial number
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([driverId])
+}
+
+model Delivery {
+  id                String         @id @default(uuid())
+  orderId           String         @unique
+  driverId          String
+  recipientName     String
+  recipientPhone    String
+  deliveryAddress   String
+  destinationLat    Float
+  destinationLon    Float
+  proofHash         String?        @unique
+  boundWitnessData  Json?
+  blockNumber       Int?
+  verifiedAt        DateTime?
+  actualLat         Float?
+  actualLon         Float?
+  distanceFromDest  Float?
+  photoIpfsHash     String?
+  signatureIpfsHash String?
+  notes             String?
+  status            DeliveryStatus @default(PENDING)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([driverId])
+  @@index([proofHash])
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  DISPUTED
+}
+
+model Configuration {
+  id          String   @id @default(uuid())
+  category    String   // 'backend', 'web', 'mobile'
+  key         String
+  value       String?
+  description String?
+  isSecret    Boolean  @default(false) // If true, value is masked in UI
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([category, key])
+  @@index([category])
+}
+
+model ConfigurationUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([username])
+}
+
