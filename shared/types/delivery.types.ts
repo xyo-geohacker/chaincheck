@@ -10,6 +10,9 @@ export interface DeliveryLocation {
   latitude: number;
   longitude: number;
   timestamp: number;
+  altitude?: number | null; // Elevation in meters (from GPS)
+  barometricPressure?: number | null; // Barometric pressure in hPa (hectopascals)
+  accelerometer?: { x: number; y: number; z: number } | null; // Device acceleration in m/s² (meters per second squared)
 }
 
 export interface DeliveryVerificationPayload extends DeliveryLocation {

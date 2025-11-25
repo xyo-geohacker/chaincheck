@@ -94,38 +94,41 @@ export function CryptographicDetails({ proofHash }: Props) {
       {/* Summary Section */}
       <div className="space-y-4">
         {/* Signature Status */}
-        <div className={`rounded-lg border p-4 ${
-          details.signatureValid
-            ? 'border-emerald-400/60 bg-emerald-400/20'
-            : 'border-rose-400/60 bg-rose-400/20'
-        }`}>
-          <div className="flex items-center justify-between">
-            {details.signatureValid ? (
-              <button
-                onClick={() => setIsExplanationModalOpen(true)}
-                className="text-sm font-semibold text-white hover:text-emerald-200 transition-colors cursor-pointer text-left"
-                type="button"
-                title="Click to learn what this means"
-              >
+        {details.signatureValid ? (
+          <button
+            onClick={() => setIsExplanationModalOpen(true)}
+            className={`w-full rounded-lg border p-4 text-left transition-all ${
+              'border-emerald-400/60 bg-emerald-400/20 hover:bg-emerald-400/30 hover:scale-[1.02] cursor-pointer'
+            }`}
+            type="button"
+            title="Click to learn what this means"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">
                 Cryptographically Verified
-              </button>
-            ) : (
+              </span>
+              <span className="text-lg text-emerald-200">✓</span>
+            </div>
+          </button>
+        ) : (
+          <div className={`rounded-lg border p-4 ${
+            'border-rose-400/60 bg-rose-400/20'
+          }`}>
+            <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-white">
                 Cryptographic Verification Failed
               </span>
-            )}
-            <span className={`text-lg ${details.signatureValid ? 'text-emerald-200' : 'text-rose-200'}`}>
-              {details.signatureValid ? '✓' : '✗'}
-            </span>
-          </div>
-          {details.errors.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {details.errors.map((err, i) => (
-                <div key={i} className="text-xs text-rose-300">{err}</div>
-              ))}
+              <span className="text-lg text-rose-200">✗</span>
             </div>
-          )}
-        </div>
+            {details.errors.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {details.errors.map((err, i) => (
+                  <div key={i} className="text-xs text-rose-300">{err}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Expandable Details */}
         <button

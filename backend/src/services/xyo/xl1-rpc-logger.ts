@@ -179,7 +179,7 @@ export function installFetchInterceptor(): void {
   const originalFetch = globalThis.fetch;
 
   // Override global fetch
-  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit & { baseURL?: string }): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const fullUrl = url.startsWith('http') ? url : (init?.baseURL ? `${init.baseURL}${url}` : url);
     

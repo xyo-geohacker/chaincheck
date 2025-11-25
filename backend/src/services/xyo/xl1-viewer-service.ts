@@ -74,8 +74,24 @@ export class Xl1ViewerService {
       // Transaction IS the bound witness
       const [transaction, payloads] = result;
       
+      // Ensure bound witness has _hash field (required by schema)
+      // XL1 viewer may return bound witnesses without _hash pre-calculated
+      let boundWitness = transaction as Record<string, unknown>;
+      if (!boundWitness._hash && !boundWitness.hash) {
+        try {
+          const { BoundWitnessWrapper } = await XyoSdkLoader.loadBoundWitnessWrapper();
+          const wrapper = (BoundWitnessWrapper as any).parse(boundWitness);
+          const calculatedHash = await wrapper.hash();
+          boundWitness = { ...boundWitness, _hash: calculatedHash };
+        } catch (hashError) {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to calculate hash for bound witness:', hashError);
+          // Continue without hash - caller can use transaction hash as fallback
+        }
+      }
+      
       // Extract block information from bound witness
-      const bw = transaction as Record<string, unknown>;
+      const bw = boundWitness;
       const nbf = bw.nbf as number | undefined;
       const exp = bw.exp as number | undefined;
       const blockNumber = bw.blockNumber as number | undefined;
@@ -83,67 +99,6 @@ export class Xl1ViewerService {
       // Determine actual block number (if transaction has been committed)
       // Actual block number is typically present if different from nbf or if exp has passed
       const actualBlockNumber = blockNumber && blockNumber !== nbf ? blockNumber : null;
-      
-      // Inspect _storage metadata from bound witness (may contain Archivist hints)
-      const storageMeta = bw._storage as Record<string, unknown> | undefined;
-      if (storageMeta) {
-        // eslint-disable-next-line no-console
-        console.log('\n=== BOUND WITNESS STORAGE METADATA ===');
-        // eslint-disable-next-line no-console
-        console.log('_storage keys:', Object.keys(storageMeta));
-        // eslint-disable-next-line no-console
-        console.log('_storage content:', JSON.stringify(storageMeta, null, 2));
-        
-        // Check for common storage metadata fields that might indicate Archivist location
-        if ('archive' in storageMeta) {
-          // eslint-disable-next-line no-console
-          console.log('✓ Found archive name in _storage:', storageMeta.archive);
-        }
-        if ('archivist' in storageMeta || 'archivistUrl' in storageMeta || 'archivist_url' in storageMeta) {
-          // eslint-disable-next-line no-console
-          console.log('✓ Found Archivist URL hint in _storage:', storageMeta.archivist || storageMeta.archivistUrl || storageMeta.archivist_url);
-        }
-        if ('endpoint' in storageMeta || 'url' in storageMeta) {
-          // eslint-disable-next-line no-console
-          console.log('✓ Found endpoint/URL hint in _storage:', storageMeta.endpoint || storageMeta.url);
-        }
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('⚠ No _storage metadata found on bound witness');
-      }
-      
-      // Inspect _storage metadata from payloads
-      if (Array.isArray(payloads) && payloads.length > 0) {
-        // eslint-disable-next-line no-console
-        console.log('\n=== PAYLOADS STORAGE METADATA ===');
-        payloads.forEach((payload, index) => {
-          if (typeof payload === 'object' && payload !== null) {
-            const p = payload as Record<string, unknown>;
-            const payloadStorageMeta = p._storage as Record<string, unknown> | undefined;
-            if (payloadStorageMeta) {
-              // eslint-disable-next-line no-console
-              console.log(`\nPayload ${index} (_hash: ${p._hash || 'N/A'}, schema: ${p.schema || 'N/A'}):`);
-              // eslint-disable-next-line no-console
-              console.log('  _storage keys:', Object.keys(payloadStorageMeta));
-              // eslint-disable-next-line no-console
-              console.log('  _storage content:', JSON.stringify(payloadStorageMeta, null, 2));
-              
-              // Check for storage hints
-              if ('archive' in payloadStorageMeta) {
-                // eslint-disable-next-line no-console
-                console.log(`  ✓ Archive name: ${payloadStorageMeta.archive}`);
-              }
-              if ('archivist' in payloadStorageMeta || 'archivistUrl' in payloadStorageMeta || 'archivist_url' in payloadStorageMeta) {
-                // eslint-disable-next-line no-console
-                console.log(`  ✓ Archivist URL: ${payloadStorageMeta.archivist || payloadStorageMeta.archivistUrl || payloadStorageMeta.archivist_url}`);
-              }
-            } else {
-              // eslint-disable-next-line no-console
-              console.log(`Payload ${index} (_hash: ${p._hash || 'N/A'}): No _storage metadata`);
-            }
-          }
-        });
-      }
       
       // eslint-disable-next-line no-console
       console.log('\n=== TRANSACTION SUMMARY ===');
@@ -153,7 +108,7 @@ export class Xl1ViewerService {
       console.log('Block info:', { nbf, exp, blockNumber, actualBlockNumber });
       
       return {
-        boundWitness: transaction,
+        boundWitness,
         payloads: Array.isArray(payloads) ? payloads : [],
         nbf,
         exp,
@@ -169,11 +124,17 @@ export class Xl1ViewerService {
   /**
    * Get bound witness chain by following previous_hashes using XL1 viewer
    * This reads directly from the blockchain, not from Archivist
+   * 
+   * @param proofHash - The transaction hash to start from
+   * @param maxDepth - Maximum depth to traverse
+   * @param address - Optional address to track. If provided, uses address-indexed previous_hashes.
+   *                  If not provided, uses the first address's previous hash (for backward compatibility)
    */
-  async getBoundWitnessChainFromXL1(proofHash: string, maxDepth: number = 5): Promise<unknown[]> {
+  async getBoundWitnessChainFromXL1(proofHash: string, maxDepth: number = 5, address?: string): Promise<unknown[]> {
     const chain: unknown[] = [];
     let currentHash: string | null = proofHash;
     let depth = 0;
+    let trackingAddress: string | undefined = address;
 
     try {
       const connection = await this.createRpcConnection();
@@ -196,6 +157,10 @@ export class Xl1ViewerService {
           console.log(`Method: transactionByHash`);
           // eslint-disable-next-line no-console
           console.log(`Transaction Hash: ${currentHash}`);
+          if (trackingAddress) {
+            // eslint-disable-next-line no-console
+            console.log(`Tracking address: ${trackingAddress}`);
+          }
           // eslint-disable-next-line no-console
           console.log(`========================\n`);
           
@@ -229,12 +194,61 @@ export class Xl1ViewerService {
           }
 
           const [transaction] = result;
-          chain.push(transaction);
+          
+          // Ensure bound witness has _hash field (required by schema)
+          // XL1 viewer may return bound witnesses without _hash pre-calculated
+          let boundWitness = transaction as Record<string, unknown>;
+          if (!boundWitness._hash && !boundWitness.hash) {
+            try {
+              const { BoundWitnessWrapper } = await XyoSdkLoader.loadBoundWitnessWrapper();
+              const wrapper = (BoundWitnessWrapper as any).parse(boundWitness);
+              const calculatedHash = await wrapper.hash();
+              boundWitness = { ...boundWitness, _hash: calculatedHash };
+            } catch (hashError) {
+              // eslint-disable-next-line no-console
+              console.warn(`Failed to calculate hash for bound witness at depth ${depth}:`, hashError);
+              // Continue without hash - frontend can use transaction hash as fallback
+            }
+          }
+          
+          chain.push(boundWitness);
 
-          // Extract previous hash from bound witness
-          const bw = transaction as Record<string, unknown>;
-          if ('previous_hashes' in bw && Array.isArray(bw.previous_hashes) && bw.previous_hashes.length > 0) {
-            const previousHash = bw.previous_hashes[0];
+          // Extract previous hash from bound witness using address-indexed previous_hashes
+          const bw = boundWitness;
+          if ('previous_hashes' in bw && Array.isArray(bw.previous_hashes) && 'addresses' in bw && Array.isArray(bw.addresses)) {
+            const addresses = bw.addresses as string[];
+            const previousHashes = bw.previous_hashes as (string | null)[];
+            
+            // Find the address index to use for previous_hashes
+            let addressIndex = 0;
+            if (trackingAddress) {
+              // Normalize address for comparison (case-insensitive)
+              const normalizedTrackingAddress = trackingAddress.toLowerCase();
+              addressIndex = addresses.findIndex(addr => addr.toLowerCase() === normalizedTrackingAddress);
+              
+              if (addressIndex === -1) {
+                // Tracking address not found in this transaction, use first address
+                // eslint-disable-next-line no-console
+                console.warn(`Tracking address ${trackingAddress} not found in transaction addresses, using first address`);
+                addressIndex = 0;
+                // Update tracking address to the first address for next iteration
+                trackingAddress = addresses[0];
+              } else {
+                // Keep tracking the same address
+                trackingAddress = addresses[addressIndex];
+              }
+            } else {
+              // No address specified, use first address (backward compatibility)
+              if (addresses.length > 0) {
+                trackingAddress = addresses[0];
+              }
+            }
+            
+            // Get the previous hash for this address
+            const previousHash = addressIndex < previousHashes.length ? previousHashes[addressIndex] : null;
+            
+            // eslint-disable-next-line no-console
+            console.log(`Using address index ${addressIndex} (address: ${trackingAddress}) for previous_hashes`);
             
             // Check if previous hash is null, empty, or all zeros (chain start)
             if (
@@ -333,36 +347,9 @@ export class Xl1ViewerService {
 
         const viewer = connection.viewer;
 
-        // Strategy 1: Try blockByHash with the transaction hash
-        // In XL1, transactions might be blocks themselves, or the hash might reference the block
-        if (typeof viewer.blockByHash === 'function') {
-          try {
-            // eslint-disable-next-line no-console
-            console.log(`Trying blockByHash with transaction hash: ${transactionHash}`);
-            
-            const blockByHashResult = await viewer.blockByHash(transactionHash);
-            
-            if (blockByHashResult && Array.isArray(blockByHashResult)) {
-              const [block] = blockByHashResult;
-              const blockData = block as Record<string, unknown>;
-              
-              // Extract block number from the block
-              const blockNum = blockData.block as number | undefined;
-              if (blockNum !== undefined && blockNum !== null) {
-                // eslint-disable-next-line no-console
-                console.log(`✓ Found block ${blockNum} via blockByHash for transaction ${transactionHash}`);
-                return blockNum;
-              }
-            }
-          } catch (error) {
-            // eslint-disable-next-line no-console
-            console.log(`blockByHash with transaction hash failed:`, error instanceof Error ? error.message : String(error));
-            // Continue to other strategies
-          }
-        }
-
-        // Strategy 2: Search blocks in the expected range using blockByNumber
-        if (typeof viewer.blockByNumber === 'function') {
+        // Search blocks in the expected range using transactionByBlockNumberAndIndex
+        // This is the most reliable method after the package upgrade
+        if (typeof viewer.transactionByBlockNumberAndIndex === 'function') {
           // Get current block number to limit our search
           let currentBlock: number | null = null;
           try {
@@ -377,75 +364,66 @@ export class Xl1ViewerService {
           const startBlock = result.nbf;
           const endBlock = currentBlock !== null && currentBlock < result.exp ? currentBlock : result.exp;
           
-          // eslint-disable-next-line no-console
-          console.log(`Searching blocks ${startBlock} to ${endBlock} for transaction ${transactionHash}`);
-
-          // Check blocks in the range (limit to reasonable number to avoid long searches)
-          const maxBlocksToCheck = 100; // Limit search to prevent timeout
+          // Limit search to prevent timeout
+          const maxBlocksToCheck = 100;
           const blocksToCheck = Math.min(endBlock - startBlock + 1, maxBlocksToCheck);
           
           for (let i = 0; i < blocksToCheck; i++) {
             const blockNum = startBlock + i;
             
             try {
-              // eslint-disable-next-line no-console
-              console.log(`Checking block ${blockNum} for transaction ${transactionHash}`);
+              // Check transactions in this block using transactionByBlockNumberAndIndex
+              let txIndex = 0;
+              const maxTransactionsPerBlock = 100;
               
-              const blockResult = await viewer.blockByNumber(blockNum);
-              
-              if (blockResult && Array.isArray(blockResult)) {
-                const [block, transactions] = blockResult;
-                
-                // Check if our transaction is in this block's transactions
-                if (Array.isArray(transactions)) {
-                  // eslint-disable-next-line no-console
-                  console.log(`Block ${blockNum} has ${transactions.length} transaction(s)`);
+              while (txIndex < maxTransactionsPerBlock) {
+                try {
+                  const txResult = await viewer.transactionByBlockNumberAndIndex(blockNum, txIndex);
+                  if (!txResult) {
+                    // No more transactions in this block
+                    break;
+                  }
                   
-                  for (let txIndex = 0; txIndex < transactions.length; txIndex++) {
-                    const tx = transactions[txIndex];
-                    
-                    // Transaction format might be [boundWitness, payloads] or just boundWitness
-                    let txBoundWitness: Record<string, unknown>;
-                    if (Array.isArray(tx) && tx.length > 0) {
-                      txBoundWitness = tx[0] as Record<string, unknown>;
-                    } else if (typeof tx === 'object' && tx !== null) {
-                      txBoundWitness = tx as Record<string, unknown>;
-                    } else {
+                  // Transaction format is [boundWitness, payloads] or just boundWitness
+                  let txBoundWitness: Record<string, unknown>;
+                  if (Array.isArray(txResult) && txResult.length > 0) {
+                    txBoundWitness = txResult[0] as Record<string, unknown>;
+                  } else if (typeof txResult === 'object' && txResult !== null) {
+                    txBoundWitness = txResult as Record<string, unknown>;
+                  } else {
+                    break;
+                  }
+                  
+                  // Get hash from bound witness or calculate it
+                  let txHash = txBoundWitness._hash || txBoundWitness.hash;
+                  if (!txHash) {
+                    try {
+                      const { BoundWitnessWrapper } = await XyoSdkLoader.loadBoundWitnessWrapper();
+                      const wrapper = (BoundWitnessWrapper as any).parse(txBoundWitness);
+                      txHash = await wrapper.hash();
+                    } catch {
+                      // Continue to next transaction if hash calculation fails
+                      txIndex++;
                       continue;
                     }
-                    
-                    const txHash = txBoundWitness._hash || txBoundWitness.hash;
-                    
-                    // eslint-disable-next-line no-console
-                    console.log(`  Transaction ${txIndex}: hash=${txHash}, looking for=${transactionHash}`);
-                    
-                    if (txHash === transactionHash) {
-                      // eslint-disable-next-line no-console
-                      console.log(`✓ Found transaction ${transactionHash} in block ${blockNum} at index ${txIndex}`);
-                      return blockNum;
-                    }
                   }
-                } else {
-                  // eslint-disable-next-line no-console
-                  console.log(`Block ${blockNum} transactions is not an array:`, typeof transactions);
+                  
+                  // Compare hashes (case-insensitive)
+                  if (txHash && typeof txHash === 'string' && txHash.toLowerCase() === transactionHash.toLowerCase()) {
+                    return blockNum;
+                  }
+                  
+                  txIndex++;
+                } catch {
+                  // No more transactions in this block
+                  break;
                 }
-              } else {
-                // eslint-disable-next-line no-console
-                console.log(`Block ${blockNum} result is not in expected format:`, typeof blockResult);
               }
-            } catch (error) {
-              // eslint-disable-next-line no-console
-              console.warn(`Error checking block ${blockNum}:`, error instanceof Error ? error.message : String(error));
-              // Continue to next block
+            } catch {
+              // Continue to next block if this one fails
               continue;
             }
           }
-
-          // eslint-disable-next-line no-console
-          console.log(`Transaction ${transactionHash} not found in blocks ${startBlock} to ${endBlock}`);
-        } else {
-          // eslint-disable-next-line no-console
-          console.warn('viewer.blockByNumber() is not available - cannot check blocks for transaction');
         }
       }
 

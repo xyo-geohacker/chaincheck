@@ -17,6 +17,9 @@ export class XYOMobileService {
       latitude: number;
       longitude: number;
       timestamp: number;
+      altitude?: number | null;
+      barometricPressure?: number | null;
+      accelerometer?: { x: number; y: number; z: number } | null;
       notes?: string;
       nfcRecord1?: string;
       nfcSerialNumber?: string;
@@ -25,6 +28,18 @@ export class XYOMobileService {
       longitude: location.longitude,
       timestamp: location.timestamp
     };
+
+    if (location.altitude !== undefined && location.altitude !== null) {
+      requestBody.altitude = location.altitude;
+    }
+
+    if (location.barometricPressure !== undefined && location.barometricPressure !== null) {
+      requestBody.barometricPressure = location.barometricPressure;
+    }
+
+    if (location.accelerometer !== undefined && location.accelerometer !== null) {
+      requestBody.accelerometer = location.accelerometer;
+    }
 
     if (location.notes) {
       requestBody.notes = location.notes;

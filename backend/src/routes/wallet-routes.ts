@@ -1,10 +1,45 @@
 import { Router } from 'express';
-import { disableGloballyUnique } from '@xylabs/object';
 import { validateRequest } from '../middleware/validation-middleware.js';
 import { mnemonicSchema } from '../lib/validation-schemas.js';
+import { logger } from '../lib/logger.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/wallet/generate-mnemonic:
+ *   get:
+ *     summary: Generate mnemonic seed phrase
+ *     description: Generates a new 12-word mnemonic seed phrase for XL1 wallet and returns the derived address
+ *     tags: [Wallet]
+ *     responses:
+ *       200:
+ *         description: Mnemonic generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 mnemonic:
+ *                   type: string
+ *                   description: 12-word mnemonic seed phrase
+ *                   example: "word1 word2 word3 ... word12"
+ *                 address:
+ *                   type: string
+ *                   description: Derived XL1 address from mnemonic
+ *                 warning:
+ *                   type: string
+ *                   description: Security warning message
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 /**
  * GET /api/wallet/generate-mnemonic
  * Generates a new 12-word mnemonic seed phrase for XL1 wallet
@@ -18,10 +53,8 @@ const router = Router();
  */
 router.get('/wallet/generate-mnemonic', async (req, res) => {
   try {
-    // MUST call this before importing XYO SDK to prevent "Global unique item" errors
-    disableGloballyUnique();
-    
     // Dynamically import packages
+    // Note: disableGloballyUnique() no longer needed in SDK 5.x
     const { HDWallet } = await import('@xyo-network/wallet');
     const { generateXyoBaseWalletFromPhrase, ADDRESS_INDEX } = await import('@xyo-network/xl1-protocol-sdk');
     
@@ -39,8 +72,7 @@ router.get('/wallet/generate-mnemonic', async (req, res) => {
       warning: 'Keep this mnemonic secure and never share it publicly! Store it in a safe place.'
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error generating mnemonic:', error);
+    logger.error('Error generating mnemonic', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to generate mnemonic',
@@ -49,6 +81,55 @@ router.get('/wallet/generate-mnemonic', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/wallet/validate-mnemonic:
+ *   post:
+ *     summary: Validate mnemonic seed phrase
+ *     description: Validates a mnemonic phrase and returns the derived XL1 address if valid
+ *     tags: [Wallet]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mnemonic
+ *             properties:
+ *               mnemonic:
+ *                 type: string
+ *                 description: 12-word mnemonic seed phrase
+ *                 example: "word1 word2 word3 ... word12"
+ *     responses:
+ *       200:
+ *         description: Mnemonic is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                   example: true
+ *                 address:
+ *                   type: string
+ *                   description: Derived XL1 address
+ *       400:
+ *         description: Invalid mnemonic
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ */
 /**
  * POST /api/wallet/validate-mnemonic
  * Validates a mnemonic phrase and returns the derived address
@@ -60,10 +141,8 @@ router.post('/wallet/validate-mnemonic', validateRequest(mnemonicSchema), async 
   const { mnemonic } = req.body;
   
   try {
-    // MUST call this before importing XYO SDK to prevent "Global unique item" errors
-    disableGloballyUnique();
-    
     // Dynamically import packages
+    // Note: disableGloballyUnique() no longer needed in SDK 5.x
     const { generateXyoBaseWalletFromPhrase, ADDRESS_INDEX } = await import('@xyo-network/xl1-protocol-sdk');
     
     // Validate by attempting to generate wallet

@@ -79,8 +79,7 @@ describe('Deliveries API', () => {
     await prisma.driver.create({
       data: {
         driverId,
-        passwordHash: testPasswordHash,
-        name: 'Test Driver'
+        passwordHash: testPasswordHash
       }
     });
 

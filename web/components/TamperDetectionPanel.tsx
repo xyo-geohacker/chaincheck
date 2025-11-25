@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import type { ArchivistSubmissionResult } from '@shared/types/xyo.types';
+import { CollapsibleSection } from './CollapsibleSection';
 import { calculatePayloadHash } from '../lib/payload-hash';
 
 type Props = {
@@ -315,14 +316,6 @@ export function TamperDetectionPanel({ storedPayload, xl1TransactionHash, boundW
     <div className="glass-card rounded-3xl border border-[#2f2862] px-6 py-6 text-slate-100">
       <h2 className="text-lg font-semibold text-white mb-4">Tamper Detection</h2>
 
-      {/* Explanation */}
-      <div className="mb-4 rounded-lg border border-[#2f2862] bg-[#0a0815] p-4">
-        <p className="text-sm text-slate-300 leading-relaxed">
-          This verification checks if the delivery data stored in the XYO Archivist has been tampered with since it was originally recorded.
-          It compares the current data in the Archivist with the blockchain proof to ensure they match.
-        </p>
-      </div>
-
       {/* Status Display */}
       <div className="mb-4">
         <div className={`rounded-lg border p-4 ${
@@ -430,17 +423,24 @@ export function TamperDetectionPanel({ storedPayload, xl1TransactionHash, boundW
         {isChecking ? 'Checking...' : 'Check for Tampering'}
       </button>
 
-      {/* Additional Info */}
-      {xl1Hash && (
-        <div className="mt-4 text-xs text-slate-400">
-          <p className="mb-1">How it works:</p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>Fetches current data from the XYO Archivist</li>
-            <li>Compares the data hash with the blockchain proof</li>
-            <li>Detects any changes made after the original recording</li>
-          </ul>
+      {/* How It Works - Collapsible */}
+      <CollapsibleSection title="How It Works" defaultOpen={false}>
+        <div className="text-sm text-slate-300 leading-relaxed space-y-3">
+          <p>
+            This verification checks if the delivery data stored in the XYO Archivist has been tampered with since it was originally recorded. It compares the current data in the Archivist with the blockchain proof to ensure they match.
+          </p>
+          <p className="font-semibold text-slate-200 mb-2">The verification process:</p>
+          <ol className="list-decimal list-inside space-y-1.5 ml-1 mb-3">
+            <li>Fetches the current payload data from the XYO Archivist</li>
+            <li>Recalculates the cryptographic hash from the actual payload data</li>
+            <li>Compares the recalculated hash with the hash stored on the XL1 blockchain</li>
+            <li>Detects any changes made after the original recording, even if the stored hash field wasn't updated</li>
+          </ol>
+          <p className="text-xs text-slate-400 italic">
+            Note: By recalculating the hash from the actual data, this method ensures that any tampering is detected, even if someone modifies the data but forgets to update the stored hash field.
+          </p>
         </div>
-      )}
+      </CollapsibleSection>
     </div>
   );
 }

@@ -345,12 +345,22 @@ export class XyoService {
           const chain: unknown[] = [boundWitness];
           
           // Follow the chain using XL1 viewer
+          // IMPORTANT: previous_hashes is address-indexed. previous_hashes[i] corresponds to addresses[i]
           const bwObj = boundWitness as Record<string, unknown>;
-          if ('previous_hashes' in bwObj && Array.isArray(bwObj.previous_hashes) && bwObj.previous_hashes.length > 0) {
-            const previousHash = bwObj.previous_hashes[0];
+          if ('previous_hashes' in bwObj && Array.isArray(bwObj.previous_hashes) && 
+              'addresses' in bwObj && Array.isArray(bwObj.addresses) && 
+              bwObj.addresses.length > 0) {
+            const addresses = bwObj.addresses as string[];
+            const previousHashes = bwObj.previous_hashes as (string | null)[];
+            
+            // Use the first address's previous hash (for backward compatibility)
+            // In the future, we might want to track a specific address
+            const trackingAddress = addresses[0];
+            const previousHash = previousHashes.length > 0 ? previousHashes[0] : null;
+            
             if (previousHash && typeof previousHash === 'string' && previousHash !== '' && !/^0+$/.test(previousHash)) {
-              // Continue chain from previous hash using XL1 viewer
-              const remainingChain = await this.xl1ViewerService.getBoundWitnessChainFromXL1(previousHash, maxDepth - 1);
+              // Continue chain from previous hash using XL1 viewer, tracking the same address
+              const remainingChain = await this.xl1ViewerService.getBoundWitnessChainFromXL1(previousHash, maxDepth - 1, trackingAddress);
               chain.push(...remainingChain);
             }
           }
@@ -483,54 +493,122 @@ export class XyoService {
    * @param longitude Location longitude
    * @param witnessNodes Array of witness nodes that verified the location
    * @param proofHash Optional proof hash to extract witness nodes from XL1 transaction
+   * @param destinationLat Optional destination latitude for actual delivery accuracy
+   * @param destinationLon Optional destination longitude for actual delivery accuracy
+   * @param distanceFromDest Optional pre-calculated distance from destination in meters
+   * @param isRealXL1Transaction Optional flag indicating if this is a real XL1 transaction (from stored data)
    * @returns LocationAccuracyResult with accuracy score, confidence level, and precision metrics
    */
   async calculateLocationAccuracy(
     latitude: number,
     longitude: number,
     witnessNodes: WitnessNodeDetails[] = [],
-    proofHash?: string
+    proofHash?: string,
+    destinationLat?: number | null,
+    destinationLon?: number | null,
+    distanceFromDest?: number | null,
+    isRealXL1Transaction?: boolean
   ): Promise<LocationAccuracyResult> {
     // Typical GPS accuracy (varies by device and conditions)
     const GPS_ACCURACY_METERS = 10;
 
-    // If no witness nodes provided, try to extract from XL1 transaction
-    let nodes = witnessNodes;
-    if (nodes.length === 0 && proofHash) {
+    // Track if we're using real XL1 data
+    // Use the passed flag first (from stored delivery data), then try to verify via XL1 query
+    let hasXL1Data = isRealXL1Transaction === true;
+    let xl1Addresses: string[] = [];
+
+    // Always try to extract XL1 data if proofHash is provided (to determine if data is real)
+    // This allows us to mark the result as not mocked even if witness nodes don't have location data
+    // Only query XL1 if we don't already know it's a real transaction (to avoid unnecessary queries)
+    if (proofHash && !hasXL1Data) {
       try {
         // eslint-disable-next-line no-console
-        console.log('No witness nodes provided, attempting to extract from XL1 transaction');
+        console.log('[Location Accuracy] Checking for XL1 transaction data');
+        const xl1Data = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
+        
+        if (xl1Data && xl1Data.boundWitness) {
+          hasXL1Data = true;
+          const boundWitness = xl1Data.boundWitness as Record<string, unknown>;
+          
+          // Extract addresses from bound witness
+          if ('addresses' in boundWitness && Array.isArray(boundWitness.addresses)) {
+            xl1Addresses = boundWitness.addresses as string[];
+            
+            // eslint-disable-next-line no-console
+            console.log(`[Location Accuracy] Found XL1 transaction with ${xl1Addresses.length} participant addresses`);
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn('[Location Accuracy] Failed to check XL1 transaction:', error);
+      }
+    } else if (hasXL1Data) {
+      // eslint-disable-next-line no-console
+      console.log('[Location Accuracy] Using real XL1 transaction data (from stored delivery data)');
+    }
+
+    // If no witness nodes provided, try to extract from XL1 transaction
+    let nodes = witnessNodes;
+    if (nodes.length === 0 && proofHash && hasXL1Data) {
+      try {
+        // eslint-disable-next-line no-console
+        console.log('[Location Accuracy] Attempting to extract witness nodes from XL1 transaction');
         const xl1Data = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
         
         if (xl1Data && xl1Data.boundWitness) {
           const boundWitness = xl1Data.boundWitness as Record<string, unknown>;
           
-          // Extract addresses from bound witness
+          // Extract addresses from bound witness (we already have xl1Addresses, but need to process them)
           if ('addresses' in boundWitness && Array.isArray(boundWitness.addresses)) {
-            const addresses = boundWitness.addresses as string[];
-            
             // Extract signatures to verify
             const signatures: string[] = [];
             if ('$signatures' in boundWitness && Array.isArray(boundWitness.$signatures)) {
               signatures.push(...(boundWitness.$signatures as string[]));
             }
-            const signaturesValid = signatures.length > 0 && signatures.length >= addresses.length;
+            const signaturesValid = signatures.length > 0 && signatures.length >= xl1Addresses.length;
             
-            // Create witness nodes from addresses
-            nodes = addresses.map((address, index) => ({
-              address,
-              type: index === 0 ? 'bridge' : 'sentinel',
-              verified: signaturesValid,
-              status: 'active' as const
-            }));
+            // Try to look up addresses in network service to get location data
+            const nodesWithLocation: WitnessNodeDetails[] = [];
+            for (const address of xl1Addresses) {
+              try {
+                // Try to get node info from network service (may not have location)
+                const allNodes = await this.networkService.getAllWitnessNodes({});
+                const nodeInfo = allNodes.find(n => n.address?.toLowerCase() === address.toLowerCase());
+                if (nodeInfo && nodeInfo.location) {
+                  nodesWithLocation.push({
+                    ...nodeInfo,
+                    verified: signaturesValid,
+                    status: 'active' as const
+                  });
+                } else {
+                  // Add node without location (will be filtered later)
+                  nodesWithLocation.push({
+                    address,
+                    type: xl1Addresses.indexOf(address) === 0 ? 'bridge' : 'sentinel',
+                    verified: signaturesValid,
+                    status: 'active' as const
+                  });
+                }
+              } catch (error) {
+                // Address not found in network service, add without location
+                nodesWithLocation.push({
+                  address,
+                  type: xl1Addresses.indexOf(address) === 0 ? 'bridge' : 'sentinel',
+                  verified: signaturesValid,
+                  status: 'active' as const
+                });
+              }
+            }
+            
+            nodes = nodesWithLocation;
             
             // eslint-disable-next-line no-console
-            console.log(`Extracted ${nodes.length} witness nodes from XL1 transaction`);
+            console.log(`[Location Accuracy] Extracted ${nodes.length} witness nodes from XL1 transaction (${nodes.filter(n => n.location).length} with location data)`);
           }
         }
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.warn('Failed to extract witness nodes from XL1 transaction:', error);
+        console.warn('[Location Accuracy] Failed to extract witness nodes from XL1 transaction:', error);
       }
     }
 
@@ -559,19 +637,57 @@ export class XyoService {
 
     const nodeCount = activeNodesWithLocation.length;
 
-    // If no nodes available, return default accuracy
+    // Calculate actual delivery accuracy if destination is provided
+    let actualDeliveryAccuracy: number | null = null;
+    if (distanceFromDest !== null && distanceFromDest !== undefined) {
+      actualDeliveryAccuracy = distanceFromDest;
+    } else if (destinationLat !== null && destinationLat !== undefined && 
+               destinationLon !== null && destinationLon !== undefined) {
+      actualDeliveryAccuracy = haversineDistance(
+        latitude,
+        longitude,
+        destinationLat,
+        destinationLon
+      );
+    }
+
+    // If no nodes available, but we have XL1 data or actual delivery accuracy, use that
     if (nodeCount === 0) {
+      // If we have actual delivery accuracy, use that as the accuracy score
+      if (actualDeliveryAccuracy !== null) {
+        const finalAccuracy = Math.max(1, actualDeliveryAccuracy);
+        // Precision radius is based on actual delivery accuracy (distance from destination)
+        // This is a real metric even without witness nodes
+        const precisionRadius = Math.round(finalAccuracy * 1.96 * 10) / 10; // 95% confidence interval
+        
+        return {
+          accuracyScore: Math.round(finalAccuracy * 10) / 10,
+          confidenceLevel: hasXL1Data ? 'medium' : 'low',
+          precisionRadius: precisionRadius,
+          witnessNodeCount: xl1Addresses.length, // Show XL1 participants even without location
+          gpsAccuracy: GPS_ACCURACY_METERS,
+          xyoNetworkAccuracy: Math.round(finalAccuracy * 10) / 10,
+          accuracyImprovement: actualDeliveryAccuracy < GPS_ACCURACY_METERS 
+            ? Math.round(((GPS_ACCURACY_METERS - finalAccuracy) / GPS_ACCURACY_METERS) * 100 * 10) / 10
+            : 0,
+          consensusAgreement: 0, // Cannot calculate consensus without witness nodes
+          nodeProximityScore: 0, // Cannot calculate proximity without witness nodes
+          isMocked: !hasXL1Data // Not mocked if we have XL1 data
+        };
+      }
+      
+      // Default fallback - no nodes and no delivery accuracy data
       return {
         accuracyScore: GPS_ACCURACY_METERS,
         confidenceLevel: 'low',
         precisionRadius: GPS_ACCURACY_METERS,
-        witnessNodeCount: 0,
+        witnessNodeCount: xl1Addresses.length || 0,
         gpsAccuracy: GPS_ACCURACY_METERS,
         xyoNetworkAccuracy: GPS_ACCURACY_METERS,
         accuracyImprovement: 0,
-        consensusAgreement: 0,
-        nodeProximityScore: 0,
-        isMocked: true
+        consensusAgreement: 0, // Cannot calculate without nodes
+        nodeProximityScore: 0, // Cannot calculate without nodes
+        isMocked: !hasXL1Data
       };
     }
 
@@ -607,68 +723,63 @@ export class XyoService {
     // std dev of 0 = 100, std dev of 100m = 80, std dev of 500m = 40, std dev of 1000m = 0
     const consensusAgreement = Math.max(0, Math.min(100, 100 - (stdDev / 10)));
 
-    // Calculate XYO Network accuracy based on:
-    // - Number of witness nodes (more nodes = better accuracy)
-    // - Node proximity (closer nodes = better accuracy)
-    // - Consensus agreement (better agreement = better accuracy)
-    // - Node reputation (if available)
+    // IMPORTANT: XYO Network does NOT improve GPS location accuracy
+    // The XYO Network cryptographically verifies the location data provided by the phone's GPS
+    // It does not measure location independently, so it cannot improve upon GPS accuracy
+    // 
+    // The meaningful accuracy metric is the actual delivery accuracy (distance from destination)
+    // This shows how accurately the driver reached the intended delivery location
     
-    // Base accuracy improves with more nodes (diminishing returns)
-    const nodeCountFactor = Math.min(1.0, 0.5 + (nodeCount * 0.1));
+    // Use actual delivery accuracy if available, otherwise use GPS accuracy
+    // The XYO Network provides verification strength, not location accuracy improvement
+    let finalAccuracy: number;
+    let precisionRadius: number;
+    let accuracyImprovement: number;
     
-    // Proximity factor: closer nodes improve accuracy
-    const proximityFactor = nodeProximityScore / 100;
-    
-    // Consensus factor: better agreement improves accuracy
-    const consensusFactor = consensusAgreement / 100;
-    
-    // Reputation factor: average reputation of nodes (if available)
-    const reputationScores = activeNodesWithLocation
-      .map(node => node.reputation ?? 50)
-      .filter(rep => rep > 0);
-    const avgReputation = reputationScores.length > 0
-      ? reputationScores.reduce((sum, rep) => sum + rep, 0) / reputationScores.length
-      : 50;
-    const reputationFactor = avgReputation / 100;
-
-    // Calculate XYO Network accuracy
-    // Formula: GPS accuracy * (1 - improvement_factor)
-    // improvement_factor combines all factors
-    const improvementFactor = (nodeCountFactor * 0.3 + proximityFactor * 0.3 + consensusFactor * 0.3 + reputationFactor * 0.1);
-    const xyoNetworkAccuracy = GPS_ACCURACY_METERS * (1 - (improvementFactor * 0.5)); // Up to 50% improvement
-    
-    // Ensure minimum accuracy of 1 meter
-    const finalAccuracy = Math.max(1, xyoNetworkAccuracy);
-    
-    // Precision radius: confidence interval (95% of measurements within this radius)
-    const precisionRadius = finalAccuracy * 1.96; // 95% confidence interval
-
-    // Accuracy improvement percentage
-    const accuracyImprovement = ((GPS_ACCURACY_METERS - finalAccuracy) / GPS_ACCURACY_METERS) * 100;
-
-    // Determine confidence level
-    let confidenceLevel: 'high' | 'medium' | 'low';
-    const confidenceScore = (nodeCountFactor * 0.3 + proximityFactor * 0.3 + consensusFactor * 0.4) * 100;
-    
-    if (confidenceScore >= 70 && nodeCount >= 3) {
-      confidenceLevel = 'high';
-    } else if (confidenceScore >= 40 && nodeCount >= 2) {
-      confidenceLevel = 'medium';
+    if (actualDeliveryAccuracy !== null) {
+      // Use actual delivery accuracy (real metric based on distance from destination)
+      finalAccuracy = Math.max(1, actualDeliveryAccuracy);
+      precisionRadius = Math.round(finalAccuracy * 1.96 * 10) / 10; // 95% confidence interval
+      accuracyImprovement = actualDeliveryAccuracy < GPS_ACCURACY_METERS 
+        ? Math.round(((GPS_ACCURACY_METERS - finalAccuracy) / GPS_ACCURACY_METERS) * 100 * 10) / 10
+        : 0;
     } else {
-      confidenceLevel = 'low';
+      // No actual delivery accuracy data - use GPS accuracy as baseline
+      // XYO Network doesn't improve this, it just verifies it
+      finalAccuracy = GPS_ACCURACY_METERS;
+      precisionRadius = Math.round(GPS_ACCURACY_METERS * 1.96 * 10) / 10; // 95% confidence interval
+      accuracyImprovement = 0; // No improvement - XYO verifies, doesn't measure
     }
 
+    // Determine confidence level based on verification strength
+    // This reflects how well the data is verified, not location accuracy
+    let confidenceLevel: 'high' | 'medium' | 'low';
+    
+    if (nodeCount >= 3 && consensusAgreement >= 70) {
+      confidenceLevel = 'high'; // Strong verification with multiple nodes
+    } else if (nodeCount >= 2 && consensusAgreement >= 40) {
+      confidenceLevel = 'medium'; // Moderate verification
+    } else if (hasXL1Data) {
+      confidenceLevel = 'medium'; // XL1 blockchain verification provides medium confidence
+    } else {
+      confidenceLevel = 'low'; // Minimal or no verification
+    }
+    
+    // Final accuracy score is the actual delivery accuracy (if available) or GPS accuracy
+    const finalAccuracyScore = finalAccuracy;
+
     return {
-      accuracyScore: Math.round(finalAccuracy * 10) / 10, // Round to 1 decimal
+      accuracyScore: Math.round(finalAccuracyScore * 10) / 10, // Round to 1 decimal
       confidenceLevel,
       precisionRadius: Math.round(precisionRadius * 10) / 10,
-      witnessNodeCount: nodeCount,
+      witnessNodeCount: Math.max(nodeCount, xl1Addresses.length), // Show XL1 participants even if no location
       gpsAccuracy: GPS_ACCURACY_METERS,
-      xyoNetworkAccuracy: Math.round(finalAccuracy * 10) / 10,
+      // XYO Network accuracy is the same as the actual accuracy - XYO verifies, doesn't improve GPS
+      xyoNetworkAccuracy: Math.round(finalAccuracyScore * 10) / 10,
       accuracyImprovement: Math.round(accuracyImprovement * 10) / 10,
       consensusAgreement: Math.round(consensusAgreement * 10) / 10,
       nodeProximityScore: Math.round(nodeProximityScore * 10) / 10,
-      isMocked: nodes.length === 0 || activeNodesWithLocation.length === 0
+      isMocked: !hasXL1Data && (nodes.length === 0 || activeNodesWithLocation.length === 0)
     };
   }
 }

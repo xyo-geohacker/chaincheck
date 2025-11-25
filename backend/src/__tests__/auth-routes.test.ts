@@ -28,8 +28,7 @@ describe('Authentication API', () => {
     await prisma.driver.create({
       data: {
         driverId: testDriverId,
-        passwordHash: testPasswordHash,
-        name: 'Test Driver'
+        passwordHash: testPasswordHash
       }
     });
   });

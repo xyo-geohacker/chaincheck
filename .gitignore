@@ -120,9 +120,11 @@ mobile/ios/*.xcuserdata
 # Only ignore generated client
 backend/prisma/migrations/.migrate/
 
-# MongoDB key file (sensitive, generated)
-archivist/mongodb.key
-mongodb.key
+# MongoDB key file (sensitive, generated) - allowed for sample projects
+# archivist/mongodb.key
+# mongodb.key
+# Explicitly include the sample MongoDB key file
+!archivist/mongodb.key
 
 # Package manager
 .npm

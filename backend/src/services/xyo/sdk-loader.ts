@@ -1,18 +1,15 @@
 /**
  * Utility for safely loading XYO SDK modules
- * Handles the disableGloballyUnique() requirement before importing XYO packages
+ * Note: disableGloballyUnique() is no longer needed in SDK 5.x
  */
 
-import { disableGloballyUnique } from '@xylabs/object';
-
 /**
- * Loads XYO SDK modules safely by calling disableGloballyUnique first
- * This prevents "Global unique item" errors at module load time
+ * Loads XYO SDK modules safely
+ * SDK 5.x no longer requires disableGloballyUnique() call
  */
 export async function loadXyoSdkModules<T extends Record<string, unknown>>(
   modulePath: string
 ): Promise<T> {
-  disableGloballyUnique();
   return await import(modulePath) as T;
 }
 
@@ -21,7 +18,7 @@ export async function loadXyoSdkModules<T extends Record<string, unknown>>(
  */
 export const XyoSdkLoader = {
   async payloadBuilder() {
-    return loadXyoSdkModules<{ PayloadBuilder: unknown }>('@xyo-network/payload-builder');
+    return await loadXyoSdkModules<{ PayloadBuilder: unknown }>('@xyo-network/payload-builder');
   },
 
   async boundWitnessBuilder() {

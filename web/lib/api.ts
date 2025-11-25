@@ -289,6 +289,55 @@ export interface WitnessNodeDetails {
   metadata?: Record<string, unknown>;
 }
 
+export interface ROIMetrics {
+  disputeReduction: {
+    totalDisputes: number;
+    disputesWithProof: number;
+    disputesWithoutProof: number;
+    reductionPercent: number;
+    estimatedCostSavings: number;
+    avgDisputeResolutionTime: number;
+    avgDisputeCost: number;
+  };
+  fraudPrevention: {
+    totalDeliveries: number;
+    verifiedDeliveries: number;
+    verificationRate: number;
+    tamperDetections: number;
+    estimatedFraudPrevented: number;
+  };
+  operationalEfficiency: {
+    totalDeliveries: number;
+    verifiedDeliveries: number;
+    avgVerificationTime: number;
+    customerServiceCallsReduced: number;
+    timeSavedOnDisputes: number;
+  };
+  financialSummary: {
+    totalCostSavings: number;
+    disputeCostSavings: number;
+    fraudPreventionSavings: number;
+    operationalEfficiencySavings: number;
+    roi: number;
+  };
+  period: {
+    startDate: string;
+    endDate: string;
+    days: number;
+  };
+}
+
+export async function fetchROIMetrics(startDate?: string, endDate?: string): Promise<ROIMetrics> {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+  
+  const response = await apiClient.get<{ success: boolean; metrics: ROIMetrics }>(
+    `/api/analytics/roi?${params.toString()}`
+  );
+  return response.data.metrics;
+}
+
 export async function fetchNetworkStatistics(): Promise<NetworkStatistics> {
   if (!apiClient.defaults.baseURL) {
     throw new Error('NEXT_PUBLIC_API_URL is not configured');

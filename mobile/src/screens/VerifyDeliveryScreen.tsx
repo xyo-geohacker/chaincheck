@@ -1,10 +1,10 @@
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Accelerometer, Barometer } from 'expo-sensors';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -58,6 +58,9 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorTitle, setErrorTitle] = useState('');
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const [verificationData, setVerificationData] = useState<{
     proofHash: string;
     archivistStatus: string;
@@ -66,7 +69,12 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
   const [currentLocation, setCurrentLocation] = useState<{
     latitude: number;
     longitude: number;
+    altitude?: number | null;
   } | null>(null);
+  const [barometricPressure, setBarometricPressure] = useState<number | null>(null);
+  const [barometerAvailable, setBarometerAvailable] = useState<boolean>(false);
+  const [accelerometerData, setAccelerometerData] = useState<{ x: number; y: number; z: number } | null>(null);
+  const [accelerometerAvailable, setAccelerometerAvailable] = useState<boolean>(false);
 
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -88,7 +96,8 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
 
           setCurrentLocation({
             latitude: location.coords.latitude,
-            longitude: location.coords.longitude
+            longitude: location.coords.longitude,
+            altitude: location.coords.altitude ?? null
           });
 
           const distance = haversineDistance(
@@ -106,7 +115,9 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
           subscription.remove();
         };
       } catch (error) {
-        Alert.alert('Location Error', error instanceof Error ? error.message : String(error));
+        setAlertTitle('Location Error');
+        setAlertMessage(error instanceof Error ? error.message : String(error));
+        setShowAlertModal(true);
       } finally {
         setIsLoading(false);
       }
@@ -127,6 +138,72 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
     }
   }, []);
 
+  // Initialize barometric pressure sensor
+  useEffect(() => {
+    let barometerSubscription: { remove: () => void } | null = null;
+
+    const initializeBarometer = async () => {
+      try {
+        const isAvailable = await Barometer.isAvailableAsync();
+        setBarometerAvailable(isAvailable);
+
+        if (isAvailable) {
+          // Set update interval to 1000ms (1 second)
+          Barometer.setUpdateInterval(1000);
+          
+          barometerSubscription = Barometer.addListener(({ pressure }) => {
+            // Pressure is in hPa (hectopascals)
+            setBarometricPressure(pressure);
+          });
+        }
+      } catch (error) {
+        console.warn('Barometer not available:', error);
+        setBarometerAvailable(false);
+      }
+    };
+
+    initializeBarometer();
+
+    return () => {
+      if (barometerSubscription) {
+        barometerSubscription.remove();
+      }
+    };
+  }, []);
+
+  // Initialize accelerometer sensor
+  useEffect(() => {
+    let accelerometerSubscription: { remove: () => void } | null = null;
+
+    const initializeAccelerometer = async () => {
+      try {
+        const isAvailable = await Accelerometer.isAvailableAsync();
+        setAccelerometerAvailable(isAvailable);
+
+        if (isAvailable) {
+          // Set update interval to 100ms for more responsive readings
+          Accelerometer.setUpdateInterval(100);
+          
+          accelerometerSubscription = Accelerometer.addListener(({ x, y, z }) => {
+            // Acceleration in m/s² (meters per second squared)
+            setAccelerometerData({ x, y, z });
+          });
+        }
+      } catch (error) {
+        console.warn('Accelerometer not available:', error);
+        setAccelerometerAvailable(false);
+      }
+    };
+
+    initializeAccelerometer();
+
+    return () => {
+      if (accelerometerSubscription) {
+        accelerometerSubscription.remove();
+      }
+    };
+  }, []);
+
   const mapCenter = useMemo(
     () => [delivery.destinationLon, delivery.destinationLat] as [number, number],
     [delivery.destinationLat, delivery.destinationLon]
@@ -143,19 +220,25 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
 
   const handleVerifyDelivery = async () => {
     if (!capturedPhoto) {
-      Alert.alert('Photo required', 'Capture a delivery photo before verifying.');
+      setAlertTitle('Photo Required');
+      setAlertMessage('Capture a delivery photo before verifying.');
+      setShowAlertModal(true);
       setStatusMessage('Capture a delivery photo before submitting proof.');
       setStatusType('error');
       return;
     }
 
     if (!currentLocation) {
-      Alert.alert('Location unavailable', 'Current GPS location has not been determined yet.');
+      setAlertTitle('Location Unavailable');
+      setAlertMessage('Current GPS location has not been determined yet.');
+      setShowAlertModal(true);
       return;
     }
 
     if (!isWithinRange) {
-      Alert.alert('Out of range', 'Move within 50 meters of the destination to verify delivery.');
+      setAlertTitle('Out of Range');
+      setAlertMessage('Move within 50 meters of the destination to verify delivery.');
+      setShowAlertModal(true);
       return;
     }
 
@@ -176,6 +259,9 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
         latitude: currentLocation.latitude,
         longitude: currentLocation.longitude,
         timestamp: Date.now(),
+        altitude: currentLocation.altitude ?? undefined,
+        barometricPressure: barometricPressure ?? undefined,
+        accelerometer: accelerometerData ?? undefined,
         notes: driverNotes.trim() || undefined,
         nfcData: capturedNfc ? {
           record1: capturedNfc.record1,
@@ -497,6 +583,38 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
         </View>
       </Modal>
 
+      {/* Generic Alert Modal */}
+      <Modal
+        visible={showAlertModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowAlertModal(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.verificationModal}>
+            <View style={styles.verificationHeader}>
+              <View style={styles.warningIconContainer}>
+                <Text style={styles.warningIcon}>⚠</Text>
+              </View>
+              <Text style={styles.verificationTitle}>{alertTitle}</Text>
+              <Text style={styles.verificationSubtitle}>{alertMessage}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowAlertModal(false);
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Styled Verification Success Modal */}
       {verificationData && (
         <Modal
@@ -577,13 +695,17 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
     if (!cameraPermission) {
       const permissionResponse = await requestCameraPermission();
       if (!permissionResponse || permissionResponse.status !== 'granted') {
-        Alert.alert('Camera permission required', 'Camera access is needed to capture proof photos.');
+        setAlertTitle('Camera Permission Required');
+        setAlertMessage('Camera access is needed to capture proof photos.');
+        setShowAlertModal(true);
         return;
       }
     } else if (cameraPermission.status !== 'granted') {
       const permissionResponse = await requestCameraPermission();
       if (!permissionResponse || permissionResponse.status !== 'granted') {
-        Alert.alert('Camera permission required', 'Camera access is needed to capture proof photos.');
+        setAlertTitle('Camera Permission Required');
+        setAlertMessage('Camera access is needed to capture proof photos.');
+        setShowAlertModal(true);
         return;
       }
     }
@@ -603,7 +725,9 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
       setCapturedPhoto({ uri: photo.uri });
       setIsCameraOpen(false);
     } catch (error) {
-      Alert.alert('Camera error', error instanceof Error ? error.message : String(error));
+      setAlertTitle('Camera Error');
+      setAlertMessage(error instanceof Error ? error.message : String(error));
+      setShowAlertModal(true);
     }
   }
 };
@@ -841,6 +965,20 @@ const styles = StyleSheet.create({
   errorIcon: {
     fontSize: 36,
     color: '#f87171',
+    fontWeight: '700'
+  },
+  warningIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16
+  },
+  warningIcon: {
+    fontSize: 36,
+    color: '#fbbf24',
     fontWeight: '700'
   },
   verificationTitle: {
