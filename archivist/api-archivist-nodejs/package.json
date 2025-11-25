@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json.schemastore.org/package.json",
+  "name": "@xyo-network/archivist-node",
+  "version": "2.0.96",
+  "private": true,
+  "description": "XYO Archivist",
+  "license": "LGPL-3.0-only",
+  "author": "Arie Trouw",
+  "type": "module",
+  "scripts": {
+    "postinstall": "patch-package",
+    "start": "nodemon",
+    "start-esm": "node ./dist/node/index.mjs"
+  },
+  "dependencies": {
+    "@xylabs/mongo": "^5.0.11",
+    "@xyo-network/archivist-mongodb": "^5.1.2",
+    "@xyo-network/module-abstract-mongodb": "^5.1.2",
+    "@xyo-network/node-app": "^4.1.1",
+    "patch-package": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/source-map-support": "0.5.10",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "@xylabs/eslint-config-flat": "^7.1.7",
+    "@xylabs/ts-scripts-yarn3": "^7.1.7",
+    "@xylabs/tsconfig": "^7.1.7",
+    "depcheck": "^1.4.7",
+    "eslint": "^9.36.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "knip": "^5.64.0",
+    "nodemon": "^3.1.10",
+    "postinstall-postinstall": "^2.1.0",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "yarn@4.8.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "volta": {
+    "node": "22.5.1",
+    "yarn": "4.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideeffects": false
+}

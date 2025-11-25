@@ -1,6 +1,16 @@
-# ChainCheck Monorepo
+# ChainCheck - XYO Network Integration Reference
 
-Delivery verification system using XYO Network proofs.
+**Reference implementation** for integrating XYO Network and XL1 blockchain proof-of-location into existing supply chain and delivery systems. Designed for partners like FedEx to add cryptographic verification to their existing processes with minimal effort.
+
+## Purpose
+
+ChainCheck serves as a **reference implementation** and **integration guide** for XYO Network partners. The core XYO functionality is modular and can be:
+
+- **Extracted** into existing systems
+- **Integrated** via API calls
+- **Used as a template** for custom implementations
+
+**Primary Goal**: Enable "drop-in" integration of XYO Network/XL1 functionality into existing delivery verification systems.
 
 [![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/CI/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
 [![CodeQL](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/CodeQL%20Security%20Analysis/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/security/code-scanning)
@@ -8,7 +18,18 @@ Delivery verification system using XYO Network proofs.
 [![codecov](https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO)
 [![Contributors Welcome](https://img.shields.io/badge/contributors-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-This project uses GitHub Actions for continuous integration. All tests, linting, and type checking run automatically on every push and pull request. See [CI/CD Documentation](./docs/CI_CD.md) for details.
+This project uses GitHub Actions for continuous integration. All tests, linting, and type checking run automatically on every push and pull request.
+
+## For Partners: Quick Integration
+
+**Want to add XYO Network to your existing system?**
+
+1. **Extract XYO Services**: Copy `backend/src/services/xyo/` to your project
+2. **Install Dependencies**: Add XYO SDK packages to your `package.json`
+3. **Configure**: Set environment variables
+4. **Use**: Call `xyoService.createLocationProofXL1()` in your verification flow
+
+See [Integration Guide](./docs/INTEGRATION_GUIDE.md) for detailed instructions and code examples.
 
 ## Features
 
@@ -76,8 +97,6 @@ This project uses GitHub Actions for continuous integration. All tests, linting,
 - **Main CI Workflow**: Runs tests, linting, type checking, and builds for all components
 - **Code Quality Workflow**: Validates code quality standards across the codebase
 - **Test Coverage Workflow**: Generates and tracks test coverage reports
-
-See [CI/CD Documentation](./docs/CI_CD.md) for detailed information about the CI/CD setup, running tests locally, and troubleshooting.
 
 ## Structure
 
@@ -645,8 +664,6 @@ cd web && npm test
 cd mobile && npm test
 ```
 
-See [Test Coverage Documentation](./docs/TEST_COVERAGE.md) for detailed information about test coverage, what's tested, and areas for improvement.
-
 ## Code Quality
 
 ChainCheck follows industry best practices and standards:
@@ -658,7 +675,26 @@ ChainCheck follows industry best practices and standards:
 - **Code Organization**: Clear separation of concerns, consistent structure
 - **Documentation**: Comprehensive documentation, API docs, inline comments
 
-See [Code Quality Improvements](./docs/CODE_QUALITY_IMPROVEMENTS.md) and [Code Cleanup Summary](./docs/CODE_CLEANUP_SUMMARY.md) for detailed information.
+## For Partners: Integration Approach
+
+ChainCheck is designed as a **reference implementation** for XYO Network partners. The XYO functionality is modular and can be integrated into existing systems in three ways:
+
+### 1. Extract Services (Recommended)
+Copy the XYO services (`backend/src/services/xyo/`) into your codebase. Minimal code changes required.
+
+**Best for**: Full control, customization, minimal dependencies
+
+### 2. API Integration
+Use ChainCheck's backend as a microservice. Make API calls from your system.
+
+**Best for**: Quick integration, no code changes, managed service
+
+### 3. Reference Implementation
+Use ChainCheck's code as a template for your own implementation.
+
+**Best for**: Learning, custom requirements, different tech stack
+
+See [Integration Guide](./docs/INTEGRATION_GUIDE.md) for detailed instructions and [Code Examples](./examples/) for ready-to-use templates.
 
 ## Dependency Management
 

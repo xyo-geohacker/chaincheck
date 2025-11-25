@@ -1,0 +1,19 @@
+ignores:
+  [
+    "@types/jest",
+    "@types/node",
+    "@types/source-map-support",
+    "@xylabs/eslint-config",
+    "@xylabs/ts-scripts-yarn3",
+    "@xylabs/tsconfig",
+    "babel-jest",
+    "depcheck",
+    "eslint-plugin-unicorn",
+    "jest-extended",
+    "jest-mock-extended",
+    "jest-sorted",
+    "lodash-es",
+    "ts-jest",
+    "ts-node",
+    "typescript"
+  ]
