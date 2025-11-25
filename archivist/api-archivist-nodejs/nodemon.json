@@ -1,0 +1,9 @@
+{
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "exec": "node ./dist/node/index.mjs",
+  "ext": "ts, js, json",
+  "ignore": ["dist", "node_modules", "**/*.spec.ts"],
+  "watch": ["src"]
+}

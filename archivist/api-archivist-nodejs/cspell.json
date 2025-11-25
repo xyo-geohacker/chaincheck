@@ -1,0 +1,36 @@
+{
+  "dictionaries": [],
+  "dictionaryDefinitions": [],
+  "ignorePaths": [
+    "yarn.lock",
+    "./.vscode"
+  ],
+  "ignoreWords": [],
+  "import": [],
+  "version": "0.2",
+  "words": [
+    "Arie",
+    "autogen",
+    "axios",
+    "boundwitness",
+    "boundwitnesses",
+    "BUILDKIT",
+    "buildx",
+    "coinapp",
+    "composability",
+    "depcheck",
+    "Hasher",
+    "HURI",
+    "lcov",
+    "nodemon",
+    "nodenext",
+    "Promisable",
+    "rimraf",
+    "rollbar",
+    "Shutdownable",
+    "sideeffects",
+    "Trouw",
+    "xylabs",
+    "yarnpkg"
+  ]
+}

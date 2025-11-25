@@ -1,0 +1,96 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getQuadkeyHeatmapFromPoints calculates with known points 1`] = `
+Array [
+  Object {
+    "density": 1,
+    "quadkey": "1302220000",
+  },
+  Object {
+    "density": 1,
+    "quadkey": "2120002222",
+  },
+  Object {
+    "density": 1,
+    "quadkey": "3120002222",
+  },
+  Object {
+    "density": 1,
+    "quadkey": "0302220000",
+  },
+]
+`;
+
+exports[`getQuadkeyHeatmapFromPoints calculates with known points 2`] = `
+Array [
+  Object {
+    "density": 4,
+    "quadkey": "0000000000",
+  },
+]
+`;
+
+exports[`getQuadkeyHeatmapFromPoints calculates with many points 1`] = `
+Array [
+  Object {
+    "density": 240,
+    "quadkey": "0000000000",
+  },
+  Object {
+    "density": 224,
+    "quadkey": "0001222222",
+  },
+  Object {
+    "density": 208,
+    "quadkey": "0030000000",
+  },
+  Object {
+    "density": 192,
+    "quadkey": "0033000000",
+  },
+  Object {
+    "density": 176,
+    "quadkey": "0122222222",
+  },
+  Object {
+    "density": 160,
+    "quadkey": "0303000000",
+  },
+  Object {
+    "density": 144,
+    "quadkey": "0330000000",
+  },
+  Object {
+    "density": 128,
+    "quadkey": "0333000000",
+  },
+  Object {
+    "density": 112,
+    "quadkey": "3000000000",
+  },
+  Object {
+    "density": 96,
+    "quadkey": "3003000000",
+  },
+  Object {
+    "density": 80,
+    "quadkey": "3030000000",
+  },
+  Object {
+    "density": 64,
+    "quadkey": "3031222222",
+  },
+  Object {
+    "density": 48,
+    "quadkey": "3300000000",
+  },
+  Object {
+    "density": 32,
+    "quadkey": "3303000000",
+  },
+  Object {
+    "density": 16,
+    "quadkey": "3330000000",
+  },
+]
+`;
