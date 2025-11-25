@@ -1,0 +1,71 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      # Backend Analysis
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run backend tests with coverage
+        working-directory: ./backend
+        run: npm test -- --coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chaincheck_test
+          NODE_ENV: test
+          JWT_SECRET: test-secret-key-for-ci
+          XYO_WALLET_MNEMONIC: test test test test test test test test test test test test
+
+      # Web Analysis
+      - name: Install web dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: Run web tests with coverage
+        working-directory: ./web
+        run: npm test -- --coverage --watchAll=false
+        env:
+          CI: true
+
+      # Mobile Analysis
+      - name: Install mobile dependencies
+        working-directory: ./mobile
+        run: npm ci
+
+      - name: Run mobile tests with coverage
+        working-directory: ./mobile
+        run: npm test -- --coverage --watchAll=false
+        env:
+          CI: true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+

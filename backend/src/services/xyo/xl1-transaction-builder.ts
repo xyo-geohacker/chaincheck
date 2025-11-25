@@ -10,7 +10,6 @@ import { XyoSdkLoader } from './sdk-loader.js';
 export class Xl1TransactionBuilder {
   /**
    * Build on-chain and off-chain payloads for delivery verification
-   * Adds storage metadata to payloads for proper handling (following explore project pattern)
    */
   async buildPayloads(payload: DeliveryVerificationPayload): Promise<{
     onChainPayloads: unknown[];
@@ -39,6 +38,10 @@ export class Xl1TransactionBuilder {
         destinationLon: payload.metadata?.destinationLon ?? payload.longitude,
         recipientPhone: payload.metadata?.recipientPhone || '',
         deliveryAddress: payload.metadata?.deliveryAddress || '',
+        // Include sensor data if available
+        altitude: payload.altitude ?? null,
+        barometricPressure: payload.barometricPressure ?? null,
+        accelerometer: payload.accelerometer ?? null,
         // Include NFC data if available
         xyoNfcUserRecord: payload.metadata?.xyoNfcUserRecord as string | undefined,
         xyoNfcSerialNumber: payload.metadata?.xyoNfcSerialNumber as string | undefined
@@ -52,14 +55,9 @@ export class Xl1TransactionBuilder {
       hash
     };
 
-    // Add storage metadata to payloads (following explore project pattern)
-    // This ensures proper payload handling and retrieval
-    const deliveryPayloadWithMeta = await PayloadBuilderClass.addStorageMeta(deliveryPayload);
-    const hashPayloadWithMeta = await PayloadBuilderClass.addStorageMeta(hashPayload);
-
     return {
-      onChainPayloads: [hashPayloadWithMeta],
-      offChainPayloads: [deliveryPayloadWithMeta]
+      onChainPayloads: [hashPayload],
+      offChainPayloads: [deliveryPayload]
     };
   }
 }

@@ -14,6 +14,9 @@ export function LocationAccuracyPanel({ proofHash, latitude, longitude }: Props)
   const [accuracy, setAccuracy] = useState<LocationAccuracyResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Check if this is real XL1 data (not mocked)
+  const hasXL1Data = accuracy && !accuracy.isMocked;
 
   useEffect(() => {
     async function loadAccuracy() {
@@ -89,31 +92,35 @@ export function LocationAccuracyPanel({ proofHash, latitude, longitude }: Props)
           <span className="text-sm text-slate-400">precision</span>
         </div>
         <p className="text-xs text-slate-500">
-          XYO Network accuracy: ±{accuracy.xyoNetworkAccuracy}m
+          Actual delivery accuracy: ±{accuracy.xyoNetworkAccuracy}m
         </p>
       </div>
 
-      {/* GPS vs XYO Network Comparison */}
+      {/* GPS vs Actual Delivery Accuracy Comparison */}
       <div className="mb-6 rounded-lg border border-[#2f2862] bg-[#0a0815] p-4">
-        <h3 className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff] mb-3">Accuracy Comparison</h3>
+        <h3 className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff] mb-3">Accuracy Metrics</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-300">GPS Accuracy</span>
+            <span className="text-sm text-slate-300">GPS Accuracy (Typical)</span>
             <span className="text-sm font-semibold text-slate-200">±{accuracy.gpsAccuracy}m</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-300">XYO Network</span>
+            <span className="text-sm text-slate-300">Actual Delivery Accuracy</span>
             <span className="text-sm font-semibold text-emerald-200">±{accuracy.xyoNetworkAccuracy}m</span>
           </div>
           {accuracy.accuracyImprovement > 0 && (
             <div className="pt-2 border-t border-[#2f2862]">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-emerald-200">Improvement</span>
+                <span className="text-sm font-semibold text-emerald-200">Better than Typical GPS</span>
                 <span className="text-sm font-bold text-emerald-200">+{accuracy.accuracyImprovement}%</span>
               </div>
             </div>
           )}
         </div>
+        <p className="text-xs text-slate-500 mt-3 italic">
+          Note: XYO Network cryptographically verifies the location data but does not improve GPS accuracy. 
+          Actual delivery accuracy is based on distance from the intended destination.
+        </p>
       </div>
 
       {/* Metrics Grid */}
@@ -136,17 +143,17 @@ export function LocationAccuracyPanel({ proofHash, latitude, longitude }: Props)
         </div>
       </div>
 
-      {/* Accuracy Improvement Badge */}
-      {accuracy.accuracyImprovement > 0 && (
+      {/* Verification Strength Badge */}
+      {hasXL1Data && (
         <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4">
           <div className="flex items-center gap-2">
             <span className="text-emerald-200 text-lg">✓</span>
             <div>
               <div className="text-sm font-semibold text-emerald-200">
-                XYO Network improves accuracy by {accuracy.accuracyImprovement}%
+                Cryptographically Verified on XL1 Blockchain
               </div>
               <div className="text-xs text-emerald-300/80 mt-0.5">
-                Multi-node verification provides better precision than GPS alone
+                Location data is immutably stored and verified by {accuracy.witnessNodeCount} participant{accuracy.witnessNodeCount !== 1 ? 's' : ''}
               </div>
             </div>
           </div>

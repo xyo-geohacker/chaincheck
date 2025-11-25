@@ -12,12 +12,12 @@ import { z } from 'zod';
  */
 export const loginSchema = z.object({
   driverId: z
-    .string({ required_error: 'Driver ID is required' })
-    .min(1, 'Driver ID cannot be empty')
+    .string()
+    .min(1, 'Driver ID is required and cannot be empty')
     .trim(),
   password: z
-    .string({ required_error: 'Password is required' })
-    .min(1, 'Password cannot be empty')
+    .string()
+    .min(1, 'Password is required and cannot be empty')
 });
 
 /**
@@ -36,24 +36,15 @@ export const deliveryVerificationSchema = z.object({
   nfcRecord1: z.string().optional(),
   nfcSerialNumber: z.string().optional(),
   latitude: z
-    .number({
-      required_error: 'Latitude is required',
-      invalid_type_error: 'Latitude must be a number'
-    })
+    .number({ message: 'Latitude is required and must be a number' })
     .min(-90, 'Latitude must be between -90 and 90')
     .max(90, 'Latitude must be between -90 and 90'),
   longitude: z
-    .number({
-      required_error: 'Longitude is required',
-      invalid_type_error: 'Longitude must be a number'
-    })
+    .number({ message: 'Longitude is required and must be a number' })
     .min(-180, 'Longitude must be between -180 and 180')
     .max(180, 'Longitude must be between -180 and 180'),
   timestamp: z
-    .number({
-      required_error: 'Timestamp is required',
-      invalid_type_error: 'Timestamp must be a number'
-    })
+    .number({ message: 'Timestamp is required and must be a number' })
     .int('Timestamp must be an integer')
     .positive('Timestamp must be a positive number')
     .refine(
@@ -68,6 +59,27 @@ export const deliveryVerificationSchema = z.object({
         message: 'Timestamp must be within the last year and not more than a year in the future'
       }
     ),
+  // Sensor data fields (optional)
+  altitude: z
+    .number({ message: 'Altitude must be a number' })
+    .min(-500, 'Altitude must be reasonable (not below -500m)')
+    .max(9000, 'Altitude must be reasonable (not above 9000m)')
+    .nullable()
+    .optional(),
+  barometricPressure: z
+    .number({ message: 'Barometric pressure must be a number' })
+    .min(300, 'Barometric pressure must be reasonable (not below 300 hPa)')
+    .max(1100, 'Barometric pressure must be reasonable (not above 1100 hPa)')
+    .nullable()
+    .optional(),
+  accelerometer: z
+    .object({
+      x: z.number({ message: 'Accelerometer x must be a number' }),
+      y: z.number({ message: 'Accelerometer y must be a number' }),
+      z: z.number({ message: 'Accelerometer z must be a number' })
+    })
+    .nullable()
+    .optional(),
   notes: z
     .string()
     .max(1000, 'Notes cannot exceed 1000 characters')
@@ -80,7 +92,8 @@ export const deliveryVerificationSchema = z.object({
  */
 export const deliveryIdParamSchema = z.object({
   id: z
-    .string({ required_error: 'Delivery ID is required' })
+    .string()
+    .min(1, 'Delivery ID is required')
     .uuid('Delivery ID must be a valid UUID')
 });
 
@@ -89,8 +102,8 @@ export const deliveryIdParamSchema = z.object({
  */
 export const proofHashParamSchema = z.object({
   proofHash: z
-    .string({ required_error: 'Proof hash is required' })
-    .min(1, 'Proof hash cannot be empty')
+    .string()
+    .min(1, 'Proof hash is required and cannot be empty')
     .regex(/^[a-f0-9]+$/i, 'Proof hash must be a valid hexadecimal string')
 });
 
@@ -99,8 +112,8 @@ export const proofHashParamSchema = z.object({
  */
 export const orderIdParamSchema = z.object({
   orderId: z
-    .string({ required_error: 'Order ID is required' })
-    .min(1, 'Order ID cannot be empty')
+    .string()
+    .min(1, 'Order ID is required and cannot be empty')
     .max(100, 'Order ID cannot exceed 100 characters')
 });
 
@@ -112,8 +125,8 @@ export const orderIdParamSchema = z.object({
  */
 export const signatureUploadSchema = z.object({
   signatureBase64: z
-    .string({ required_error: 'Signature data is required' })
-    .min(1, 'Signature data cannot be empty')
+    .string()
+    .min(1, 'Signature data is required and cannot be empty')
     .refine(
       (val) => {
         // Check if it's a valid base64 data URI
@@ -146,8 +159,8 @@ export const deliveryListQuerySchema = z.object({
  */
 export const mnemonicSchema = z.object({
   mnemonic: z
-    .string({ required_error: 'Mnemonic is required' })
-    .min(1, 'Mnemonic cannot be empty')
+    .string()
+    .min(1, 'Mnemonic is required and cannot be empty')
     .refine(
       (val) => {
         // Check if it's a valid mnemonic (12 or 24 words)
@@ -167,8 +180,8 @@ export const mnemonicSchema = z.object({
  */
 export const nodeAddressParamSchema = z.object({
   nodeAddress: z
-    .string({ required_error: 'Node address is required' })
-    .min(1, 'Node address cannot be empty')
+    .string()
+    .min(1, 'Node address is required and cannot be empty')
     .regex(/^0x[a-f0-9]+$/i, 'Node address must be a valid hexadecimal address starting with 0x')
 });
 

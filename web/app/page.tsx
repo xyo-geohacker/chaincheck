@@ -71,6 +71,19 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-12 text-slate-100">
+      {/* XL1 Wallet Info Link - Upper Right Corner */}
+      <div className="flex justify-end">
+        <Link
+          href="https://docs.xyo.network/developers/xl1-wallet/get-xl1-browser-wallet"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg border border-[#8ea8ff]/40 bg-[#8ea8ff]/10 px-4 py-2 text-xs font-medium text-[#8ea8ff] hover:bg-[#8ea8ff]/20 transition-colors flex items-center gap-2"
+        >
+          <span>ℹ️</span>
+          <span>XL1 Wallet Required for Blockchain Transactions</span>
+        </Link>
+      </div>
+
       <header className="glass-card relative overflow-hidden rounded-3xl p-10">
         <div className="absolute inset-0 bg-gradient-to-br from-[#6d4afe]/30 via-transparent to-[#40baf7]/20" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -87,14 +100,21 @@ export default async function DashboardPage() {
               <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                 Powered by
               </span>
-              <Image
-                src="/images/xyo-network-logo-color.png"
-                alt="XYO Network"
-                width={140}
-                height={32}
-                priority
-                className="h-8 w-auto object-contain"
-              />
+              <Link
+                href="https://xyo.network"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-opacity hover:opacity-80"
+              >
+                <Image
+                  src="/images/xyo-network-logo-color.png"
+                  alt="XYO Network"
+                  width={140}
+                  height={32}
+                  priority
+                  className="h-8 w-auto object-contain"
+                />
+              </Link>
             </div>
           </div>
 
@@ -105,12 +125,18 @@ export default async function DashboardPage() {
             >
               View XYO Network Overview →
             </Link>
-              <Link
-                href="/configuration/login"
-                className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
-              >
-                ChainCheck Configuration →
-              </Link>
+            <Link
+              href="/configuration/login"
+              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
+            >
+              View ChainCheck Configuration →
+            </Link>
+            <Link
+              href="/roi"
+              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
+            >
+              View ROI Dashboard →
+            </Link>
           </div>
         </div>
       </header>

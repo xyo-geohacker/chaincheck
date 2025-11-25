@@ -264,6 +264,45 @@ async function checkDivinerStatus(): Promise<ServiceStatus> {
   }
 }
 
+/**
+ * @swagger
+ * /api/server-status:
+ *   get:
+ *     summary: Get server status
+ *     description: Get health status of all services (backend, web, mobile, archivist, diviner)
+ *     tags: [Server Status]
+ *     security:
+ *       - configBearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Server status for all services
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 services:
+ *                   type: object
+ *                   properties:
+ *                     backend:
+ *                       type: object
+ *                     web:
+ *                       type: object
+ *                     mobile:
+ *                       type: object
+ *                     archivist:
+ *                       type: object
+ *                     diviner:
+ *                       type: object
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET /api/server-status - Get status of all services
 router.get('/server-status', authenticateConfigToken, async (_req, res) => {
   try {

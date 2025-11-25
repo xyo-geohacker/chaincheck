@@ -215,7 +215,10 @@ JWT_SECRET=your_jwt_secret_here_change_in_production
 MOCK_XL1_TRANSACTIONS=true
 
 # XL1 Wallet Mnemonic (only required if MOCK_XL1_TRANSACTIONS=false)
-# Generate one using: GET /api/wallet/generate-mnemonic after server starts
+# To interact with the XL1 blockchain, an XL1 wallet is required.
+# Get an XL1 wallet: https://docs.xyo.network/developers/xl1-wallet/get-xl1-browser-wallet
+# Generate a mnemonic using: GET /api/wallet/generate-mnemonic after server starts
+# The generated mnemonic phrase corresponds to the XYO_WALLET_MNEMONIC value
 XYO_WALLET_MNEMONIC=your twelve word mnemonic phrase here
 
 # XL1 RPC Endpoint (defaults to localhost if not set)
@@ -597,6 +600,11 @@ Instead of using XYO Network's production Diviners, you can run a local Location
 - **Testing**: Verify location-based queries against your local Archivist data
 - **Debugging**: Inspect Diviner query processing and results
 - **Integration Testing**: Test complete Archivist + Diviner workflow locally
+
+**Important Note**: The Diviner code in `./diviner` is from the GitHub repository [XYOracleNetwork/api-location.diviner.xyo.network-express](https://github.com/XYOracleNetwork/api-location.diviner.xyo.network-express), which has not been updated since August 2022. As a result:
+- **Diviner functionality with XL1 is primarily mocked** - The Diviner does not fully support XL1 blockchain queries
+- **Archivist is the off-chain source of record** - Location data is typically extracted directly from Archivist payloads rather than relying on Diviner queries
+- The backend falls back to using Archivist data when Diviner queries fail or return empty results
 
 **Prerequisites**: A local Archivist must be running (see [Local Archivist Setup](#7-local-archivist-setup-optional) above).
 
@@ -1048,18 +1056,11 @@ EXPO_PUBLIC_API_URL=http://192.168.1.100:4000
 
 ### 4. iOS Simulator Setup (macOS Only)
 
-#### 4.1. Install iOS Dependencies
+**Note:** This is an Expo project. The native `ios/` directory is automatically generated when you first run `npm run ios`. You don't need to manually create it or run `pod install` separately.
 
-```bash
-cd mobile
-cd ios
-pod install
-cd ..
-```
+#### 4.1. Start iOS Simulator (Optional)
 
-**Note:** Only needed if you've modified native iOS code or first-time setup.
-
-#### 4.2. Start iOS Simulator
+You can start the simulator manually, or `npm run ios` will start it automatically if it's not running.
 
 **Option A: Via Command Line**
 ```bash
@@ -1078,7 +1079,7 @@ open -a Simulator
 - Xcode → Open Developer Tool → Simulator
 - Select device: File → Open Simulator → Choose device
 
-#### 4.3. Run App on iOS Simulator
+#### 4.2. Run App on iOS Simulator
 
 ```bash
 cd mobile
@@ -1086,12 +1087,22 @@ npm run ios
 ```
 
 This will:
+- Automatically generate the native `ios/` directory (if it doesn't exist)
+- Automatically run `pod install` to install iOS dependencies
 - Start Metro bundler
 - Build the iOS app
-- Launch the app in the iOS Simulator
+- Launch the app in the iOS Simulator (or use an already-running simulator)
 - Enable hot reloading
 
-**First-time setup may take 5-10 minutes** as it builds the native iOS project.
+**First-time setup may take 5-10 minutes** as it generates the native iOS project and builds it.
+
+**Note:** If you need to manually reinstall iOS dependencies (e.g., after adding a new native module), you can run:
+```bash
+cd mobile
+npx expo prebuild --platform ios --clean
+cd ios
+pod install
+```
 
 ### 5. Android Emulator Setup
 
@@ -1264,6 +1275,105 @@ The app configuration is in `mobile/app.config.js`. Key settings:
 
 ### 8. Mobile Testing
 
+#### 8.0. Quick Start: Testing on iOS and Android
+
+**High-Level Overview:**
+
+Both iOS Simulator (macOS only) and Android Emulator provide sufficient testing environments for most development work. Physical devices are only required for NFC functionality and final production validation.
+
+##### iOS Simulator Testing (macOS Only)
+
+**Prerequisites:**
+- macOS with Xcode installed
+- CocoaPods: `sudo gem install cocoapods` (installed automatically with Xcode Command Line Tools)
+
+**Quick Start:**
+1. **Start iOS Simulator:**
+   - Via Xcode: Xcode → Open Developer Tool → Simulator
+   - Via command line: `open -a Simulator`
+
+2. **Run the app:**
+   ```bash
+   cd mobile
+   npm run ios
+   ```
+
+**Note:** The first time you run `npm run ios`, Expo will automatically:
+- Generate the native `ios/` directory (if it doesn't exist)
+- Run `pod install` to install iOS dependencies
+- Build the iOS app
+- Launch it in the simulator
+
+This first-time setup may take 5-10 minutes.
+
+**What Works:**
+- ✅ Core app functionality (UI, navigation, screens)
+- ✅ API integration (use `http://localhost:4000` for backend)
+- ✅ Location services (simulated locations)
+- ✅ Camera (uses Mac's camera)
+- ✅ Most sensors (accelerometer, barometer - may be simulated)
+- ✅ Map display (Mapbox)
+- ✅ Signature capture
+- ✅ Photo capture
+
+**Limitations:**
+- ❌ NFC card scanning (requires physical device)
+- ⚠️ Sensor accuracy may differ from real devices
+- ⚠️ Performance may differ from real devices
+
+**Is Simulator Sufficient?**
+Yes, for most development and testing. Use a physical device only for:
+- NFC functionality testing
+- Final sensor accuracy validation
+- Production-ready performance testing
+
+##### Android Emulator Testing
+
+**Prerequisites:**
+- Android Studio installed
+- Android SDK and emulator configured
+
+**Quick Start:**
+1. **Create Android Virtual Device (AVD)** (one-time):
+   - Open Android Studio
+   - Tools → Device Manager → Create Device
+   - Select device (e.g., Pixel 6) and system image (API 33+)
+
+2. **Start Android Emulator:**
+   - Via Android Studio: Tools → Device Manager → Click ▶️ next to AVD
+   - Via command line: `emulator -avd <AVD_NAME>`
+
+3. **Run the app:**
+   ```bash
+   cd mobile
+   npm run android
+   ```
+
+**What Works:**
+- ✅ Core app functionality (UI, navigation, screens)
+- ✅ API integration (use `http://10.0.2.2:4000` for backend - Android emulator localhost)
+- ✅ Location services (simulated locations)
+- ✅ Camera (uses host machine's camera)
+- ✅ Most sensors (accelerometer, barometer - may be simulated)
+- ✅ Map display (Mapbox)
+- ✅ Signature capture
+- ✅ Photo capture
+
+**Limitations:**
+- ❌ NFC card scanning (requires physical device)
+- ⚠️ Sensor accuracy may differ from real devices
+- ⚠️ Performance may differ from real devices
+
+**Is Emulator Sufficient?**
+Yes, for most development and testing. Use a physical device only for:
+- NFC functionality testing
+- Final sensor accuracy validation
+- Production-ready performance testing
+
+**Important Configuration Notes:**
+- **iOS Simulator**: Use `http://localhost:4000` for `EXPO_PUBLIC_API_URL` in `mobile/.env`
+- **Android Emulator**: Use `http://10.0.2.2:4000` for `EXPO_PUBLIC_API_URL` in `mobile/.env` (Android emulator maps `10.0.2.2` to host machine's `localhost`)
+
 #### 8.1. Unit Testing
 
 ```bash
@@ -1419,7 +1529,10 @@ watchman watch-del-all
 
 **iOS:**
 ```bash
-cd mobile/ios
+cd mobile
+# Regenerate iOS project and reinstall pods
+npx expo prebuild --platform ios --clean
+cd ios
 pod deintegrate
 pod install
 cd ..
@@ -1564,7 +1677,7 @@ eas build --platform android --profile production
 | `PINATA_API_KEY` | Yes | Pinata IPFS API key | `your_key` |
 | `PINATA_SECRET_KEY` | Yes | Pinata IPFS secret | `your_secret` |
 | `JWT_SECRET` | No* | JWT signing secret | `your_secret` |
-| `XYO_WALLET_MNEMONIC` | Conditional** | XL1 wallet mnemonic | `word1 word2 ... word12` |
+| `XYO_WALLET_MNEMONIC` | Conditional** | XL1 wallet mnemonic (seed phrase). Required for blockchain transactions. See [XL1 Wallet Setup](#xl1-wallet-setup) | `word1 word2 ... word12` |
 | `MOCK_XL1_TRANSACTIONS` | No | Mock blockchain transactions | `true` |
 
 \* Defaults to dev secret in development mode  
@@ -1601,12 +1714,22 @@ eas build --platform android --profile production
 3. Create a new token with public scope
 4. Copy the token
 
-**Generate Wallet Mnemonic:**
-After starting the backend server:
-```bash
-curl http://localhost:4000/api/wallet/generate-mnemonic
-```
-Save the returned mnemonic phrase securely.
+### XL1 Wallet Setup
+
+To interact with the XL1 blockchain, an XL1 wallet is required. The wallet mnemonic (seed phrase) must be configured in the backend environment variable `XYO_WALLET_MNEMONIC`.
+
+**Getting an XL1 Wallet:**
+1. Follow the official XYO Network documentation: [Get XL1 Browser Wallet](https://docs.xyo.network/developers/xl1-wallet/get-xl1-browser-wallet)
+2. Generate a wallet mnemonic using the backend API endpoint (after starting the server):
+   ```bash
+   curl http://localhost:4000/api/wallet/generate-mnemonic
+   ```
+3. Save the returned mnemonic phrase securely and add it to your `backend/.env` file:
+   ```env
+   XYO_WALLET_MNEMONIC=your twelve word mnemonic phrase here
+   ```
+
+**Important:** The seed phrase generated for the XL1 wallet must match the `XYO_WALLET_MNEMONIC` value in your backend configuration. This wallet is used to sign all blockchain transactions for delivery verifications. The same mnemonic phrase can be used in an XL1 browser wallet to view and interact with the same wallet address.
 
 ---
 
@@ -1727,6 +1850,278 @@ cd web
 npm run build
 npm start
 ```
+
+---
+
+## System Architecture & Implementation Details
+
+This section provides detailed information about the ChainCheck system architecture, key features, and implementation details.
+
+### Network Statistics & Health
+
+The Network Statistics panel on the XYO Network Overview page displays real-time metrics about the XYO Network infrastructure based on XL1 blockchain transactions and delivery records.
+
+#### Network Health Calculation
+
+Network health is determined by analyzing node activity, composition, and network size. The health status is calculated using the following logic (evaluated in order):
+
+**Excellent:**
+- **Active ratio** ≥ 80% (activeNodes / totalNodes)
+- **Has bridges** (bridge count > 0)
+- **Has sentinels** (sentinel count > 0)
+- **Total nodes** ≥ 10
+
+**Good:**
+- **Active ratio** ≥ 60%
+- **Has bridges** (bridge count > 0)
+- **Total nodes** ≥ 5
+
+**Fair:**
+- **Active ratio** ≥ 40%
+- **Total nodes** ≥ 3
+
+**Poor:**
+- All other cases, including:
+  - Total nodes = 0
+  - Total nodes < 3
+  - Active ratio < 40%
+  - Missing required node types (bridges for "Good", bridges + sentinels for "Excellent")
+
+#### Implementation
+
+The network health calculation is implemented in `backend/src/services/xyo/network-service.ts`:
+
+```typescript
+private calculateNetworkHealth(stats: {
+  totalNodes: number;
+  activeNodes: number;
+  nodeTypes: {
+    sentinel: number;
+    bridge: number;
+    diviner: number;
+  };
+}): 'excellent' | 'good' | 'fair' | 'poor' {
+  if (stats.totalNodes === 0) return 'poor';
+  
+  const activeRatio = stats.activeNodes / stats.totalNodes;
+  const hasBridges = stats.nodeTypes.bridge > 0;
+  const hasSentinels = stats.nodeTypes.sentinel > 0;
+  
+  if (activeRatio >= 0.8 && hasBridges && hasSentinels && stats.totalNodes >= 10) {
+    return 'excellent';
+  } else if (activeRatio >= 0.6 && hasBridges && stats.totalNodes >= 5) {
+    return 'good';
+  } else if (activeRatio >= 0.4 && stats.totalNodes >= 3) {
+    return 'fair';
+  }
+  
+  return 'poor';
+}
+```
+
+#### Node Activity Threshold
+
+A node is considered "active" if it has been seen within the last **7 days** (168 hours). This threshold is defined as:
+
+```typescript
+const RECENT_ACTIVITY_THRESHOLD = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+```
+
+#### Data Sources
+
+- **Node counts and types**: Extracted from XL1 blockchain transactions (bound witnesses)
+- **Active nodes**: Nodes that have participated in transactions within the last 7 days
+- **Delivery statistics**: Calculated from verified delivery records in the database
+
+### Coverage Calculation
+
+The coverage area represents the geographic footprint of the delivery network based on actual delivery locations.
+
+#### Calculation Method
+
+1. **Location Extraction**: 
+   - Uses `actualLat`/`actualLon` if available (from mobile GPS)
+   - Falls back to `destinationLat`/`destinationLon` if actual location is not available
+   - Only includes verified deliveries (those with a `proofHash`)
+
+2. **Unique Location Grouping**:
+   - Locations are rounded to ~1km precision (0.01 degrees) to group nearby deliveries
+   - Duplicate locations are deduplicated
+
+3. **Area Calculation**:
+   - **Single location**: Returns a minimum service area of ~314 km² (representing a 10km radius circle)
+   - **Multiple locations**: Calculates bounding box area using:
+     - Latitude span: `(maxLat - minLat) * 111 km`
+     - Longitude span: `(maxLon - minLon) * 111 km * cos(avgLat)`
+     - Total area: `latSpan * lonSpan`
+
+4. **Country Estimation**:
+   - Single location or spread < 20 degrees: 1 country
+   - Spread ≥ 20 degrees: Estimated as `floor(spread / 20)` countries
+
+#### Implementation
+
+Located in `backend/src/services/xyo/network-service.ts` → `calculateCoverageFromDeliveries()`
+
+### Delivery Verification Flow
+
+#### Mobile App Flow
+
+1. Driver logs in and views active deliveries
+2. Driver navigates to delivery destination
+3. Driver captures:
+   - GPS location (actualLat/actualLon)
+   - Delivery photo (uploaded to IPFS)
+   - Recipient signature (uploaded to IPFS)
+4. Mobile app creates bound witness with:
+   - Location payload
+   - Delivery metadata
+   - IPFS hashes for photo and signature
+5. Bound witness is posted to XL1 blockchain
+6. Transaction hash is stored as `proofHash` in database
+7. Delivery status updated to `DELIVERED`
+
+#### Backend Processing
+
+1. Receives delivery verification request from mobile app
+2. Creates XYO bound witness with location and metadata
+3. Posts transaction to XL1 blockchain via RPC
+4. Stores transaction hash and bound witness data in database
+5. Optionally stores off-chain payload in Archivist (if enabled)
+6. Returns verification result to mobile app
+
+#### Verification Details
+
+- **Proof Hash**: XL1 transaction hash (stored in `delivery.proofHash`)
+- **Block Number**: XL1 block number when transaction is committed
+- **Bound Witness Data**: Stored as JSON in `delivery.boundWitnessData`
+- **Verification Timestamp**: Stored in `delivery.verifiedAt`
+
+### XYO Network Integration Details
+
+#### XL1 Blockchain
+
+ChainCheck uses the XL1 blockchain for immutable proof storage:
+
+- **RPC Endpoint**: Configured via `XYO_CHAIN_RPC_URL` environment variable
+- **Transaction Format**: Bound witness transactions containing location and delivery metadata
+- **Viewer API**: Used to query transaction details by hash
+
+#### Archivist (Optional)
+
+The Archivist stores off-chain payload data:
+
+- **Code Location**: `./archivist/`
+- **Enabled/Disabled**: Controlled via `XYO_ARCHIVIST_DISABLED` environment variable
+- **URL**: Configured via `XYO_ARCHIVIST_URL`
+- **Purpose**: Stores full payload data referenced by on-chain hashes
+
+For local development setup, see [Local Archivist Setup](#7-local-archivist-setup-optional) above.
+
+#### Diviner (Optional)
+
+The Diviner provides location verification queries:
+
+- **Code Location**: `./diviner/api-diviner-nodejs/`
+- **Source Repository**: [XYOracleNetwork/api-location.diviner.xyo.network-express](https://github.com/XYOracleNetwork/api-location.diviner.xyo.network-express)
+- **Last Updated**: August 2022 (repository has not been updated since)
+- **Enabled/Disabled**: Controlled via `XYO_DIVINER_DISABLED` environment variable
+- **URL**: Configured via `XYO_DIVINER_URL`
+- **Purpose**: Answers location queries using network consensus
+
+**Current Status**: Due to the Diviner repository not being updated since August 2022, Diviner functionality with XL1 is primarily mocked. The backend uses **Archivist as the off-chain source of record** for location data, extracting location information directly from Archivist payloads when Diviner queries fail or return empty results.
+
+For local development setup, see [Local Diviner Setup](#8-local-diviner-setup-optional) above.
+
+#### Mock Mode
+
+For development and testing:
+
+- **Mock XL1 Transactions**: Set `MOCK_XL1_TRANSACTIONS=true`
+- **Mock Transaction ID**: Set `MOCK_XL1_TRANSACTION_ID` to use a specific transaction hash
+- When enabled, transactions are not posted to XL1 but mock data is returned
+
+### Database Schema
+
+#### Key Models
+
+**Delivery:**
+```prisma
+model Delivery {
+  id                String         @id @default(uuid())
+  orderId           String         @unique
+  driverId          String
+  proofHash         String?        @unique  // XL1 transaction hash
+  boundWitnessData  Json?                    // XL1 transaction data
+  blockNumber       Int?                      // XL1 block number
+  verifiedAt        DateTime?
+  actualLat         Float?                    // GPS location from mobile
+  actualLon         Float?
+  destinationLat    Float                     // Delivery destination
+  destinationLon    Float
+  status            DeliveryStatus @default(PENDING)
+  // ... other fields
+}
+```
+
+**Driver:**
+```prisma
+model Driver {
+  id                  String   @id @default(uuid())
+  driverId            String   @unique
+  passwordHash        String
+  xyoNfcUserRecord    String?   // NFC Record 1
+  xyoNfcSerialNumber  String?   // NFC Serial number
+  // ... timestamps
+}
+```
+
+### API Endpoints
+
+#### Delivery Verification
+
+- **POST** `/api/deliveries/:id/verify`
+  - Verifies a delivery and posts to XL1 blockchain
+  - Requires authentication token
+  - Returns: `{ proofHash, blockNumber, boundWitnessData }`
+  - Note: Uses delivery `id` (UUID), not `orderId`
+
+#### Network Statistics
+
+- **GET** `/api/network/statistics`
+  - Returns network-wide statistics
+  - Response: `NetworkStatistics` interface
+
+#### Witness Nodes
+
+- **GET** `/api/network/nodes`
+  - Returns witness node information
+  - Query params: `type`, `status`, `minLat`, `maxLat`, `minLon`, `maxLon`
+
+- **GET** `/api/network/nodes/:nodeAddress`
+  - Returns specific witness node information by address
+
+### Development Tips
+
+#### Testing Network Statistics
+
+1. Seed test data: `npm run seed` in `backend/`
+2. Verify a delivery via mobile app or API
+3. Check Network Overview page: `http://localhost:3000/network`
+4. View backend logs for `[Coverage]` and network statistics messages
+
+#### Debugging Network Health
+
+- Check backend logs for node extraction messages
+- Verify deliveries have `proofHash` set (verified deliveries)
+- Ensure `boundWitnessData` contains valid bound witness structure
+- Check that nodes are within 7-day activity window for "active" status
+
+#### Coverage Calculation Issues
+
+- Ensure deliveries have location data (`destinationLat`/`destinationLon` always present)
+- Check that verified deliveries have `proofHash` set
+- Review console logs for `[Coverage]` messages showing delivery and location counts
 
 ---
 

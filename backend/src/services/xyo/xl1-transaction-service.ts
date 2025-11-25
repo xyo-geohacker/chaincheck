@@ -8,7 +8,7 @@
 import type { DeliveryVerificationPayload } from '../../../../shared/types/delivery.types.js';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Shared types outside rootDir
-import type { LocationProofDetails } from '../../../../shared/types/xyo.types.js';
+import type { LocationProofDetails, ProofVerificationResult } from '../../../../shared/types/xyo.types.js';
 
 import { env } from '../../lib/env.js';
 import { prisma } from '../../lib/prisma.js';
@@ -103,10 +103,14 @@ export class XL1TransactionService {
    * NOTE: This modifies the bound witness copy we store in our database, not the blockchain version.
    * The blockchain bound witness retains its original previous_hashes based on account transaction history.
    * Our stored copy includes the driver's previous delivery hash for application-level proof chaining.
+   * 
+   * IMPORTANT: previous_hashes is address-indexed. previous_hashes[i] corresponds to addresses[i].
+   * We need to find the account address index and update that specific position.
    */
   private updateBoundWitnessWithDriverChain(
     boundWitness: unknown,
-    previousDeliveryHash: string | null
+    previousDeliveryHash: string | null,
+    accountAddress: string
   ): unknown {
     if (!boundWitness || typeof boundWitness !== 'object') {
       return boundWitness;
@@ -117,21 +121,36 @@ export class XL1TransactionService {
     // Update previous_hashes to include the driver's previous delivery
     // This creates a driver-specific proof chain for the Proof Chain UI
     if (previousDeliveryHash) {
-      // Get existing previous_hashes from blockchain (may be null, empty, or contain blockchain's previous hash)
+      // Get existing previous_hashes and addresses from blockchain
       const existingPreviousHashes = Array.isArray(bw.previous_hashes) 
-        ? (bw.previous_hashes as unknown[]) 
-        : [null];
+        ? (bw.previous_hashes as (string | null)[]) 
+        : [];
+      const addresses = Array.isArray(bw.addresses) 
+        ? (bw.addresses as string[]) 
+        : [];
       
-      // Set driver's previous delivery as the primary previous hash
-      // This ensures the Proof Chain UI can follow the driver's delivery history
-      // Filter out duplicates and nulls from existing hashes
-      const otherHashes = existingPreviousHashes.filter(
-        h => h !== previousDeliveryHash && h !== null && h !== undefined
-      );
-      bw.previous_hashes = [previousDeliveryHash, ...otherHashes];
+      // Find the account address index in the addresses array
+      const normalizedAccountAddress = accountAddress.toLowerCase();
+      const addressIndex = addresses.findIndex(addr => addr.toLowerCase() === normalizedAccountAddress);
+      
+      if (addressIndex === -1) {
+        // Account address not found - this shouldn't happen, but handle gracefully
+        // eslint-disable-next-line no-console
+        console.warn(`[Driver Chain] Account address ${accountAddress} not found in bound witness addresses, cannot update driver chain`);
+        return boundWitness;
+      }
+      
+      // Ensure previous_hashes array is large enough
+      while (existingPreviousHashes.length <= addressIndex) {
+        existingPreviousHashes.push(null);
+      }
+      
+      // Update the previous hash at the account address index
+      existingPreviousHashes[addressIndex] = previousDeliveryHash;
+      bw.previous_hashes = existingPreviousHashes;
       
       // eslint-disable-next-line no-console
-      console.log(`✓ Linked to driver's previous delivery: ${previousDeliveryHash.substring(0, 16)}...`);
+      console.log(`✓ Linked to driver's previous delivery at address index ${addressIndex}: ${previousDeliveryHash.substring(0, 16)}...`);
     } else {
       // First delivery by this driver - keep blockchain's previous_hashes as-is
       // eslint-disable-next-line no-console
@@ -180,6 +199,10 @@ export class XL1TransactionService {
       // eslint-disable-next-line no-console
       console.log(`Connected to ${networkName} RPC endpoint:`, endpoint);
 
+      // NOTE: The SDK sets previous_hashes internally from account.previousHash, which it retrieves from
+      // Account.previousHashStore. In Node.js, IndexedDB is not available, so previous_hashes will be [null].
+      // This is an accepted limitation - we maintain application-level driver chains in stored bound witness copies.
+
       // 2.5. Diagnostic: Query account's transaction history to see what SDK will use for previous_hashes
       try {
         if (connection.viewer) {
@@ -187,6 +210,8 @@ export class XL1TransactionService {
           console.log(`[DIAGNOSTIC] ========================================`);
           // eslint-disable-next-line no-console
           console.log(`[DIAGNOSTIC] ACCOUNT TRANSACTION HISTORY DIAGNOSTIC`);
+          // eslint-disable-next-line no-console
+          console.log(`[DIAGNOSTIC] SDK Version: @xyo-network/sdk-js ^3.0.0`);
           // eslint-disable-next-line no-console
           console.log(`[DIAGNOSTIC] Account address: ${accountAddress}`);
           // eslint-disable-next-line no-console
@@ -199,22 +224,55 @@ export class XL1TransactionService {
           // eslint-disable-next-line no-console
           console.log(`[DIAGNOSTIC] Available viewer methods:`, viewerMethods);
           
+          // Log all viewer properties (including non-function properties) for SDK 5.2.10+ discovery
+          const allViewerProperties = Object.keys(connection.viewer || {});
+          // eslint-disable-next-line no-console
+          console.log(`[DIAGNOSTIC] All viewer properties:`, allViewerProperties);
+          
           // Try to get the account's recent transactions
           // Note: The exact method may vary by SDK version
+          // SDK 5.2.10+ may have additional methods
           try {
             let accountTransactions: unknown = null;
             let transactionCount = 0;
             let lastTransactionHash: string | null = null;
+            let methodUsed: string | null = null;
             
-            // Try different possible method names
-            if (typeof connection.viewer.getTransactionsByAddress === 'function') {
-              accountTransactions = await connection.viewer.getTransactionsByAddress(accountAddress);
-            } else if (typeof connection.viewer.accountTransactions === 'function') {
-              accountTransactions = await connection.viewer.accountTransactions(accountAddress);
-            } else if (typeof connection.viewer.getAccountTransactions === 'function') {
-              accountTransactions = await connection.viewer.getAccountTransactions(accountAddress);
-            } else if (typeof connection.viewer.transactionsByAddress === 'function') {
-              accountTransactions = await connection.viewer.transactionsByAddress(accountAddress);
+            // Try different possible method names (expanded for SDK 5.2.10+)
+            const methodAttempts = [
+              'getTransactionsByAddress',
+              'accountTransactions',
+              'getAccountTransactions',
+              'transactionsByAddress',
+              'getTransactions',
+              'queryTransactions',
+              'findTransactions',
+              'listTransactions',
+              'getTransactionHistory',
+              'transactionHistory'
+            ];
+            
+            for (const methodName of methodAttempts) {
+              if (typeof (connection.viewer as any)[methodName] === 'function') {
+                // eslint-disable-next-line no-console
+                console.log(`[DIAGNOSTIC] Attempting to use viewer method: ${methodName}`);
+                try {
+                  accountTransactions = await (connection.viewer as any)[methodName](accountAddress);
+                  methodUsed = methodName;
+                  // eslint-disable-next-line no-console
+                  console.log(`[DIAGNOSTIC] ✓ Successfully called ${methodName}`);
+                  break;
+                } catch (methodError) {
+                  // eslint-disable-next-line no-console
+                  console.log(`[DIAGNOSTIC] ⚠ Method ${methodName} exists but failed:`, methodError instanceof Error ? methodError.message : String(methodError));
+                  // Continue to next method
+                }
+              }
+            }
+            
+            if (!methodUsed) {
+              // eslint-disable-next-line no-console
+              console.log(`[DIAGNOSTIC] ⚠ None of the attempted transaction history methods are available`);
             }
             
             if (accountTransactions) {
@@ -244,10 +302,15 @@ export class XL1TransactionService {
                 console.log(`[DIAGNOSTIC] Transaction history query returned non-array:`, typeof accountTransactions);
               }
             } else {
+              if (methodUsed) {
+                // eslint-disable-next-line no-console
+                console.log(`[DIAGNOSTIC] ⚠ Method ${methodUsed} was called but returned null/undefined`);
+              } else {
+                // eslint-disable-next-line no-console
+                console.log(`[DIAGNOSTIC] ⚠ No account transaction query method available on viewer`);
+              }
               // eslint-disable-next-line no-console
-              console.log(`[DIAGNOSTIC] ⚠ No account transaction query method available on viewer`);
-              // eslint-disable-next-line no-console
-              console.log(`[DIAGNOSTIC] SDK will determine previous_hashes internally (method not exposed)`);
+              console.log(`[DIAGNOSTIC] SDK will determine previous_hashes internally (method not exposed or returned no data)`);
             }
           } catch (queryError) {
             // eslint-disable-next-line no-console
@@ -291,7 +354,7 @@ export class XL1TransactionService {
         console.log(`No previous delivery found for driver ${payload.driverId} - this will be the first in their chain`);
       }
 
-      // 5. Build transaction payloads (with storage metadata)
+      // 5. Build transaction payloads
       const { onChainPayloads, offChainPayloads } = await this.transactionBuilder.buildPayloads(payload);
 
       // 5.5. Diagnostic: Log what we're about to submit
@@ -318,21 +381,49 @@ export class XL1TransactionService {
         console.warn('⚠ XL1 transaction confirmation returned null');
       } else {
         // Diagnostic: Log what previous_hashes the SDK set in the blockchain transaction
+        // IMPORTANT: previous_hashes is address-indexed. previous_hashes[i] corresponds to addresses[i]
         try {
           const confirmedArray = confirmed as unknown[];
           const confirmedBoundWitness = confirmedArray[0] as any;
           if (confirmedBoundWitness) {
             const sdkPreviousHashes = confirmedBoundWitness.previous_hashes;
+            const sdkAddresses = confirmedBoundWitness.addresses;
             // eslint-disable-next-line no-console
             console.log(`[DIAGNOSTIC] SDK-set previous_hashes in blockchain transaction:`, sdkPreviousHashes);
-            if (Array.isArray(sdkPreviousHashes) && sdkPreviousHashes.length > 0) {
-              const firstPreviousHash = sdkPreviousHashes[0];
-              if (firstPreviousHash && firstPreviousHash !== null) {
+            // eslint-disable-next-line no-console
+            console.log(`[DIAGNOSTIC] SDK-set addresses in blockchain transaction:`, sdkAddresses);
+            
+            // Find the account address index
+            if (Array.isArray(sdkAddresses) && Array.isArray(sdkPreviousHashes)) {
+              const normalizedAccountAddress = accountAddress.toLowerCase();
+              const addressIndex = sdkAddresses.findIndex((addr: string) => addr.toLowerCase() === normalizedAccountAddress);
+              
+              if (addressIndex !== -1 && addressIndex < sdkPreviousHashes.length) {
+                const accountPreviousHash = sdkPreviousHashes[addressIndex];
                 // eslint-disable-next-line no-console
-                console.log(`[DIAGNOSTIC] ✓ SDK found previous transaction: ${String(firstPreviousHash).substring(0, 16)}...`);
+                console.log(`[DIAGNOSTIC] Account address index: ${addressIndex}`);
+                if (accountPreviousHash && accountPreviousHash !== null) {
+                  // eslint-disable-next-line no-console
+                  console.log(`[DIAGNOSTIC] ✓ SDK found previous transaction for account (index ${addressIndex}): ${String(accountPreviousHash).substring(0, 16)}...`);
+                } else {
+                  // eslint-disable-next-line no-console
+                  console.log(`[DIAGNOSTIC] ⚠ SDK set previous_hashes[${addressIndex}] to null - this account may have no previous transactions, or SDK couldn't query transaction history`);
+                }
               } else {
                 // eslint-disable-next-line no-console
-                console.log(`[DIAGNOSTIC] ⚠ SDK set previous_hashes[0] to null - this account may have no previous transactions, or SDK couldn't query transaction history`);
+                console.log(`[DIAGNOSTIC] ⚠ Account address ${accountAddress} not found in addresses array, or index out of bounds`);
+              }
+              
+              // Also log first address's previous hash for reference
+              if (sdkPreviousHashes.length > 0) {
+                const firstPreviousHash = sdkPreviousHashes[0];
+                if (firstPreviousHash && firstPreviousHash !== null) {
+                  // eslint-disable-next-line no-console
+                  console.log(`[DIAGNOSTIC] First address's previous_hashes[0]: ${String(firstPreviousHash).substring(0, 16)}...`);
+                } else {
+                  // eslint-disable-next-line no-console
+                  console.log(`[DIAGNOSTIC] ⚠ SDK set previous_hashes[0] to null`);
+                }
               }
             } else {
               // eslint-disable-next-line no-console
@@ -359,20 +450,31 @@ export class XL1TransactionService {
           const confirmedBoundWitness = confirmedArray[0] as any;
           if (confirmedBoundWitness) {
             const sdkPreviousHashes = confirmedBoundWitness.previous_hashes;
-            const sdkFirstPreviousHash = Array.isArray(sdkPreviousHashes) && sdkPreviousHashes.length > 0 
-              ? sdkPreviousHashes[0] 
-              : null;
+            const sdkAddresses = confirmedBoundWitness.addresses;
+            
+            // Find the account address index to get the correct previous hash
+            let sdkAccountPreviousHash: string | null = null;
+            if (Array.isArray(sdkAddresses) && Array.isArray(sdkPreviousHashes)) {
+              const normalizedAccountAddress = accountAddress.toLowerCase();
+              const addressIndex = sdkAddresses.findIndex((addr: string) => addr.toLowerCase() === normalizedAccountAddress);
+              
+              if (addressIndex !== -1 && addressIndex < sdkPreviousHashes.length) {
+                sdkAccountPreviousHash = sdkPreviousHashes[addressIndex];
+              }
+            }
             
             // eslint-disable-next-line no-console
             console.log(`[DIAGNOSTIC] ========================================`);
             // eslint-disable-next-line no-console
             console.log(`[DIAGNOSTIC] PREVIOUS_HASHES COMPARISON`);
             // eslint-disable-next-line no-console
-            console.log(`[DIAGNOSTIC] SDK-set previous_hashes[0]: ${sdkFirstPreviousHash ? String(sdkFirstPreviousHash).substring(0, 16) + '...' : 'null'}`);
+            console.log(`[DIAGNOSTIC] Account address: ${accountAddress}`);
+            // eslint-disable-next-line no-console
+            console.log(`[DIAGNOSTIC] SDK-set previous_hashes[accountIndex]: ${sdkAccountPreviousHash ? String(sdkAccountPreviousHash).substring(0, 16) + '...' : 'null'}`);
             if (previousDeliveryHash) {
               // eslint-disable-next-line no-console
               console.log(`[DIAGNOSTIC] Driver chain previous_hash: ${previousDeliveryHash.substring(0, 16)}...`);
-              if (sdkFirstPreviousHash === previousDeliveryHash) {
+              if (sdkAccountPreviousHash === previousDeliveryHash) {
                 // eslint-disable-next-line no-console
                 console.log(`[DIAGNOSTIC] ✓ Match! SDK and driver chain agree`);
               } else {
@@ -397,6 +499,7 @@ export class XL1TransactionService {
       // 7.6. Update bound witness with driver chain link
       // The SDK creates the bound witness automatically, but we can update our stored copy
       // to include the driver's previous delivery hash for application-level chaining
+      // IMPORTANT: previous_hashes is address-indexed, so we need to update the correct index
       let updatedBoundWitness = confirmed;
       if (confirmed && previousDeliveryHash) {
         const confirmedArray = confirmed as unknown[];
@@ -405,8 +508,10 @@ export class XL1TransactionService {
         
         // eslint-disable-next-line no-console
         console.log(`[Driver Chain] Before update - previous_hashes:`, (boundWitness as any)?.previous_hashes);
+        // eslint-disable-next-line no-console
+        console.log(`[Driver Chain] Account address: ${accountAddress}`);
         
-        const updatedBw = this.updateBoundWitnessWithDriverChain(boundWitness, previousDeliveryHash);
+        const updatedBw = this.updateBoundWitnessWithDriverChain(boundWitness, previousDeliveryHash, accountAddress);
         updatedBoundWitness = [updatedBw, ...payloads];
         
         // eslint-disable-next-line no-console
@@ -434,7 +539,7 @@ export class XL1TransactionService {
           // eslint-disable-next-line no-console
           console.log('Inserting off-chain payloads into Archivist (Gateway does not store them automatically)...');
           // Insert off-chain payloads into Archivist (if not disabled)
-          let insertResult = { success: false, inserted: 0, error: 'Archivist disabled' as string | undefined };
+          let insertResult: { success: boolean; inserted: number; error?: string; archivistBoundWitnessHash?: string } = { success: false, inserted: 0, error: 'Archivist disabled' };
           if (!env.xyoArchivistDisabled) {
             insertResult = await this.archivistService.insertPayloads(offChainPayloads);
           } else {
@@ -529,7 +634,7 @@ export class XL1TransactionService {
             // The Data Lake service (used by archivistService.verifyLocationProof) handles retries with delays
             // Direct HTTP fallback calls always return 401, so no retry logic needed there
             // Skip if Archivist is disabled
-            let archivistResult = { isValid: false, data: null, errors: ['Archivist is disabled'] };
+            let archivistResult: ProofVerificationResult = { isValid: false, data: null, errors: ['Archivist is disabled'] };
             if (!env.xyoArchivistDisabled) {
               archivistResult = await this.archivistService.verifyLocationProof(chaincheckHash);
             } else {
@@ -688,7 +793,7 @@ export class XL1TransactionService {
         // eslint-disable-next-line no-console
         console.log('Attempting to fetch real bound witness data from Archivist for transaction:', presetHash);
         // Skip if Archivist is disabled
-        let archivistResult = { isValid: false, data: null, errors: ['Archivist is disabled'] };
+        let archivistResult: ProofVerificationResult = { isValid: false, data: null, errors: ['Archivist is disabled'] };
         if (!env.xyoArchivistDisabled) {
           archivistResult = await this.archivistService.verifyLocationProof(presetHash);
         } else {
@@ -703,9 +808,9 @@ export class XL1TransactionService {
           let payloads: unknown[] = [];
 
           // Handle different response formats
-          if (Array.isArray(boundWitnessData) && boundWitnessData.length > 0) {
+          if (Array.isArray(boundWitnessData) && Array.isArray(boundWitnessData) && boundWitnessData.length > 0) {
             boundWitness = boundWitnessData[0];
-            payloads = boundWitnessData.slice(1);
+            payloads = (boundWitnessData as unknown[]).slice(1);
           } else if (typeof boundWitnessData === 'object' && boundWitnessData !== null) {
             const data = boundWitnessData as Record<string, unknown>;
             if ('data' in data && Array.isArray(data.data) && data.data.length > 0) {

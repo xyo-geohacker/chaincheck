@@ -1,0 +1,104 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  coverage:
+    name: Generate Test Coverage Reports
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chaincheck_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Backend Coverage
+      - name: Backend - Install dependencies
+        working-directory: ./backend
+        run: |
+          npm ci
+          npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chaincheck_test
+
+      - name: Backend - Run tests with coverage
+        working-directory: ./backend
+        run: npm test -- --coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chaincheck_test
+          NODE_ENV: test
+          JWT_SECRET: test-secret-key-for-ci
+          XYO_WALLET_MNEMONIC: test test test test test test test test test test test test
+
+      - name: Backend - Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage/coverage-final.json
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+      # Web Coverage
+      - name: Web - Install dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: Web - Run tests with coverage
+        working-directory: ./web
+        run: npm test -- --coverage --watchAll=false
+        env:
+          CI: true
+
+      - name: Web - Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./web/coverage/coverage-final.json
+          flags: web
+          name: web-coverage
+          fail_ci_if_error: false
+
+      # Mobile Coverage
+      - name: Mobile - Install dependencies
+        working-directory: ./mobile
+        run: npm ci
+
+      - name: Mobile - Run tests with coverage
+        working-directory: ./mobile
+        run: npm test -- --coverage --watchAll=false
+        env:
+          CI: true
+
+      - name: Mobile - Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./mobile/coverage/coverage-final.json
+          flags: mobile
+          name: mobile-coverage
+          fail_ci_if_error: false
+

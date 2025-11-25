@@ -33,10 +33,18 @@ export function BoundWitnessChain({ proofHash, maxDepth = 5, isMocked, xl1Transa
         const result = await fetchBoundWitnessChain(proofHash, maxDepth);
         
         // Transform chain data into display format
-        const chainItems: ChainItem[] = result.chain.map((bw: unknown) => {
+        const chainItems: ChainItem[] = result.chain.map((bw: unknown, index: number) => {
           const boundWitness = bw as Record<string, unknown>;
+          // Bound witnesses should have _hash per schema, but if missing, use fallback
+          const extractedHash = (boundWitness._hash || boundWitness.hash || '') as string;
+          
+          // Fallback: For the first item in XL1 transactions, use xl1TransactionHash if hash is missing
+          // (This should rarely be needed now that backend calculates _hash, but kept as safety net)
+          const isFirst = index === 0;
+          const hash = extractedHash || (isFirst && isXL1 && xl1TransactionHash ? xl1TransactionHash : '');
+          
           return {
-            hash: (boundWitness._hash || boundWitness.hash || '') as string,
+            hash,
             previousHash: Array.isArray(boundWitness.previous_hashes) && boundWitness.previous_hashes.length > 0
               ? (boundWitness.previous_hashes[0] as string | null)
               : null,
@@ -57,6 +65,7 @@ export function BoundWitnessChain({ proofHash, maxDepth = 5, isMocked, xl1Transa
     if (proofHash) {
       loadChain();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proofHash, maxDepth]);
 
   // Determine if data is mocked: only if we explicitly know it's mocked AND we have no real data

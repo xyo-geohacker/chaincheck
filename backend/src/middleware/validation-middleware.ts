@@ -54,7 +54,7 @@ export function validateRequest(
     } catch (error) {
       if (error instanceof ZodError) {
         // Format Zod validation errors into a user-friendly response
-        const errors = error.errors.map((err) => ({
+        const errors = error.issues.map((err) => ({
           path: err.path.join('.'),
           message: err.message,
           code: err.code
@@ -83,7 +83,7 @@ export function validateRequest(
  * Helper to format validation errors for logging
  */
 export function formatValidationErrors(error: ZodError): string {
-  return error.errors
+  return error.issues
     .map((err) => `${err.path.join('.')}: ${err.message}`)
     .join('; ');
 }

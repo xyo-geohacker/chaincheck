@@ -70,9 +70,18 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
       }
 
       try {
+        // eslint-disable-next-line no-console
+        console.log('Loading deliveries for driver:', driverId);
+        // eslint-disable-next-line no-console
+        console.log('API Base URL:', apiClient.defaults.baseURL);
+        
         const response = await apiClient.get<{ deliveries: DeliveryRecord[] }>('/api/deliveries', {
-          params: { driverId }
+          params: { driverId },
+          timeout: 30000 // 30 second timeout
         });
+        
+        // eslint-disable-next-line no-console
+        console.log('Deliveries loaded successfully:', response.data.deliveries?.length ?? 0, 'deliveries');
         setDeliveries(response.data.deliveries ?? []);
         setError(null);
       } catch (err) {
@@ -87,9 +96,18 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
           }
         }
         
-        setError('Unable to load deliveries. Pull to retry.');
+        // Enhanced error message for network issues
+        let errorMessage = 'Unable to load deliveries. Pull to retry.';
+        if (err && typeof err === 'object' && 'code' in err) {
+          const networkError = err as { code?: string; message?: string };
+          if (networkError.code === 'ECONNREFUSED' || networkError.code === 'ENOTFOUND' || networkError.code === 'ETIMEDOUT') {
+            errorMessage = 'Cannot connect to server. Check your network connection and API URL configuration.';
+          }
+        }
+        
+        setError(errorMessage);
         // eslint-disable-next-line no-console
-        console.error(err);
+        console.error('Failed to load deliveries:', err);
       } finally {
         if (showSpinner) {
           setIsLoading(false);

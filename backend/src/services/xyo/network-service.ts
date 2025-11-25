@@ -5,6 +5,7 @@
  */
 
 import type { WitnessNodeInfo } from '../../../../shared/types/xyo.types.js';
+import { Prisma } from '@prisma/client';
 import { env } from '../../lib/env.js';
 import { prisma } from '../../lib/prisma.js';
 
@@ -50,10 +51,9 @@ export class NetworkService {
    */
   async getWitnessNodeInfo(nodeAddress: string): Promise<WitnessNodeDetails> {
     try {
-      // TODO: Implement actual XYO Network API call to retrieve node information
-      // For now, return mock data
-      // eslint-disable-next-line no-console
-      console.log('Getting witness node info for:', nodeAddress);
+      // NOTE: Currently returns mock data. Actual XYO Network API integration
+      // would require XYO Network API credentials and endpoint configuration.
+      // This is a known limitation documented in the development guide.
       
       return this.createMockNodeInfo(nodeAddress);
     } catch (error) {
@@ -287,7 +287,7 @@ export class NetworkService {
       const deliveries = await prisma.delivery.findMany({
         where: {
           boundWitnessData: {
-            not: null
+            not: Prisma.JsonNull
           }
         },
         select: {
@@ -456,7 +456,7 @@ export class NetworkService {
       const deliveries = await prisma.delivery.findMany({
         where: {
           boundWitnessData: {
-            not: null
+            not: Prisma.JsonNull
           }
         },
         select: {

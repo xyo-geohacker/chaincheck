@@ -1,7 +1,11 @@
-import { Router } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import multer from 'multer';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - Shared types outside rootDir
+import type { LocationProofDetails } from '../../../../shared/types/xyo.types.js';
 
 import { prisma } from '../lib/prisma.js';
 import { env } from '../lib/env.js';
@@ -22,15 +26,78 @@ import {
 } from '../lib/validation-schemas.js';
 
 const router = Router();
+// Multer configuration for file uploads
+// Increased to 25MB to accommodate high-resolution phone camera photos
+// Note: Pinata IPFS supports files up to 1GB, but we limit to 25MB for practical reasons
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB
+    fileSize: 25 * 1024 * 1024 // 25MB (increased from 10MB)
   }
 });
 
 const xyoService = new XyoService();
 const ipfsService = new IpfsService();
+
+/**
+ * Check if NFC verification was performed for a specific delivery
+ * NFC data is stored in boundWitnessData metadata (payload data) when verification occurs
+ * This checks the delivery's boundWitnessData, not the driver's stored NFC records
+ * 
+ * NFC data is stored in the off-chain payload's data field:
+ * - boundWitnessData.archivistResponse.offChainPayload.data.xyoNfcUserRecord
+ * - boundWitnessData.archivistResponse.offChainPayload.data.xyoNfcSerialNumber
+ * 
+ * Or in the boundWitness tuple payloads:
+ * - boundWitnessData.boundWitness[1] (payloads array) contains the off-chain payload
+ */
+function checkDeliveryNfcVerification(boundWitnessData: unknown): boolean {
+  if (!boundWitnessData || typeof boundWitnessData !== 'object') {
+    return false;
+  }
+
+  const bwData = boundWitnessData as Record<string, unknown>;
+  
+  // First, check archivistResponse.offChainPayload (most reliable source)
+  // This is where the off-chain payload with NFC data is stored
+  if (bwData.archivistResponse && typeof bwData.archivistResponse === 'object') {
+    const archivistResponse = bwData.archivistResponse as Record<string, unknown>;
+    if (archivistResponse.offChainPayload && typeof archivistResponse.offChainPayload === 'object') {
+      const offChainPayload = archivistResponse.offChainPayload as Record<string, unknown>;
+      // NFC data is stored in the payload's data field
+      if (offChainPayload.data && typeof offChainPayload.data === 'object') {
+        const data = offChainPayload.data as Record<string, unknown>;
+        if (data.xyoNfcUserRecord && data.xyoNfcSerialNumber) {
+          return true;
+        }
+      }
+    }
+  }
+  
+  // Fallback: Check boundWitness tuple payloads
+  // The boundWitness is stored as [boundWitness, payloads] tuple
+  // The off-chain payload with NFC data should be in the payloads array
+  if (bwData.boundWitness && Array.isArray(bwData.boundWitness) && bwData.boundWitness.length > 1) {
+    const payloads = bwData.boundWitness[1] as unknown[] | undefined;
+    if (Array.isArray(payloads)) {
+      // Check each payload for NFC data
+      for (const payload of payloads) {
+        if (payload && typeof payload === 'object') {
+          const payloadData = payload as Record<string, unknown>;
+          // NFC data is stored in the payload's data field
+          if (payloadData.data && typeof payloadData.data === 'object') {
+            const data = payloadData.data as Record<string, unknown>;
+            if (data.xyoNfcUserRecord && data.xyoNfcSerialNumber) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
 
 // GET /api/payloads/:hash - Get payload from Archivist by payload hash
 // IMPORTANT: This route must be placed EARLY to ensure it's matched before other dynamic routes
@@ -85,6 +152,41 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/deliveries:
+ *   get:
+ *     summary: List deliveries
+ *     description: Get a list of deliveries. If authenticated, returns only deliveries for the authenticated driver. Otherwise, returns all deliveries.
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: driverId
+ *         schema:
+ *           type: string
+ *         description: Filter deliveries by driver ID (only if not authenticated)
+ *         example: "driver123"
+ *     responses:
+ *       200:
+ *         description: List of deliveries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 deliveries:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Delivery'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET /deliveries - List deliveries (optional auth: if authenticated, filter by driverId)
 router.get(
   '/deliveries',
@@ -117,6 +219,136 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/deliveries/{id}/verify:
+ *   post:
+ *     summary: Verify a delivery
+ *     description: Verify a delivery by creating an XL1 blockchain transaction with location proof. Requires authentication.
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Delivery ID (UUID)
+ *         example: "123e4567-e89b-12d3-a456-426614174000"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - latitude
+ *               - longitude
+ *               - timestamp
+ *             properties:
+ *               latitude:
+ *                 type: number
+ *                 format: double
+ *                 description: Delivery location latitude
+ *                 example: 37.7749
+ *               longitude:
+ *                 type: number
+ *                 format: double
+ *                 description: Delivery location longitude
+ *                 example: -122.4194
+ *               timestamp:
+ *                 type: number
+ *                 description: Unix timestamp in milliseconds
+ *                 example: 1703123456789
+ *               altitude:
+ *                 type: number
+ *                 format: double
+ *                 nullable: true
+ *                 description: Elevation in meters (from GPS). Optional sensor data for enhanced validation.
+ *                 example: 45.5
+ *               barometricPressure:
+ *                 description: Barometric pressure in hPa (hectopascals). Optional sensor data for enhanced validation. More accurate than GPS altitude.
+ *               accelerometer:
+ *                 type: object
+ *                 description: Device acceleration in m/s² (meters per second squared). Optional sensor data captured at verification time. Low/zero values indicate device is stationary, providing evidence driver was present at location.
+ *                 properties:
+ *                   x:
+ *                     type: number
+ *                     description: Acceleration along X-axis in m/s²
+ *                   y:
+ *                     type: number
+ *                     description: Acceleration along Y-axis in m/s²
+ *                   z:
+ *                     type: number
+ *                     description: Acceleration along Z-axis in m/s²
+ *               barometricPressure:
+ *                 type: number
+ *                 format: double
+ *                 nullable: true
+ *                 description: Barometric pressure in hPa (hectopascals). Optional sensor data for enhanced validation. More accurate than GPS altitude.
+ *                 example: 1013.25
+ *               notes:
+ *                 type: string
+ *                 description: Optional delivery notes
+ *                 example: "Left at front door"
+ *               nfcRecord1:
+ *                 type: string
+ *                 description: Optional NFC user record for driver verification
+ *               nfcSerialNumber:
+ *                 type: string
+ *                 description: Optional NFC serial number for driver verification
+ *     responses:
+ *       200:
+ *         description: Delivery verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 delivery:
+ *                   $ref: '#/components/schemas/Delivery'
+ *                 proof:
+ *                   type: object
+ *                   properties:
+ *                     hash:
+ *                       type: string
+ *                       description: Proof hash (XL1 transaction hash)
+ *                     blockNumber:
+ *                       type: integer
+ *                       nullable: true
+ *                     verificationUrl:
+ *                       type: string
+ *                       format: uri
+ *       400:
+ *         description: Invalid request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Delivery not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // POST /deliveries/:id/verify - Verify delivery (requires authentication)
 router.post(
   '/deliveries/:id/verify',
@@ -126,7 +358,17 @@ router.post(
   validateRequest(deliveryVerificationSchema),
   async (req, res) => {
     const { id } = req.params;
-    const { latitude: lat, longitude: lon, timestamp: ts, notes, nfcRecord1, nfcSerialNumber } = req.body;
+    const { 
+      latitude: lat, 
+      longitude: lon, 
+      timestamp: ts, 
+      altitude,
+      barometricPressure,
+      accelerometer,
+      notes, 
+      nfcRecord1, 
+      nfcSerialNumber 
+    } = req.body;
     const driverId = (req as { driverId?: string }).driverId;
 
   try {
@@ -161,6 +403,9 @@ router.post(
         latitude: lat,
         longitude: lon,
         timestamp: ts,
+        altitude: altitude ?? undefined,
+        barometricPressure: barometricPressure ?? undefined,
+        accelerometer: accelerometer ?? undefined,
         deliveryId: delivery.id,
         driverId: delivery.driverId,
         metadata: {
@@ -408,7 +653,30 @@ router.post(
   authenticateToken,
   validateRequest(deliveryIdParamSchema, 'params'),
   upload.single('photo'),
-  async (req, res): Promise<void> => {
+  // Multer error handler middleware
+  (err: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ 
+            error: 'File too large', 
+            message: 'Photo size exceeds the maximum allowed size of 25MB. Please compress or resize the image before uploading.',
+            maxSize: '25MB'
+          });
+        }
+        return res.status(400).json({ 
+          error: 'File upload error', 
+          message: err.message 
+        });
+      }
+      return res.status(500).json({ 
+        error: 'File upload error', 
+        message: err instanceof Error ? err.message : 'Unknown error'
+      });
+    }
+    next();
+  },
+  async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const file = req.file;
 
@@ -448,6 +716,26 @@ router.post(
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Photo upload error:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('File too large') || error.message.includes('LIMIT_FILE_SIZE')) {
+          res.status(413).json({ 
+            error: 'File too large', 
+            message: 'Photo size exceeds the maximum allowed size of 25MB. Please compress or resize the image before uploading.',
+            maxSize: '25MB'
+          });
+          return;
+        }
+        if (error.message.includes('Pinata')) {
+          res.status(502).json({ 
+            error: 'IPFS upload failed', 
+            message: 'Failed to upload photo to IPFS. Please try again later.' 
+          });
+          return;
+        }
+      }
+      
       res.status(500).json({ error: 'Failed to upload photo' });
     }
   }
@@ -460,7 +748,30 @@ router.post(
   authenticateToken,
   validateRequest(deliveryIdParamSchema, 'params'),
   upload.single('signature'),
-  async (req, res): Promise<void> => {
+  // Multer error handler middleware
+  (err: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ 
+            error: 'File too large', 
+            message: 'Signature size exceeds the maximum allowed size of 25MB. Please compress or resize the image before uploading.',
+            maxSize: '25MB'
+          });
+        }
+        return res.status(400).json({ 
+          error: 'File upload error', 
+          message: err.message 
+        });
+      }
+      return res.status(500).json({ 
+        error: 'File upload error', 
+        message: err instanceof Error ? err.message : 'Unknown error'
+      });
+    }
+    next();
+  },
+  async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const file = req.file;
     
@@ -471,7 +782,7 @@ router.post(
       if (!bodyValidation.success) {
         res.status(400).json({
           error: 'Validation failed',
-          details: bodyValidation.error.errors.map((err) => ({
+          details: bodyValidation.error.issues.map((err) => ({
             path: err.path.join('.'),
             message: err.message
           }))
@@ -611,38 +922,66 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/deliveries/by-proof/{proofHash}:
+ *   get:
+ *     summary: Get delivery by proof hash
+ *     description: Retrieve a delivery by its proof hash (XL1 transaction hash)
+ *     tags: [Deliveries]
+ *     parameters:
+ *       - in: path
+ *         name: proofHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Proof hash (XL1 transaction hash)
+ *         example: "0x1234567890abcdef..."
+ *     responses:
+ *       200:
+ *         description: Delivery details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Delivery'
+ *       404:
+ *         description: Delivery not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get(
   '/deliveries/by-proof/:proofHash',
   validateRequest(proofHashParamSchema, 'params'),
   async (req, res) => {
     const { proofHash } = req.params;
 
-  try {
-    const delivery = await prisma.delivery.findUnique({
-      where: { proofHash },
-      include: {
-        // Include driver information to check NFC verification status
-        // Note: Prisma doesn't support direct relation, so we'll fetch driver separately
-      }
-    });
+    try {
+      const delivery = await prisma.delivery.findUnique({
+        where: { proofHash }
+        // Note: Driver relation not available, fetch driver separately if needed
+      });
 
     if (!delivery) {
       return res.status(404).json({ error: 'Delivery not found' });
     }
 
-    // Fetch driver to check NFC verification status
-    const driver = await prisma.driver.findUnique({
-      where: { driverId: delivery.driverId },
-      select: {
-        xyoNfcUserRecord: true,
-        xyoNfcSerialNumber: true
-      }
-    });
+    // Check if NFC verification was performed for THIS specific delivery
+    // This checks the delivery's boundWitnessData, not the driver's stored NFC records
+    const driverNfcVerified = checkDeliveryNfcVerification(delivery.boundWitnessData);
 
     // Add driver NFC verification status to delivery response
+    // This indicates whether NFC was verified for THIS specific delivery, not the driver in general
     const deliveryWithDriver = {
       ...delivery,
-      driverNfcVerified: driver ? Boolean(driver.xyoNfcUserRecord && driver.xyoNfcSerialNumber) : false
+      driverNfcVerified
     };
 
     return res.json(deliveryWithDriver);
@@ -654,6 +993,45 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/deliveries/{id}:
+ *   get:
+ *     summary: Get delivery by ID
+ *     description: Retrieve a single delivery by its UUID
+ *     tags: [Deliveries]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Delivery ID (UUID)
+ *         example: "123e4567-e89b-12d3-a456-426614174000"
+ *     responses:
+ *       200:
+ *         description: Delivery details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 delivery:
+ *                   $ref: '#/components/schemas/Delivery'
+ *       404:
+ *         description: Delivery not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET /deliveries/:id - Get delivery by ID
 // NOTE: This route must be placed AFTER more specific routes like /deliveries/:id/verify, /deliveries/:id/photo, etc.
 router.get(
@@ -671,7 +1049,13 @@ router.get(
         return res.status(404).json({ error: 'Delivery not found' });
       }
 
-      return res.json(delivery);
+      // Check if NFC verification was performed for THIS specific delivery
+      const driverNfcVerified = checkDeliveryNfcVerification(delivery.boundWitnessData);
+
+      return res.json({
+        ...delivery,
+        driverNfcVerified
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Fetch delivery error:', error);
@@ -881,6 +1265,64 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/proofs/{proofHash}/accuracy:
+ *   get:
+ *     summary: Get location accuracy metrics
+ *     description: Calculate and return location accuracy metrics for a delivery proof, including GPS accuracy, XYO Network accuracy, witness node counts, and precision metrics
+ *     tags: [Deliveries]
+ *     parameters:
+ *       - in: path
+ *         name: proofHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Proof hash (XL1 transaction hash)
+ *         example: "0x1234567890abcdef..."
+ *     responses:
+ *       200:
+ *         description: Location accuracy metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accuracyScore:
+ *                   type: number
+ *                   description: Accuracy score in meters
+ *                 confidenceLevel:
+ *                   type: string
+ *                   enum: [high, medium, low]
+ *                 precisionRadius:
+ *                   type: number
+ *                 witnessNodeCount:
+ *                   type: number
+ *                 gpsAccuracy:
+ *                   type: number
+ *                 xyoNetworkAccuracy:
+ *                   type: number
+ *                 accuracyImprovement:
+ *                   type: number
+ *                 consensusAgreement:
+ *                   type: number
+ *                 nodeProximityScore:
+ *                   type: number
+ *                 isMocked:
+ *                   type: boolean
+ *       404:
+ *         description: Delivery not found or missing location data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET /proofs/:proofHash/accuracy - Get location accuracy metrics for a proof
 router.get(
   '/proofs/:proofHash/accuracy',
@@ -889,7 +1331,7 @@ router.get(
     const { proofHash } = req.params;
 
     try {
-      // Get delivery to extract location data
+      // Get delivery to extract location data and bound witness metadata
       const delivery = await prisma.delivery.findUnique({
         where: { proofHash }
       });
@@ -899,6 +1341,17 @@ router.get(
           error: 'Delivery not found or missing location data',
           message: 'Location accuracy calculation requires verified delivery with location data'
         });
+      }
+
+      // Check if this is a real XL1 transaction (not mocked) from stored boundWitnessData
+      // This is more reliable than querying XL1 every time
+      let isRealXL1Transaction = false;
+      if (delivery.boundWitnessData && typeof delivery.boundWitnessData === 'object') {
+        const bwData = delivery.boundWitnessData as Record<string, unknown>;
+        // Check if it's marked as XL1 and not mocked
+        if (bwData.isXL1 === true && bwData.isMocked !== true) {
+          isRealXL1Transaction = true;
+        }
       }
 
       // Get witness nodes from Diviner verification if available
@@ -922,11 +1375,17 @@ router.get(
 
                   // Calculate location accuracy
                   // Pass proofHash to allow extraction of witness nodes from XL1 transaction
+                  // Include destination and distance for actual delivery accuracy calculation
+                  // Pass isRealXL1Transaction flag to ensure correct isMocked status
                   const accuracy = await xyoService.calculateLocationAccuracy(
                     delivery.actualLat,
                     delivery.actualLon,
                     witnessNodes as any[],
-                    proofHash // Allow extraction from XL1 if witness nodes not available
+                    proofHash, // Allow extraction from XL1 if witness nodes not available
+                    delivery.destinationLat,
+                    delivery.destinationLon,
+                    delivery.distanceFromDest,
+                    isRealXL1Transaction // Pass flag indicating if this is a real XL1 transaction
                   );
 
       return res.json(accuracy);
@@ -941,6 +1400,65 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/network/statistics:
+ *   get:
+ *     summary: Get network-wide statistics
+ *     description: Retrieve XYO Network statistics including node counts, coverage area, network health, and delivery statistics
+ *     tags: [Network]
+ *     responses:
+ *       200:
+ *         description: Network statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalNodes:
+ *                   type: integer
+ *                   description: Total number of witness nodes
+ *                 activeNodes:
+ *                   type: integer
+ *                   description: Number of active nodes
+ *                 nodeTypes:
+ *                   type: object
+ *                   properties:
+ *                     sentinel:
+ *                       type: integer
+ *                     bridge:
+ *                       type: integer
+ *                     diviner:
+ *                       type: integer
+ *                 coverageArea:
+ *                   type: object
+ *                   properties:
+ *                     totalKm2:
+ *                       type: number
+ *                     countries:
+ *                       type: integer
+ *                 networkHealth:
+ *                   type: string
+ *                   enum: [excellent, good, fair, poor]
+ *                 deliveries:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     verified:
+ *                       type: integer
+ *                 lastUpdated:
+ *                   type: integer
+ *                   format: int64
+ *                 isMocked:
+ *                   type: boolean
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET /network/statistics - Get network-wide statistics
 router.get(
   '/network/statistics',

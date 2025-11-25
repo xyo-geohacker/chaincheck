@@ -122,6 +122,37 @@ export function ArchivistPayloadPanel({ archivistResponse, xl1TransactionHash, a
                   </div>
                 </>
               )}
+              {payloadData.altitude != null && (
+                <div>
+                  <dt className="text-xs text-slate-400">Altitude</dt>
+                  <dd className="mt-1 text-sm text-white">
+                    {Number(payloadData.altitude).toFixed(2)} m
+                  </dd>
+                </div>
+              )}
+              {payloadData.barometricPressure != null && (
+                <div>
+                  <dt className="text-xs text-slate-400">Pressure</dt>
+                  <dd className="mt-1 text-sm text-white">
+                    {Number(payloadData.barometricPressure).toFixed(2)} hPa
+                  </dd>
+                </div>
+              )}
+              {payloadData.accelerometer != null && typeof payloadData.accelerometer === 'object' && (
+                <div>
+                  <dt className="text-xs text-slate-400">Acceleration</dt>
+                  <dd className="mt-1 text-sm text-white font-mono">
+                    X: {Number((payloadData.accelerometer as { x?: number }).x ?? 0).toFixed(3)} m/s²
+                    <br />
+                    Y: {Number((payloadData.accelerometer as { y?: number }).y ?? 0).toFixed(3)} m/s²
+                    <br />
+                    Z: {Number((payloadData.accelerometer as { z?: number }).z ?? 0).toFixed(3)} m/s²
+                  </dd>
+                  <p className="mt-1 text-[10px] text-slate-500 italic">
+                    Low/zero values indicate device was stationary at verification time
+                  </p>
+                </div>
+              )}
               {payloadData.timestamp != null && (
                 <div>
                   <dt className="text-xs text-slate-400">Timestamp</dt>
@@ -177,6 +208,15 @@ export function ArchivistPayloadPanel({ archivistResponse, xl1TransactionHash, a
                 <div>
                   <dt className="text-xs text-slate-400">Delivery Address</dt>
                   <dd className="mt-1 text-sm text-white">{String(payloadData.deliveryAddress)}</dd>
+                </div>
+              )}
+              {payloadData.xyoNfcUserRecord != null && (
+                <div>
+                  <dt className="text-xs text-slate-400">XYO Driver Record</dt>
+                  <dd className="mt-1">
+                    <span className="text-sm text-white italic">Present</span>
+                    <p className="mt-1 text-[10px] text-slate-500 italic">Not displayed for privacy (see JSON for full value)</p>
+                  </dd>
                 </div>
               )}
             </dl>

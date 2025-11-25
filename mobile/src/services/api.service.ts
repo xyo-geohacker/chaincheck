@@ -25,19 +25,32 @@ function resolveBaseUrl(rawUrl: string | undefined) {
   }
 }
 
-const baseURL = resolveBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+const rawApiUrl = process.env.EXPO_PUBLIC_API_URL;
+const baseURL = resolveBaseUrl(rawApiUrl);
 
 if (!baseURL) {
   // eslint-disable-next-line no-console
   console.error('EXPO_PUBLIC_API_URL is not defined. API requests will fail until configured.');
-  console.error('Please set EXPO_PUBLIC_API_URL in your .env file (e.g., http://192.168.12.191:3000)');
+  console.error('Please set EXPO_PUBLIC_API_URL in your .env file');
+  console.error('For physical devices, use your computer\'s IP address (e.g., http://192.168.12.191:4000)');
+  console.error('For Android emulator, use http://10.0.2.2:4000');
 } else {
   // eslint-disable-next-line no-console
   console.log('API Base URL configured:', baseURL);
+  // eslint-disable-next-line no-console
+  console.log('Raw API URL from env:', rawApiUrl);
+  if (rawApiUrl?.includes('10.0.2.2')) {
+    // eslint-disable-next-line no-console
+    console.warn('⚠️  Using 10.0.2.2 (Android emulator address). If running on a physical device, use your computer\'s IP address instead.');
+  }
 }
 
 export const apiClient = axios.create({
-  baseURL
+  baseURL,
+  timeout: 30000, // 30 second timeout
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 // Add request interceptor to log requests
@@ -73,8 +86,15 @@ apiClient.interceptors.response.use(
           code: error.code,
           message: error.message,
           baseURL: apiClient.defaults.baseURL,
-          url: error.config?.url
+          url: error.config?.url,
+          fullError: error.toString()
         });
+        // eslint-disable-next-line no-console
+        console.error('Troubleshooting: Check that EXPO_PUBLIC_API_URL is set correctly in .env file');
+        // eslint-disable-next-line no-console
+        console.error('For physical devices, use your computer\'s IP address (e.g., http://192.168.12.191:4000)');
+        // eslint-disable-next-line no-console
+        console.error('For Android emulator, use http://10.0.2.2:4000');
       }
     } else if (error.response) {
       // Server responded with error status
@@ -95,8 +115,11 @@ apiClient.interceptors.response.use(
           message: error.message,
           code: error.code,
           baseURL: apiClient.defaults.baseURL,
-          url: error.config?.url
+          url: error.config?.url,
+          fullError: error.toString()
         });
+        // eslint-disable-next-line no-console
+        console.error('Troubleshooting: Check that backend server is running and accessible');
       }
     }
 

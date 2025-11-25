@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { env } from './env.js';
+import { logger } from './logger.js';
 
 export interface JWTPayload {
   driverId: string;
@@ -45,8 +46,7 @@ export function generateToken(driverId: string): string {
  */
 export function verifyToken(token: string): JWTPayload | null {
   if (!env.jwtSecret) {
-    // eslint-disable-next-line no-console
-    console.error('JWT_SECRET is not configured');
+    logger.error('JWT_SECRET is not configured');
     return null;
   }
 
@@ -58,8 +58,7 @@ export function verifyToken(token: string): JWTPayload | null {
 
     return decoded;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('JWT verification error:', error instanceof Error ? error.message : String(error));
+    // Error is expected for invalid tokens, so we don't log it
     return null;
   }
 }
@@ -96,8 +95,7 @@ export function generateConfigToken(username: string): string {
  */
 export function verifyConfigToken(token: string): ConfigJWTPayload | null {
   if (!env.jwtSecret) {
-    // eslint-disable-next-line no-console
-    console.error('JWT_SECRET is not configured');
+    logger.error('JWT_SECRET is not configured');
     return null;
   }
 
@@ -114,8 +112,7 @@ export function verifyConfigToken(token: string): ConfigJWTPayload | null {
 
     return decoded;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('JWT verification error:', error instanceof Error ? error.message : String(error));
+    // Error is expected for invalid tokens, so we don't log it
     return null;
   }
 }

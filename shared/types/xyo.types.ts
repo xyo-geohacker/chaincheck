@@ -25,6 +25,7 @@ export interface LocationProofDetails {
 export interface ProofVerificationResult {
   isValid: boolean;
   data: unknown;
+  errors?: string[];
 }
 
 export interface DivinerVerificationResult {
@@ -61,7 +62,7 @@ export interface LocationData {
   longitude: number;
   accuracy?: number; // meters
   timestamp: number;
-  source: 'diviner' | 'gps' | 'network';
+  source: 'diviner' | 'gps' | 'network' | 'xl1';
 }
 
 export interface NetworkStatistics {

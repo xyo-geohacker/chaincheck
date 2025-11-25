@@ -1503,9 +1503,17 @@ export class ArchivistService {
         chain.push(boundWitness);
 
         // Extract previous hash from bound witness
+        // IMPORTANT: previous_hashes is address-indexed. previous_hashes[i] corresponds to addresses[i]
         const bw = boundWitness as Record<string, unknown>;
-        if ('previous_hashes' in bw && Array.isArray(bw.previous_hashes) && bw.previous_hashes.length > 0) {
-          const previousHash = bw.previous_hashes[0];
+        if ('previous_hashes' in bw && Array.isArray(bw.previous_hashes) && 
+            'addresses' in bw && Array.isArray(bw.addresses) && 
+            bw.addresses.length > 0) {
+          const addresses = bw.addresses as string[];
+          const previousHashes = bw.previous_hashes as (string | null)[];
+          
+          // Use the first address's previous hash (for backward compatibility)
+          // In the future, we might want to track a specific address
+          const previousHash = previousHashes.length > 0 ? previousHashes[0] : null;
           
           // Check if previous hash is null, empty, or all zeros (chain start)
           if (
