@@ -12,10 +12,10 @@ ChainCheck serves as a **reference implementation** and **integration guide** fo
 
 **Primary Goal**: Enable "drop-in" integration of XYO Network/XL1 functionality into existing delivery verification systems.
 
-[![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/CI/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
-[![CodeQL](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/CodeQL%20Security%20Analysis/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/security/code-scanning)
+[![CI](https://github.com/xyo-geohacker/chaincheck/workflows/CI/badge.svg)](https://github.com/xyo-geohacker/chaincheck/actions)
+[![CodeQL](https://github.com/xyo-geohacker/chaincheck/workflows/CodeQL%20Security%20Analysis/badge.svg)](https://github.com/xyo-geohacker/chaincheck/security/code-scanning)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![codecov](https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO)
+[![codecov](https://codecov.io/gh/xyo-geohacker/chaincheck/branch/main/graph/badge.svg)](https://codecov.io/gh/xyo-geohacker/chaincheck)
 [![Contributors Welcome](https://img.shields.io/badge/contributors-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 This project uses GitHub Actions for continuous integration. All tests, linting, and type checking run automatically on every push and pull request.
@@ -227,7 +227,7 @@ Before getting started, ensure you have the following prerequisites installed an
 ## Getting Started
 
 ```bash
-git clone https://github.com/your-org/chaincheck.git
+git clone https://github.com/xyo-geohacker/chaincheck.git
 cd chaincheck
 ```
 

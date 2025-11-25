@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Addressed TODO comments or documented as limitations
 - Enhanced code documentation and comments
 
-## [0.1.0] - 2024-XX-XX
+## [0.1.0] - 2024-11-24
 
 ### Added
 - Initial release
@@ -52,6 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tamper detection
 - Network statistics
 
-[Unreleased]: https://github.com/YOUR_USERNAME/YOUR_REPO/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/YOUR_USERNAME/YOUR_REPO/releases/tag/v0.1.0
+[Unreleased]: https://github.com/xyo-geohacker/chaincheck/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/xyo-geohacker/chaincheck/releases/tag/v0.1.0
 

@@ -163,7 +163,7 @@ For AWS deployment, you have several options:
 
 3. **Clone and Setup**
    ```bash
-   git clone https://github.com/your-org/chaincheck.git
+   git clone https://github.com/xyo-geohacker/chaincheck.git
    cd chaincheck/backend
    npm install
    npm run build

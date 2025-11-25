@@ -52,7 +52,7 @@ echo "Starting web dashboard..."
 start_service "web" npm run dev
 
 echo "Starting mobile app..."
-start_service "mobile" npm run start -- --clear --non-interactive
+start_service "mobile" npm start
 
 echo "All services restarted."
 echo "Backend:    http://localhost:4000"

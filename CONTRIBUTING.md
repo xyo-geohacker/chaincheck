@@ -10,7 +10,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ### Reporting Bugs
 
-Before creating a bug report, please check the [existing issues](https://github.com/YOUR_USERNAME/YOUR_REPO/issues) to see if the problem has already been reported.
+Before creating a bug report, please check the [existing issues](https://github.com/xyo-geohacker/chaincheck/issues) to see if the problem has already been reported.
 
 When creating a bug report, please include:
 - A clear and descriptive title
@@ -92,7 +92,7 @@ See [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) for detailed setup instructions
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+   git clone https://github.com/xyo-geohacker/chaincheck.git
    cd chaincheck
    ```
 
