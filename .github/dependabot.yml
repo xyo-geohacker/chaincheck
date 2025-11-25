@@ -8,13 +8,21 @@ updates:
       day: "monday"
     open-pull-requests-limit: 10
     reviewers:
-      - "YOUR_GITHUB_USERNAME"
+      - "xyo-geohacker"
     labels:
       - "dependencies"
       - "backend"
     commit-message:
       prefix: "chore(backend)"
       include: "scope"
+    # Ignore major version upgrades for packages planned for later upgrade
+    ignore:
+      # Prisma: Defer upgrade from 5.x to 7.x (planned for post-release, Month 2-3)
+      # See docs/DEPENDENCY_UPGRADE_STRATEGY.md for upgrade timeline
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
 
   # Web dependencies
   - package-ecosystem: "npm"
@@ -24,13 +32,27 @@ updates:
       day: "monday"
     open-pull-requests-limit: 10
     reviewers:
-      - "YOUR_GITHUB_USERNAME"
+      - "xyo-geohacker"
     labels:
       - "dependencies"
       - "web"
     commit-message:
       prefix: "chore(web)"
       include: "scope"
+    # Ignore major version upgrades for packages planned for later upgrade
+    ignore:
+      # Next.js: Defer upgrade from 14.x to 16.x (planned for post-release, Month 4-5)
+      # See docs/DEPENDENCY_UPGRADE_STRATEGY.md for upgrade timeline
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-config-next"
+        update-types: ["version-update:semver-major"]
+      # React: Defer upgrade from 18.x to 19.x (planned for post-release, Month 6+)
+      # See docs/DEPENDENCY_UPGRADE_STRATEGY.md for upgrade timeline
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
 
   # Mobile dependencies
   - package-ecosystem: "npm"
@@ -40,13 +62,25 @@ updates:
       day: "monday"
     open-pull-requests-limit: 10
     reviewers:
-      - "YOUR_GITHUB_USERNAME"
+      - "xyo-geohacker"
     labels:
       - "dependencies"
       - "mobile"
     commit-message:
       prefix: "chore(mobile)"
       include: "scope"
+    # Ignore major version upgrades for packages planned for later upgrade
+    ignore:
+      # Expo: Defer upgrade from SDK 51 to SDK 54 (planned for post-release, Month 6+)
+      # See docs/DEPENDENCY_UPGRADE_STRATEGY.md for upgrade timeline
+      - dependency-name: "expo"
+        update-types: ["version-update:semver-major"]
+      # React: Defer upgrade from 18.x to 19.x (planned for post-release, Month 6+)
+      # See docs/DEPENDENCY_UPGRADE_STRATEGY.md for upgrade timeline
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -56,7 +90,7 @@ updates:
       day: "monday"
     open-pull-requests-limit: 5
     reviewers:
-      - "YOUR_GITHUB_USERNAME"
+      - "xyo-geohacker"
     labels:
       - "dependencies"
       - "github-actions"

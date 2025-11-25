@@ -100,7 +100,7 @@ ChainCheck is a monorepo containing three main applications:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/chaincheck.git
+git clone https://github.com/xyo-geohacker/chaincheck.git
 cd chaincheck
 ```
 
