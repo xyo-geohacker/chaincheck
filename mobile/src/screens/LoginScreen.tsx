@@ -14,6 +14,7 @@ import {
 import type { RootStackParamList } from '../navigation/types';
 import { useDriverStore } from '@store/useDriverStore';
 import { apiClient } from '../services/api.service';
+import { colors } from '../theme/colors';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -127,16 +128,17 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       behavior={Platform.select({ ios: 'padding', android: undefined })}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>ChainCheck</Text>
+        {/* <Text style={styles.title}>ChainCheck</Text>
         <View style={styles.brandRow}>
           <Text style={styles.brandLabel}>Powered by</Text>
           <Image source={require('../../assets/xyo-network-logo-color.png')} style={styles.brandLogo} resizeMode="contain" />
-        </View>
-        <Text style={styles.subtitle}>Authenticate with your network-issued driver identifier.</Text>
+        </View> */}
+        <Image source={require('../../assets/cc-text-trans-002.png')} style={styles.logoImage} resizeMode="contain" />
 
         <TextInput
           style={styles.input}
           placeholder="Driver ID"
+          placeholderTextColor={colors.text.placeholder}
           value={driverId}
           onChangeText={(text) => {
             setDriverId(text);
@@ -150,6 +152,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Password"
+          placeholderTextColor={colors.text.placeholder}
           value={password}
           onChangeText={(text) => {
             setPassword(text);
@@ -184,7 +187,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05060F',
+    backgroundColor: colors.background.primary,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24
@@ -192,13 +195,13 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#121125',
+    backgroundColor: colors.background.secondary,
     borderRadius: 24,
     padding: 28,
     gap: 18,
     borderWidth: 1,
-    borderColor: '#282153',
-    shadowColor: '#000',
+    borderColor: colors.border.card,
+    shadowColor: colors.purple.primary,
     shadowOpacity: 0.4,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 16 },
@@ -207,12 +210,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#F7F8FD',
+    color: colors.text.primary,
     textAlign: 'center'
   },
   subtitle: {
     fontSize: 14,
-    color: '#8EA3FF'
+    color: colors.text.accent
   },
   brandRow: {
     flexDirection: 'row',
@@ -231,15 +234,21 @@ const styles = StyleSheet.create({
     width: 120,
     marginLeft: -16
   },
+  logoImage: {
+    width: '100%',
+    height: 80,
+    alignSelf: 'center',
+    marginBottom: 8
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#3a2c6f',
+    borderColor: colors.border.input,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#F7F8FD',
-    backgroundColor: '#1A1830'
+    color: colors.text.primary,
+    backgroundColor: colors.background.input
   },
   errorText: {
     color: '#ff6b6b',
@@ -253,19 +262,19 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#705cf6',
-    shadowColor: '#3c2fb0',
+    backgroundColor: colors.button.primary,
+    shadowColor: colors.button.primaryShadow,
     shadowOpacity: 0.45,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 12 },
     elevation: 6
   },
   signInButtonDisabled: {
-    backgroundColor: '#3b3566',
+    backgroundColor: colors.button.disabled,
     shadowOpacity: 0
   },
   signInText: {
-    color: '#f9f9ff',
+    color: colors.button.text,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5

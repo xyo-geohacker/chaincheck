@@ -27,6 +27,10 @@ backend/.env
 web/.env.local
 mobile/.env
 
+# User-specific configuration files (should not be committed)
+.netrc
+~/.netrc
+
 # Logs
 *.log
 npm-debug.log*

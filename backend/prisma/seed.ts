@@ -58,7 +58,7 @@ async function main() {
           driverId: 'barmstrong',
           recipientName: 'Arie Trouw',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
+          deliveryAddress: '740 13th Street #224. San Diego, CA 92101 (XY Labs)',
           destinationLat: 32.7134,
           destinationLon: -117.1532,
           status: 'IN_TRANSIT'
@@ -68,7 +68,7 @@ async function main() {
           driverId: 'vbuterin',
           recipientName: 'Markus Levin',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
+          deliveryAddress: '740 13th Street #224. San Diego, CA 92101 (XY Labs)',
           destinationLat: 32.7134,
           destinationLon: -117.1532,
           status: 'PENDING'
@@ -78,9 +78,9 @@ async function main() {
           driverId: 'czhao',
           recipientName: 'Maryann Cummings',
           recipientPhone: '555-1212',
-          deliveryAddress: '30 Hunter Mill Way, Londonderry, NH 03053',
-          destinationLat: 42.9396,
-          destinationLon: -71.3683,
+          deliveryAddress: '350 5th Ave, New York, NY 10118 (Empire State Building)',
+          destinationLat: 40.7484,
+          destinationLon: -73.9857,
           status: 'IN_TRANSIT'
         },
         {
@@ -88,9 +88,9 @@ async function main() {
           driverId: 'vbuterin',
           recipientName: 'Jordan Trouw',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: 'Golden Gate Bridge, San Francisco, CA 94129',
+          destinationLat: 37.8199,
+          destinationLon: -122.4783,
           status: 'PENDING'
         },
         {
@@ -98,9 +98,9 @@ async function main() {
           driverId: 'snakamoto',
           recipientName: 'Christine Sako',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: 'Champ de Mars, 5 Avenue Anatole France, 75007 Paris, France (Eiffel Tower)',
+          destinationLat: 48.8584,
+          destinationLon: 2.2945,
           status: 'FAILED',
           notes: 'Recipient unavailable; will retry next business day.'
         },
@@ -109,9 +109,9 @@ async function main() {
           driverId: 'msaylor',
           recipientName: 'John Arana',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: 'Westminster, London SW1A 0AA, United Kingdom (Big Ben)',
+          destinationLat: 51.4994,
+          destinationLon: -0.1245,
           status: 'FAILED',
           notes: 'Recipient unavailable; will retry next business day.'
         },
@@ -120,9 +120,9 @@ async function main() {
           driverId: 'vbuterin',
           recipientName: 'Joe Bader',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: 'Liberty Island, New York, NY 10004 (Statue of Liberty)',
+          destinationLat: 40.6892,
+          destinationLon: -74.0445,
           status: 'DISPUTED',
           notes: 'Customer claims delivery was left at wrong location.'
         },
@@ -131,9 +131,9 @@ async function main() {
           driverId: 'msaylor',
           recipientName: 'Ryan Hansen',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: '400 Broad St, Seattle, WA 98109 (Space Needle)',
+          destinationLat: 47.6205,
+          destinationLon: -122.3493,
           status: 'PENDING'
         },
         {
@@ -141,9 +141,9 @@ async function main() {
           driverId: 'snakamoto',
           recipientName: 'Joel Carter',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: '2800 E Observatory Rd, Los Angeles, CA 90027 (Hollywood Sign)',
+          destinationLat: 34.1341,
+          destinationLon: -118.3216,
           status: 'IN_TRANSIT'
         },
         {
@@ -151,29 +151,19 @@ async function main() {
           driverId: 'barmstrong',
           recipientName: 'Matt Jones',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
+          deliveryAddress: '1600 Pennsylvania Avenue NW, Washington, DC 20500 (White House)',
+          destinationLat: 38.8977,
+          destinationLon: -77.0365,
           status: 'PENDING'
         },
         {
           orderId: 'ORD-1011',
           driverId: 'czhao',
-          recipientName: 'Timmay-CA',
+          recipientName: 'Timmay',
           recipientPhone: '555-1212',
-          deliveryAddress: '740 13th Street #224. San Diego, CA 92101',
-          destinationLat: 32.7134,
-          destinationLon: -117.1532,
-          status: 'PENDING'
-        },
-        {
-          orderId: 'ORD-1012',
-          driverId: 'czhao',
-          recipientName: 'Timmay-NH',
-          recipientPhone: '555-1212',
-          deliveryAddress: '30 Hunter Mill Way, Londonderry, NH 03053',
-          destinationLat: 42.9396,
-          destinationLon: -71.3683,
+          deliveryAddress: 'Times Square, New York, NY 10036',
+          destinationLat: 40.7580,
+          destinationLon: -73.9855,
           status: 'PENDING'
         },
       ]

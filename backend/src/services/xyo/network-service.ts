@@ -87,7 +87,7 @@ export class NetworkService {
         return {
           ...xl1Stats,
           coverageArea,
-          networkHealth: this.calculateNetworkHealth(xl1Stats),
+          networkHealth: this.calculateNetworkHealth(xl1Stats, xl1Stats.deliveries),
           isMocked: false // Node counts and delivery data are real
         };
       }
@@ -548,10 +548,11 @@ export class NetworkService {
       }
 
       // Map addresses to delivery locations
-      // For each address, find the most recent delivery location associated with it
-      const addressToLocation = new Map<string, { lat: number; lon: number; source: 'delivery' | 'mock' }>();
+      // Create a node for each unique (address, location) combination to show all delivery locations
+      // This allows the same address to appear at multiple locations (e.g., different delivery addresses)
+      const addressLocationMap = new Map<string, Array<{ lat: number; lon: number; timestamp: number; source: 'delivery' | 'mock' }>>();
       
-      // First pass: collect locations from deliveries that contain each address
+      // First pass: collect all locations for each address
       for (const delivery of deliveries) {
         if (!delivery.boundWitnessData || typeof delivery.boundWitnessData !== 'object') {
           continue;
@@ -577,13 +578,27 @@ export class NetworkService {
           const addresses = bw.addresses as string[];
           const lat = delivery.actualLat ?? delivery.destinationLat;
           const lon = delivery.actualLon ?? delivery.destinationLon;
+          const timestamp = delivery.verifiedAt ? delivery.verifiedAt.getTime() : now;
           
           if (lat !== null && lon !== null) {
             addresses.forEach(address => {
-              // Use the most recent location for each address
-              if (!addressToLocation.has(address) || 
-                  (delivery.verifiedAt && addressToLocation.get(address)?.source === 'mock')) {
-                addressToLocation.set(address, { lat, lon, source: 'delivery' });
+              // Round location to ~100m precision to group very close locations
+              const roundedLat = Math.round(lat * 1000) / 1000;
+              const roundedLon = Math.round(lon * 1000) / 1000;
+              const locationKey = `${roundedLat},${roundedLon}`;
+              
+              if (!addressLocationMap.has(address)) {
+                addressLocationMap.set(address, []);
+              }
+              
+              const locations = addressLocationMap.get(address)!;
+              // Only add if this location hasn't been seen for this address
+              const existingLocation = locations.find(loc => 
+                Math.abs(loc.lat - roundedLat) < 0.001 && Math.abs(loc.lon - roundedLon) < 0.001
+              );
+              
+              if (!existingLocation) {
+                locations.push({ lat: roundedLat, lon: roundedLon, timestamp, source: 'delivery' });
               }
             });
           }
@@ -591,56 +606,81 @@ export class NetworkService {
       }
 
       // Convert to WitnessNodeDetails with real delivery locations when available
-      const nodes: WitnessNodeDetails[] = Array.from(nodeMap.values()).map(node => {
+      // Create a node for each unique (address, location) combination
+      const nodes: WitnessNodeDetails[] = [];
+      
+      for (const node of Array.from(nodeMap.values())) {
         const hash = this.simpleHash(node.address);
+        const locations = addressLocationMap.get(node.address) || [];
         
-        // Try to use real delivery location, otherwise use deterministic mock location
-        const locationData = addressToLocation.get(node.address);
-        let latitude: number;
-        let longitude: number;
-        let locationSource: 'delivery' | 'mock';
-        let locationNote: string;
-        
-        if (locationData && locationData.source === 'delivery') {
-          // Use real delivery location
-          latitude = locationData.lat;
-          longitude = locationData.lon;
-          locationSource = 'delivery';
-          locationNote = 'Location from actual delivery verification';
+        if (locations.length > 0) {
+          // Create a node for each unique location where this address was used
+          locations.forEach((locationData, index) => {
+            const isActive = (now - node.lastSeen) < RECENT_ACTIVITY_THRESHOLD;
+            
+            // Create a unique identifier for this address-location combination
+            // Use index to differentiate multiple locations for the same address
+            const uniqueAddress = locations.length > 1 
+              ? `${node.address}-${index}` 
+              : node.address;
+            
+            nodes.push({
+              address: uniqueAddress,
+              location: {
+                latitude: locationData.lat,
+                longitude: locationData.lon
+              },
+              type: node.type,
+              verified: true,
+              status: isActive ? 'active' : 'inactive',
+              reputation: Math.min(100, 50 + Math.floor((node.successfulTransactions / node.transactionCount) * 50)), // 50-100 based on success rate
+              participationHistory: {
+                totalQueries: node.transactionCount,
+                successfulQueries: node.successfulTransactions,
+                lastSeen: node.lastSeen
+              },
+              metadata: {
+                region: this.getRegionFromLocation(locationData.lat, locationData.lon),
+                locationSource: locationData.source,
+                locationNote: 'Location from actual delivery verification',
+                dataSource: 'xl1',
+                firstSeen: node.firstSeen,
+                originalAddress: node.address, // Store original address for reference
+                locationIndex: index // Track which location this is for the address
+              }
+            });
+          });
         } else {
-          // Generate deterministic mock location (for map visualization only)
-          latitude = 20 + (hash % 50) - 25; // -5 to 45
-          longitude = -120 + (hash % 100) - 50; // -170 to -70 (mostly US)
-          locationSource = 'mock';
-          locationNote = 'Location data requires Diviner access. Using deterministic mock location for visualization.';
+          // No delivery location found, use deterministic mock location
+          const latitude = 20 + (hash % 50) - 25; // -5 to 45
+          const longitude = -120 + (hash % 100) - 50; // -170 to -70 (mostly US)
+          const isActive = (now - node.lastSeen) < RECENT_ACTIVITY_THRESHOLD;
+          
+          nodes.push({
+            address: node.address,
+            location: {
+              latitude,
+              longitude
+            },
+            type: node.type,
+            verified: true,
+            status: isActive ? 'active' : 'inactive',
+            reputation: Math.min(100, 50 + Math.floor((node.successfulTransactions / node.transactionCount) * 50)),
+            participationHistory: {
+              totalQueries: node.transactionCount,
+              successfulQueries: node.successfulTransactions,
+              lastSeen: node.lastSeen
+            },
+            metadata: {
+              region: this.getRegionFromLocation(latitude, longitude),
+              locationSource: 'mock',
+              locationNote: 'Location data requires Diviner access. Using deterministic mock location for visualization.',
+              dataSource: 'xl1',
+              firstSeen: node.firstSeen
+            }
+          });
         }
-        
-        const isActive = (now - node.lastSeen) < RECENT_ACTIVITY_THRESHOLD;
-        
-        return {
-          address: node.address,
-          location: {
-            latitude,
-            longitude
-          },
-          type: node.type,
-          verified: true,
-          status: isActive ? 'active' : 'inactive',
-          reputation: Math.min(100, 50 + Math.floor((node.successfulTransactions / node.transactionCount) * 50)), // 50-100 based on success rate
-          participationHistory: {
-            totalQueries: node.transactionCount,
-            successfulQueries: node.successfulTransactions,
-            lastSeen: node.lastSeen
-          },
-          metadata: {
-            region: this.getRegionFromLocation(latitude, longitude),
-            locationSource, // Mark as delivery or mock
-            locationNote,
-            dataSource: 'xl1', // Address, type, and participation data are real from XL1
-            firstSeen: node.firstSeen
-          }
-        };
-      });
+      }
 
       return nodes;
     } catch (error) {
@@ -802,20 +842,55 @@ export class NetworkService {
   /**
    * Calculate network health based on activity metrics (estimate)
    * Real health assessment requires location data and geographic distribution
+   * For small deployments, considers verified deliveries as an indicator of network activity
    */
-  private calculateNetworkHealth(stats: { totalNodes: number; activeNodes: number; nodeTypes: { sentinel: number; bridge: number; diviner: number } }): 'excellent' | 'good' | 'fair' | 'poor' {
+  private calculateNetworkHealth(
+    stats: { totalNodes: number; activeNodes: number; nodeTypes: { sentinel: number; bridge: number; diviner: number } },
+    deliveries?: { total: number; verified: number; uniqueDrivers: number; uniqueLocations: number }
+  ): 'excellent' | 'good' | 'fair' | 'poor' {
     if (stats.totalNodes === 0) return 'poor';
     
     const activeRatio = stats.activeNodes / stats.totalNodes;
     const hasBridges = stats.nodeTypes.bridge > 0;
     const hasSentinels = stats.nodeTypes.sentinel > 0;
     
-    if (activeRatio >= 0.8 && hasBridges && hasSentinels && stats.totalNodes >= 10) {
-      return 'excellent';
-    } else if (activeRatio >= 0.6 && hasBridges && stats.totalNodes >= 5) {
-      return 'good';
-    } else if (activeRatio >= 0.4 && stats.totalNodes >= 3) {
-      return 'fair';
+    // For large networks (10+ nodes), use traditional criteria
+    if (stats.totalNodes >= 10) {
+      if (activeRatio >= 0.8 && hasBridges && hasSentinels) {
+        return 'excellent';
+      } else if (activeRatio >= 0.6 && hasBridges) {
+        return 'good';
+      } else if (activeRatio >= 0.4) {
+        return 'fair';
+      }
+      return 'poor';
+    }
+    
+    // For medium networks (5-9 nodes)
+    if (stats.totalNodes >= 5) {
+      if (activeRatio >= 0.6 && hasBridges) {
+        return 'good';
+      } else if (activeRatio >= 0.4) {
+        return 'fair';
+      }
+      return 'poor';
+    }
+    
+    // For small networks (1-4 nodes), consider verified deliveries as activity indicator
+    // This is more appropriate for deployments where multiple drivers share one wallet
+    if (stats.totalNodes >= 1) {
+      const verifiedDeliveries = deliveries?.verified ?? 0;
+      
+      // If we have verified deliveries, the network is active and functional
+      if (verifiedDeliveries >= 5 && activeRatio >= 0.8) {
+        return 'good'; // Small but active network with multiple verified deliveries
+      } else if (verifiedDeliveries >= 3 && activeRatio >= 0.6) {
+        return 'fair'; // Small network with some verified deliveries
+      } else if (verifiedDeliveries >= 1 && activeRatio >= 0.5) {
+        return 'fair'; // At least one verified delivery shows the network is working
+      } else if (activeRatio >= 0.5) {
+        return 'fair'; // Active node even without verified deliveries yet
+      }
     }
     
     return 'poor';

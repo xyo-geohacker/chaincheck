@@ -3,6 +3,7 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Pla
 // Note: react-native-nfc-manager needs to be installed: npm install react-native-nfc-manager
 // For Expo, you may need to use a development build or eject to use native modules
 import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
+import { colors } from '../theme/colors';
 
 type Props = {
   visible: boolean;
@@ -375,24 +376,24 @@ export function NFCScan({ visible, onClose, onSave }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05060F'
+    backgroundColor: colors.background.primary
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#27204d'
+    borderBottomColor: colors.border.primary
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#F7F8FD',
+    color: colors.text.primary,
     marginBottom: 4
   },
   subtitle: {
     fontSize: 14,
-    color: '#8EA8FF'
+    color: colors.text.accent
   },
   content: {
     flex: 1,
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 16,
-    color: '#F7F8FD',
+    color: colors.text.primary,
     marginTop: 12
   },
   cardImage: {
@@ -418,19 +419,19 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     fontSize: 15,
-    color: '#8EA8FF',
+    color: colors.text.accent,
     textAlign: 'center',
     marginBottom: 24
   },
   errorText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#F7F8FD',
+    color: colors.text.primary,
     marginBottom: 8
   },
   errorSubtext: {
     fontSize: 14,
-    color: '#8EA8FF',
+    color: colors.text.accent,
     textAlign: 'center',
     marginBottom: 16
   },
@@ -438,16 +439,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 8,
-    backgroundColor: '#705cf6',
+    backgroundColor: colors.button.primary,
     alignItems: 'center',
-    shadowColor: '#3c2fb0',
-    shadowOpacity: 0.35,
+    shadowColor: colors.button.primaryShadow,
+    shadowOpacity: 0.45,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3
   },
   scanButtonText: {
-    color: '#f9f9ff',
+    color: colors.button.text,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -455,28 +456,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    backgroundColor: '#2f2862',
+    backgroundColor: colors.button.secondary,
     borderWidth: 1,
-    borderColor: '#4a3f8b',
+    borderColor: colors.border.primary,
     alignItems: 'center'
   },
   enableButtonText: {
-    color: '#d7dcff',
+    color: colors.button.textSecondary,
     fontSize: 14,
     fontWeight: '600'
   },
   controls: {
     padding: 20,
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#27204d'
+    borderTopColor: colors.border.primary
   },
   cancelButton: {
     paddingVertical: 12,
     alignItems: 'center'
   },
   cancelButtonText: {
-    color: '#8EA8FF',
+    color: colors.text.accent,
     fontSize: 14,
     fontWeight: '500'
   },
@@ -488,14 +489,14 @@ const styles = StyleSheet.create({
     padding: 20
   },
   confirmationModal: {
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderRadius: 24,
     width: '100%',
     maxWidth: 400,
     borderWidth: 1,
-    borderColor: '#27204d',
+    borderColor: colors.border.primary,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: colors.purple.primary,
     shadowOpacity: 0.5,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#27204d'
+    borderBottomColor: colors.border.primary
   },
   successIconContainer: {
     width: 64,
@@ -538,14 +539,14 @@ const styles = StyleSheet.create({
   confirmationTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#F7F8FD',
+    color: colors.text.primary,
     marginBottom: 8,
     letterSpacing: 0.5,
     textAlign: 'center'
   },
   confirmationSubtitle: {
     fontSize: 14,
-    color: '#8EA8FF',
+    color: colors.text.accent,
     textAlign: 'center',
     lineHeight: 20
   },
@@ -553,21 +554,21 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#27204d'
+    borderTopColor: colors.border.primary
   },
   confirmationSaveButton: {
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#705cf6',
+    backgroundColor: colors.button.primary,
     alignItems: 'center',
-    shadowColor: '#3c2fb0',
-    shadowOpacity: 0.35,
+    shadowColor: colors.button.primaryShadow,
+    shadowOpacity: 0.45,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3
   },
   confirmationSaveButtonText: {
-    color: '#f9f9ff',
+    color: colors.button.text,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -576,7 +577,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   confirmationCancelButtonText: {
-    color: '#8EA8FF',
+    color: colors.text.accent,
     fontSize: 14,
     fontWeight: '500'
   }

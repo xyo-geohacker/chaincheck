@@ -116,7 +116,13 @@ export function ROIDashboard() {
             {formatNumber(metrics.financialSummary.roi)}%
           </div>
           <div className="text-xs text-[#8ea8ff]/80">
-            {metrics.financialSummary.roi > 0 ? 'Positive ROI' : 'Calculating...'}
+            {metrics.fraudPrevention.verifiedDeliveries === 0
+              ? 'No verified deliveries yet'
+              : metrics.financialSummary.roi > 0
+                ? 'Positive ROI'
+                : metrics.financialSummary.roi < 0
+                  ? 'Negative ROI'
+                  : 'Break-even'}
           </div>
         </div>
 

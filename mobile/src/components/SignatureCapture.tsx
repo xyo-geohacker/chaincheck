@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
+import { colors } from '../theme/colors';
 
 type Props = {
   visible: boolean;
@@ -115,24 +116,24 @@ export function SignatureCapture({ visible, onClose, onSave }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05060F'
+    backgroundColor: colors.background.primary
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#27204d'
+    borderBottomColor: colors.border.primary
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#F7F8FD',
+    color: colors.text.primary,
     marginBottom: 4
   },
   subtitle: {
     fontSize: 14,
-    color: '#8EA8FF'
+    color: colors.text.accent
   },
   signatureContainer: {
     flex: 1,
@@ -144,45 +145,45 @@ const styles = StyleSheet.create({
     width: SIGNATURE_WIDTH,
     height: SIGNATURE_HEIGHT,
     borderWidth: 2,
-    borderColor: '#3a2c6f',
+    borderColor: colors.border.primary,
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden'
   },
   controls: {
     padding: 20,
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#27204d',
+    borderTopColor: colors.border.primary,
     gap: 12
   },
   clearButton: {
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    backgroundColor: '#2f2862',
+    backgroundColor: colors.button.secondary,
     borderWidth: 1,
-    borderColor: '#4a3f8b',
+    borderColor: colors.border.primary,
     alignItems: 'center'
   },
   clearButtonText: {
-    color: '#d7dcff',
+    color: colors.button.textSecondary,
     fontSize: 14,
     fontWeight: '600'
   },
   saveButton: {
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#705cf6',
+    backgroundColor: colors.button.primary,
     alignItems: 'center',
-    shadowColor: '#3c2fb0',
-    shadowOpacity: 0.35,
+    shadowColor: colors.button.primaryShadow,
+    shadowOpacity: 0.45,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3
   },
   saveButtonText: {
-    color: '#f9f9ff',
+    color: colors.button.text,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   cancelButtonText: {
-    color: '#8EA8FF',
+    color: colors.text.accent,
     fontSize: 14,
     fontWeight: '500'
   }

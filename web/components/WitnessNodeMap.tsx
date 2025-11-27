@@ -83,7 +83,7 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
     return (
       <div className="glass-card rounded-3xl border border-[#2f2862] px-8 py-8 text-slate-100">
         <div className="flex items-center justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-white">Witness Node Map</h2>
+          <h2 className="text-lg font-semibold text-white">Driver Delivery Map</h2>
           {isMocked && (
             <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-xs font-semibold text-amber-200" title="Mock data for development">
               🧪 Mock
@@ -91,7 +91,7 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
           )}
         </div>
         <div className="h-96 flex items-center justify-center">
-          <div className="text-sm text-slate-400">Loading nodes...</div>
+          <div className="text-sm text-slate-400">Loading delivery locations...</div>
         </div>
       </div>
     );
@@ -101,7 +101,7 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
     return (
       <div className="glass-card rounded-3xl border border-[#2f2862] px-8 py-8 text-slate-100">
         <div className="flex items-center justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-white">Witness Node Map</h2>
+          <h2 className="text-lg font-semibold text-white">Driver Delivery Map</h2>
           {isMocked && (
             <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-xs font-semibold text-amber-200" title="Mock data for development">
               🧪 Mock
@@ -121,16 +121,21 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
 
   return (
     <div className="glass-card rounded-3xl border border-[#2f2862] px-8 py-8 text-slate-100">
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <h2 className="text-lg font-semibold text-white">Witness Node Map</h2>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {isMocked && (
-            <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-xs font-semibold text-amber-200" title="Mock data for development">
-              🧪 Mock
-            </span>
-          )}
-          <span className="text-sm text-slate-400">{nodes.length} nodes</span>
+      <div className="mb-6">
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <h2 className="text-lg font-semibold text-white">Driver Delivery Map</h2>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {isMocked && (
+              <span className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-xs font-semibold text-amber-200" title="Mock data for development">
+                🧪 Mock
+              </span>
+            )}
+            <span className="text-sm text-slate-400">{nodes.length} delivery location{nodes.length !== 1 ? 's' : ''}</span>
+          </div>
         </div>
+        <p className="text-xs italic text-slate-400">
+          Each icon represents a verified delivery location. All drivers share the same XL1 wallet account, which is why the Network Statistics panel shows a single unique node.
+        </p>
       </div>
 
       <div className="h-96 rounded-xl overflow-hidden border border-[#2f2862]">
@@ -167,10 +172,21 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
                 longitude={selectedNode.location.longitude}
                 onClose={() => setSelectedNode(null)}
                 closeButton={true}
-                closeOnClick={false}
+                closeOnClick={true}
                 className="w-64"
               >
-                <div className="text-slate-900 p-2">
+                <div 
+                  className="text-slate-900 p-2 cursor-pointer"
+                  onClick={() => setSelectedNode(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setSelectedNode(null);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  title="Click to close"
+                >
                   <div className="font-semibold mb-2">
                     {selectedNode.type ? selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1) : 'Unknown'} Node
                   </div>

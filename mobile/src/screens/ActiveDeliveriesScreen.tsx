@@ -16,6 +16,7 @@ import type { DeliveryRecord } from '@shared/types/delivery.types';
 import type { RootStackParamList } from '@navigation/types';
 import { apiClient } from '@services/api.service';
 import { useDriverStore } from '@store/useDriverStore';
+import { colors } from '../theme/colors';
 
 type ActiveDeliveriesNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -188,7 +189,7 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05060F'
+    backgroundColor: colors.background.primary
   },
   loadingState: {
     flex: 1,
@@ -205,13 +206,13 @@ const styles = StyleSheet.create({
     gap: 14
   },
   card: {
-    backgroundColor: '#131222',
+    backgroundColor: colors.background.card,
     borderRadius: 18,
     padding: 18,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#2D2460',
-    shadowColor: '#000',
+    borderColor: colors.border.card,
+    shadowColor: colors.purple.primary,
     shadowOpacity: 0.35,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 14 },
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#F7F8FD'
+    color: colors.text.primary
   },
   statusBadge: {
     fontSize: 11,
@@ -261,11 +262,11 @@ const styles = StyleSheet.create({
   },
   address: {
     fontSize: 16,
-    color: '#DADDF9'
+    color: colors.text.secondary
   },
   meta: {
     fontSize: 14,
-    color: '#9aa5d8'
+    color: colors.text.muted
   },
   metaMuted: {
     fontSize: 13,
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#3b2f6d',
+    borderColor: colors.border.primary,
     backgroundColor: '#1b1631'
   },
   logoutText: {
