@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { configLogin } from '@lib/api';
 
 export default function ConfigurationLoginPage() {
@@ -71,8 +72,17 @@ export default function ConfigurationLoginPage() {
           >
             ← Back to Dashboard
           </Link>
-          <h1 className="text-4xl font-bold mb-2">ChainCheck</h1>
-          <h1 className="text-4xl font-bold mb-2">Configuration Access</h1>
+          <div className="flex justify-center -mb-12">
+            <Image
+              src="/images/cc-text-trans-003.png"
+              alt="ChainCheck"
+              width={360}
+              height={48}
+              priority
+              className="block"
+            />
+          </div>
+          <h1 className="text-4xl font-bold mb-0 mt-0 leading-tight -mt-2">Configuration Access</h1>
           <p className="text-slate-400">Sign in to manage application settings</p>
         </div>
 

@@ -1,9 +1,10 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Mapbox from '@rnmapbox/maps';
 
 import type { RootStackParamList } from './src/navigation/types';
 import { ActiveDeliveriesScreen } from './src/screens/ActiveDeliveriesScreen';
@@ -38,6 +39,20 @@ LogBox.ignoreLogs([
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  // Initialize Mapbox access token early in app lifecycle
+  useEffect(() => {
+    const accessToken = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+    if (accessToken) {
+      try {
+        Mapbox.setAccessToken(accessToken);
+      } catch (error) {
+        console.warn('Failed to set Mapbox access token:', error);
+      }
+    } else {
+      console.warn('EXPO_PUBLIC_MAPBOX_TOKEN is not set. Map may not display correctly.');
+    }
+  }, []);
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>

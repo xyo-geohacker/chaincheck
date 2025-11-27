@@ -207,6 +207,19 @@ Before getting started, ensure you have the following prerequisites installed an
    - Same as web - use your Mapbox access token
    - Add to `mobile/.env`:
      - `EXPO_PUBLIC_MAPBOX_TOKEN=pk.your_mapbox_token_here`
+   - **Mapbox Downloads Token** (Required for iOS native SDK):
+     - Get a secret token (starts with `sk.`) with `Downloads:Read` scope from [Mapbox Access Tokens](https://account.mapbox.com/access-tokens/)
+     - Add to `mobile/.env`:
+       - `MAPBOX_DOWNLOADS_TOKEN=sk.your_secret_token_here`
+     - Create `~/.netrc` file for CocoaPods authentication:
+       ```bash
+       cat > ~/.netrc << EOF
+       machine api.mapbox.com
+       login mapbox
+       password sk.your_secret_token_here
+       EOF
+       chmod 600 ~/.netrc
+       ```
    - **Note**: Maps will not display without this token
 
 2. **Backend API URL** (Required)
@@ -216,6 +229,14 @@ Before getting started, ensure you have the following prerequisites installed an
    - Add to `mobile/.env`:
      - `EXPO_PUBLIC_API_URL=your_backend_url_here`
    - **Note**: App will not connect to backend without this
+
+3. **Mock Driver Location** (Optional - for testing)
+   - When set to `true`, automatically uses the delivery destination coordinates instead of actual GPS location
+   - Allows testing deliveries from any location without physically being at the delivery address
+   - Useful for simulating realistic delivery scenarios and generating test data
+   - Add to `mobile/.env`:
+     - `EXPO_PUBLIC_MOCK_DRIVER_LOCATION=true`
+   - **Note**: When enabled, the app will display a banner indicating mock location mode is active
 
 ### Optional Services
 

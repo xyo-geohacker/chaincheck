@@ -18,6 +18,7 @@ import Mapbox, { Camera, PointAnnotation, ShapeSource, CircleLayer } from '@rnma
 import type { RootStackParamList } from '@navigation/types';
 import { useDriverStore } from '@store/useDriverStore';
 import { LocationService } from '@services/location.service';
+import { colors } from '../theme/colors';
 import { XYOMobileService } from '@services/xyo.service';
 import { haversineDistance } from '@utils/distance';
 import { SignatureCapture } from '@components/SignatureCapture';
@@ -85,6 +86,22 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
       return;
     }
 
+    // Check if mock location mode is enabled
+    const mockLocationEnabled = process.env.EXPO_PUBLIC_MOCK_DRIVER_LOCATION === 'true';
+
+    if (mockLocationEnabled) {
+      // Mock location mode: use delivery destination coordinates
+      setCurrentLocation({
+        latitude: delivery.destinationLat,
+        longitude: delivery.destinationLon,
+        altitude: null
+      });
+      setIsWithinRange(true); // Always within range in mock mode
+      setIsLoading(false);
+      return;
+    }
+
+    // Real GPS location mode: watch actual device location
     let subscriptionMounted = true;
 
     (async () => {
@@ -495,6 +512,13 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
           />
         </View>
 
+        {process.env.EXPO_PUBLIC_MOCK_DRIVER_LOCATION === 'true' && (
+          <View style={styles.mockLocationBanner}>
+            <Text style={styles.mockLocationText}>
+              🧪 Mock Location Mode: Using delivery destination coordinates
+            </Text>
+          </View>
+        )}
         <Text style={styles.statusText}>
           {isWithinRange
             ? '✓ Within range'
@@ -735,7 +759,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05060F'
+    backgroundColor: colors.background.primary
   },
   map: {
     flex: 1
@@ -743,9 +767,9 @@ const styles = StyleSheet.create({
   controls: {
     paddingHorizontal: 20,
     paddingVertical: 18,
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#27204d',
+    borderColor: colors.border.primary,
     gap: 14
   },
   photoRow: {
@@ -758,9 +782,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    backgroundColor: '#2f2862',
+    backgroundColor: colors.button.secondary,
     borderWidth: 1,
-    borderColor: '#4a3f8b'
+    borderColor: colors.border.primary
   },
   captureButtonText: {
     color: '#d7dcff',
@@ -805,19 +829,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#705cf6',
-    shadowColor: '#3c2fb0',
-    shadowOpacity: 0.35,
+    backgroundColor: colors.button.primary,
+    shadowColor: colors.button.primaryShadow,
+    shadowOpacity: 0.45,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 12 },
     elevation: 5
   },
   verifyButtonDisabled: {
-    backgroundColor: '#2c2750',
+    backgroundColor: colors.button.disabled,
     shadowOpacity: 0
   },
   verifyButtonText: {
-    color: '#f9f9ff',
+    color: colors.button.text,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5
@@ -827,7 +851,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#05060F'
+    backgroundColor: colors.background.primary
   },
   loadingText: {
     fontSize: 16,
@@ -849,11 +873,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#2a234d',
-    backgroundColor: '#111025'
+    borderColor: colors.border.primary,
+    backgroundColor: colors.background.header
   },
   modalDismissText: {
-    color: '#8EA8FF',
+    color: colors.text.accent,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -871,17 +895,17 @@ const styles = StyleSheet.create({
   notesLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#8EA8FF'
+    color: colors.text.accent
   },
   notesInput: {
     borderWidth: 1,
-    borderColor: '#3a2c6f',
+    borderColor: colors.border.input,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#F7F8FD',
-    backgroundColor: '#1A1830',
+    color: colors.text.primary,
+    backgroundColor: colors.background.input,
     minHeight: 80,
     maxHeight: 120
   },
@@ -922,12 +946,12 @@ const styles = StyleSheet.create({
   verificationModal: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#111025',
+    backgroundColor: colors.background.header,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#27204d',
+    borderColor: colors.border.primary,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: colors.purple.primary,
     shadowOpacity: 0.5,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
@@ -937,7 +961,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#27204d'
+    borderBottomColor: colors.border.primary
   },
   successIconContainer: {
     width: 64,
@@ -984,13 +1008,13 @@ const styles = StyleSheet.create({
   verificationTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#F7F8FD',
+    color: colors.text.primary,
     marginBottom: 8,
     letterSpacing: 0.5
   },
   verificationSubtitle: {
     fontSize: 14,
-    color: '#8EA8FF',
+    color: colors.text.accent,
     textAlign: 'center',
     lineHeight: 20
   },
@@ -1004,21 +1028,21 @@ const styles = StyleSheet.create({
   verificationLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8EA8FF',
+    color: colors.text.accent,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   hashContainer: {
-    backgroundColor: '#1A1830',
+    backgroundColor: colors.background.input,
     borderWidth: 1,
-    borderColor: '#3a2c6f',
+    borderColor: colors.border.input,
     borderRadius: 12,
     padding: 14
   },
   hashText: {
     fontSize: 13,
     fontFamily: 'monospace',
-    color: '#d7dcff',
+    color: colors.button.textSecondary,
     letterSpacing: 0.3
   },
   statusBadge: {
@@ -1039,11 +1063,11 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#F7F8FD'
+    color: colors.text.primary
   },
   verificationDetails: {
     fontSize: 14,
-    color: '#d7dcff',
+    color: colors.button.textSecondary,
     lineHeight: 20
   },
   modalButton: {
@@ -1052,18 +1076,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#705cf6',
-    shadowColor: '#3c2fb0',
-    shadowOpacity: 0.35,
+    backgroundColor: colors.button.primary,
+    shadowColor: colors.button.primaryShadow,
+    shadowOpacity: 0.45,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 5
   },
   modalButtonText: {
-    color: '#f9f9ff',
+    color: colors.button.text,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5
+  },
+  mockLocationBanner: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.3)',
+    marginBottom: 8
+  },
+  mockLocationText: {
+    fontSize: 12,
+    color: '#fbbf24',
+    fontWeight: '600',
+    textAlign: 'center'
   }
 });
 

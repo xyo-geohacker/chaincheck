@@ -1,10 +1,10 @@
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
-import type { DeliveryRecord } from '@shared/types/delivery.types';
-import { DeliveryStatus } from '@shared/types/delivery.types';
-import { fetchDeliveries } from '@lib/api';
-import { DashboardContent } from '@components/DashboardContent';
+import type { DeliveryRecord } from "@shared/types/delivery.types";
+import { DeliveryStatus } from "@shared/types/delivery.types";
+import { fetchDeliveries } from "@lib/api";
+import { DashboardContent } from "@components/DashboardContent";
 
 export default async function DashboardPage() {
   let deliveries: DeliveryRecord[] = [];
@@ -12,61 +12,75 @@ export default async function DashboardPage() {
     deliveries = await fetchDeliveries();
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Failed to load deliveries', error);
+    console.error("Failed to load deliveries", error);
   }
 
   // Calculate statistics
   const totalDeliveries = deliveries.length;
-  const verifiedProofs = deliveries.filter((d) => d.status === DeliveryStatus.DELIVERED).length;
-  const inTransit = deliveries.filter((d) => d.status === DeliveryStatus.IN_TRANSIT).length;
-  const pending = deliveries.filter((d) => d.status === DeliveryStatus.PENDING).length;
-  const failed = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
-  const disputed = deliveries.filter((d) => d.status === DeliveryStatus.DISPUTED).length;
+  const verifiedProofs = deliveries.filter(
+    (d) => d.status === DeliveryStatus.DELIVERED
+  ).length;
+  const inTransit = deliveries.filter(
+    (d) => d.status === DeliveryStatus.IN_TRANSIT
+  ).length;
+  const pending = deliveries.filter(
+    (d) => d.status === DeliveryStatus.PENDING
+  ).length;
+  const failed = deliveries.filter(
+    (d) => d.status === DeliveryStatus.FAILED
+  ).length;
+  const disputed = deliveries.filter(
+    (d) => d.status === DeliveryStatus.DISPUTED
+  ).length;
 
   // Get unique drivers for filter
-  const uniqueDrivers = Array.from(new Set(deliveries.map((d) => d.driverId))).sort();
+  const uniqueDrivers = Array.from(
+    new Set(deliveries.map((d) => d.driverId))
+  ).sort();
 
   // Calculate verification rate
   const verificationRate =
-    totalDeliveries > 0 ? ((verifiedProofs / totalDeliveries) * 100).toFixed(1) : '0.0';
+    totalDeliveries > 0
+      ? ((verifiedProofs / totalDeliveries) * 100).toFixed(1)
+      : "0.0";
 
   const metrics = [
     {
-      label: 'Total Deliveries',
+      label: "Total Deliveries",
       value: totalDeliveries,
-      description: 'All time',
-      statusFilter: 'all' as const
+      description: "All time",
+      statusFilter: "all" as const,
     },
     {
-      label: 'Verified Proofs',
+      label: "Verified Proofs",
       value: verifiedProofs,
       description: `${verificationRate}% verification rate`,
-      statusFilter: DeliveryStatus.DELIVERED
+      statusFilter: DeliveryStatus.DELIVERED,
     },
     {
-      label: 'In Transit',
+      label: "In Transit",
       value: inTransit,
-      description: 'Active deliveries',
-      statusFilter: DeliveryStatus.IN_TRANSIT
+      description: "Active deliveries",
+      statusFilter: DeliveryStatus.IN_TRANSIT,
     },
     {
-      label: 'Pending',
+      label: "Pending",
       value: pending,
-      description: 'Awaiting pickup',
-      statusFilter: DeliveryStatus.PENDING
+      description: "Awaiting pickup",
+      statusFilter: DeliveryStatus.PENDING,
     },
     {
-      label: 'Failed',
+      label: "Failed",
       value: failed,
-      description: 'Delivery attempts',
-      statusFilter: DeliveryStatus.FAILED
+      description: "Delivery attempts",
+      statusFilter: DeliveryStatus.FAILED,
     },
     {
-      label: 'Disputes',
+      label: "Disputes",
       value: disputed,
-      description: 'Requires attention',
-      statusFilter: DeliveryStatus.DISPUTED
-    }
+      description: "Requires attention",
+      statusFilter: DeliveryStatus.DISPUTED,
+    },
   ];
 
   return (
@@ -88,15 +102,30 @@ export default async function DashboardPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#6d4afe]/30 via-transparent to-[#40baf7]/20" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-[#8ea8ff]">ChainCheck Intelligence</p>
-            <h1 className="mt-2 text-4xl font-semibold leading-tight">
+            <Link
+              href="https://xyo.network"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-opacity hover:opacity-80"
+            >
+              <Image
+                src="/images/cc-text-trans-002.png"
+                alt="ChainCheck"
+                width={360}
+                height={48}
+                priority
+              />
+            </Link>
+            {/* <p className="text-sm uppercase tracking-[0.2em] text-[#8ea8ff]">ChainCheck Intelligence</p> */}
+            <h1 className="mt-0 text-4xl font-semibold leading-tight">
               Real-Time Delivery Verification
             </h1>
             <p className="mt-4 max-w-2xl text-sm text-slate-300">
-              Track proof-of-location events, audit delivery outcomes, and surface network-backed assurance for
-              every order. Filter, search, and analyze delivery data in real-time.
+              Track proof-of-location events, audit delivery outcomes, and
+              surface network-backed assurance for every order. Filter, search,
+              and analyze delivery data in real-time.
             </p>
-            <div className="mt-6 flex items-center gap-3">
+            {/* <div className="mt-6 flex items-center gap-3">
               <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                 Powered by
               </span>
@@ -115,7 +144,7 @@ export default async function DashboardPage() {
                   className="h-8 w-auto object-contain"
                 />
               </Link>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex flex-col gap-3">

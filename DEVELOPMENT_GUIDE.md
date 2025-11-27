@@ -1058,6 +1058,40 @@ EXPO_PUBLIC_API_URL=http://192.168.1.100:4000
 
 **Note:** This is an Expo project. The native `ios/` directory is automatically generated when you first run `npm run ios`. You don't need to manually create it or run `pod install` separately.
 
+#### 4.0. iOS Prerequisites
+
+Before building the iOS app, you need to configure Mapbox authentication:
+
+**Mapbox Setup (Required for Maps):**
+
+1. **Get Mapbox Tokens:**
+   - Go to [Mapbox Access Tokens](https://account.mapbox.com/access-tokens/)
+   - Create or copy your **Public Access Token** (starts with `pk.`)
+   - Create or copy your **Secret Download Token** (starts with `sk.`) with `Downloads:Read` scope
+
+2. **Configure Environment Variables:**
+   ```bash
+   cd mobile
+   cp env.example .env
+   # Edit .env and add:
+   # EXPO_PUBLIC_MAPBOX_TOKEN=pk.your_public_token_here
+   # MAPBOX_DOWNLOADS_TOKEN=sk.your_secret_token_here
+   ```
+
+3. **Configure Mapbox SDK Downloads:**
+   ```bash
+   # Create ~/.netrc file for Mapbox SDK authentication
+   cat > ~/.netrc << EOF
+   machine api.mapbox.com
+   login mapbox
+   password sk.your_secret_token_here
+   EOF
+   chmod 600 ~/.netrc
+   ```
+   Replace `sk.your_secret_token_here` with your actual Mapbox secret download token.
+
+**Note:** The `~/.netrc` file is required for CocoaPods to download the Mapbox iOS SDK during `pod install`. This file is user-specific and should not be committed to the repository.
+
 #### 4.1. Start iOS Simulator (Optional)
 
 You can start the simulator manually, or `npm run ios` will start it automatically if it's not running.
@@ -1089,12 +1123,23 @@ npm run ios
 This will:
 - Automatically generate the native `ios/` directory (if it doesn't exist)
 - Automatically run `pod install` to install iOS dependencies
-- Start Metro bundler
+- **Automatically start Metro bundler** (no need to run `npm start` separately)
 - Build the iOS app
 - Launch the app in the iOS Simulator (or use an already-running simulator)
 - Enable hot reloading
 
+**Metro Bundler:** Both `expo run:ios` and `expo run:android` **automatically start Metro bundler** for you. You do **not** need to run `npm start` in a separate terminal before running these commands.
+
+**Optional - Running Metro Separately:** If you want to keep Metro running across multiple builds or see Metro logs in a separate terminal, you can:
+1. Run `npm start` in one terminal (this starts Metro bundler)
+2. Run `npm run ios -- --no-bundler` or `npm run android -- --no-bundler` in another terminal (this skips starting Metro since it's already running)
+
 **First-time setup may take 5-10 minutes** as it generates the native iOS project and builds it.
+
+**Important Notes:**
+- **Patches Applied Automatically:** The project uses `patch-package` to apply necessary patches to `react-native` and `@rnmapbox/maps` during `npm install`. These patches fix compatibility issues and are automatically applied via the `postinstall` script.
+- **Mapbox Native Module:** The Mapbox native module is automatically added to the Podfile after Expo prebuild runs. The `npm run ios` command uses a wrapper script that ensures Mapbox is properly linked even if Expo prebuild regenerates the Podfile. This is necessary because Mapbox requires SDK downloads via `.netrc` authentication.
+- **First Build CRC Error (Known Expo Bug):** On the first `npm run ios` execution after a clean install (`rm -rf node_modules && npm install`), you may see a CRC error from `jimp-compact` during Expo prebuild. This is a **documented Expo bug** with image processing that cannot be fully worked around. **The script attempts automatic retries with cache clearing**, but if it still fails after 3 attempts, **simply run `npm run ios` again** - it will almost certainly succeed on the second run. This is a transient issue that resolves once the image cache is "warmed up". The error does not indicate actual file corruption.
 
 **Note:** If you need to manually reinstall iOS dependencies (e.g., after adding a new native module), you can run:
 ```bash
@@ -1153,10 +1198,12 @@ npm run android
 ```
 
 This will:
-- Start Metro bundler
+- **Automatically start Metro bundler** (no need to run `npm start` separately)
 - Build the Android app
 - Install and launch the app in the emulator
 - Enable hot reloading
+
+**Note:** Like iOS, `expo run:android` automatically starts Metro bundler. You do **not** need to run `npm start` separately.
 
 **First-time setup may take 10-15 minutes** as it builds the native Android project.
 
@@ -1374,6 +1421,52 @@ Yes, for most development and testing. Use a physical device only for:
 - **iOS Simulator**: Use `http://localhost:4000` for `EXPO_PUBLIC_API_URL` in `mobile/.env`
 - **Android Emulator**: Use `http://10.0.2.2:4000` for `EXPO_PUBLIC_API_URL` in `mobile/.env` (Android emulator maps `10.0.2.2` to host machine's `localhost`)
 
+#### 8.0.1. Mock Driver Location Mode (Testing Feature)
+
+**Purpose:**
+Mock location mode allows testing delivery verifications without physically being at the delivery address. This is useful for:
+- Testing deliveries from various locations
+- Simulating realistic delivery scenarios
+- Generating test data for multiple delivery addresses
+- Development and QA testing without GPS requirements
+
+**How to Enable:**
+1. Open `mobile/.env`
+2. Add or update:
+   ```env
+   EXPO_PUBLIC_MOCK_DRIVER_LOCATION=true
+   ```
+3. Restart the mobile app (not just reload - full restart required)
+
+**How It Works:**
+When `EXPO_PUBLIC_MOCK_DRIVER_LOCATION=true`:
+- The app automatically uses the delivery destination coordinates instead of actual GPS location
+- The "Within range" check is automatically satisfied (bypasses 50m distance requirement)
+- A yellow banner is displayed indicating mock location mode is active
+- All other features work normally (photo capture, signature, NFC, sensor data)
+- Delivery verification proceeds as if the driver is at the exact delivery location
+
+**Visual Indicator:**
+When mock location mode is active, a yellow banner appears in the delivery verification screen:
+```
+🧪 Mock Location Mode: Using delivery destination coordinates
+```
+
+**Use Cases:**
+- **Development Testing**: Test delivery verification flow without GPS requirements
+- **QA Testing**: Generate test data for multiple delivery addresses quickly
+- **Demo/Showcase**: Demonstrate the system with various delivery scenarios
+- **Offline Testing**: Test app functionality when GPS is unavailable or inaccurate
+
+**Important Notes:**
+- Mock location mode should **NOT** be enabled in production builds
+- The banner clearly indicates when mock mode is active to prevent confusion
+- All other verification features (photos, signatures, NFC, sensors) work normally
+- Mock location coordinates are the exact delivery destination (no distance offset)
+
+**Disabling Mock Location:**
+Set `EXPO_PUBLIC_MOCK_DRIVER_LOCATION=false` or remove the variable entirely, then restart the app.
+
 #### 8.1. Unit Testing
 
 ```bash
@@ -1547,6 +1640,30 @@ cd ..
 npm run android
 ```
 
+**Note:** If you encounter "native code not available" errors for Mapbox on iOS:
+1. Verify `~/.netrc` file exists and contains your Mapbox secret token:
+   ```bash
+   cat ~/.netrc
+   # Should show:
+   # machine api.mapbox.com
+   # login mapbox
+   # password sk.your_token_here
+   ```
+2. Ensure `MAPBOX_DOWNLOADS_TOKEN` is set in `mobile/.env`
+3. Clean and rebuild:
+   ```bash
+   cd mobile/ios
+   rm -rf Pods Podfile.lock
+   pod install
+   cd ..
+   npm run ios
+   ```
+4. If issues persist, verify patches are applied:
+   ```bash
+   cd mobile
+   npm run postinstall  # This applies patch-package patches
+   ```
+
 #### 10.3. Permission Issues
 
 **iOS:**
@@ -1652,12 +1769,19 @@ eas build --platform android --profile production
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `EXPO_PUBLIC_API_URL` | Yes | Backend API URL | `http://localhost:4000` (simulator)<br>`http://192.168.1.100:4000` (device) |
+| `EXPO_PUBLIC_MOCK_DRIVER_LOCATION` | No | Mock driver location mode. When `true`, uses delivery destination coordinates instead of actual GPS location. Useful for testing without being physically at delivery addresses. | `true` or `false` (default: `false`) |
 
 **Important Notes:**
 - Variables prefixed with `EXPO_PUBLIC_` are exposed to the app
 - Changes require app restart (not just reload)
 - Use `localhost` for simulators/emulators
 - Use IP address for physical devices
+- **Mock Location Mode**: When `EXPO_PUBLIC_MOCK_DRIVER_LOCATION=true`, the app will:
+  - Automatically set the current location to the delivery destination coordinates
+  - Always show "Within range" status (bypasses 50m distance check)
+  - Display a yellow banner indicating mock location mode is active
+  - Allow testing deliveries from any location without GPS requirements
+  - Generate realistic delivery verification data for testing scenarios
 
 ---
 
@@ -1695,6 +1819,7 @@ eas build --platform android --profile production
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `EXPO_PUBLIC_API_URL` | Yes | Backend API URL | `http://localhost:4000` |
+| `EXPO_PUBLIC_MOCK_DRIVER_LOCATION` | No | Mock driver location mode for testing. When `true`, uses delivery destination coordinates instead of actual GPS. | `false` (default) |
 
 ### Getting API Keys
 

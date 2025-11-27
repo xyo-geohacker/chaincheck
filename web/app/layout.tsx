@@ -1,21 +1,25 @@
-"use client";
+import type { Metadata } from 'next';
+import { ReactNode } from 'react';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode, useState } from 'react';
-
+import { ClientProviders } from './client-providers';
 import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'ChainCheck',
+  icons: {
+    icon: '/images/favicon.ico',
+  },
+};
 
 type RootLayoutProps = {
   children: ReactNode;
 };
 
 export default function RootLayout({ children }: RootLayoutProps) {
-  const [queryClient] = useState(() => new QueryClient());
-
   return (
     <html lang="en">
       <body>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

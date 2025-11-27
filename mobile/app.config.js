@@ -16,6 +16,7 @@ export default ({ config }) => ({
   },
   assetBundlePatterns: ['**/*'],
   ios: {
+    bundleIdentifier: 'com.chaincheck.app',
     supportsTablet: true
   },
   android: {
@@ -34,11 +35,23 @@ export default ({ config }) => ({
       'expo-location',
       {
         isAndroidBackgroundLocationEnabled: false,
+        locationWhenInUsePermission: 'Allow ChainCheck to access your location for delivery verification.',
         locationAlwaysAndWhenInUsePermission:
           'Allow ChainCheck to access your location for delivery verification.'
       }
     ],
-    'expo-camera'
+    [
+      'expo-camera',
+      {
+        cameraPermission: 'Allow ChainCheck to access your camera to capture delivery proof photos.'
+      }
+    ],
+    [
+      '@rnmapbox/maps',
+      {
+        RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN || process.env.EXPO_PUBLIC_MAPBOX_DOWNLOADS_TOKEN || ''
+      }
+    ]
     // Note: react-native-nfc-manager doesn't need to be in plugins array
     // It's a regular React Native library, not an Expo plugin
   ],

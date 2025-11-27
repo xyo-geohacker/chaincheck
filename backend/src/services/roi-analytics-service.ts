@@ -80,7 +80,9 @@ export class ROIAnalyticsService {
     const defaultStartDate = startDate || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); // 90 days ago
     const defaultEndDate = endDate || now;
     
-    const days = Math.ceil((defaultEndDate.getTime() - defaultStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Calculate days using Math.round() to handle time component differences
+    // This ensures "Last 90 Days" displays as "90 days" instead of "91 days"
+    const days = Math.round((defaultEndDate.getTime() - defaultStartDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // Get all deliveries in the period
     const deliveries = await prisma.delivery.findMany({
@@ -163,9 +165,15 @@ export class ROIAnalyticsService {
     // Calculate ROI (assuming implementation cost of $10,000 for first year)
     // ROI = (Total Savings - Implementation Cost) / Implementation Cost * 100
     const implementationCost = 10000;
-    const roi = implementationCost > 0
-      ? ((totalCostSavings - implementationCost) / implementationCost) * 100
-      : (totalCostSavings / 1000) * 100; // If no implementation cost, show ROI per $1000
+    
+    // If there are no verified deliveries, ROI cannot be calculated yet (return 0%)
+    // This prevents showing -100% ROI when the system is just starting
+    let roi = 0;
+    if (verifiedDeliveries > 0) {
+      roi = implementationCost > 0
+        ? ((totalCostSavings - implementationCost) / implementationCost) * 100
+        : (totalCostSavings / 1000) * 100; // If no implementation cost, show ROI per $1000
+    }
 
     return {
       disputeReduction: {

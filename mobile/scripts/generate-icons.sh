@@ -26,7 +26,7 @@ if [ ! -f "$SOURCE_IMAGE" ]; then
 fi
 
 # Check if ImageMagick is installed
-if ! command -v convert &> /dev/null; then
+if ! command -v magick &> /dev/null; then
   echo "Error: ImageMagick not found. Install with: brew install imagemagick"
   echo ""
   echo "Or use online tools instead:"
@@ -43,15 +43,31 @@ mkdir -p "$ASSETS_DIR"
 
 # Generate icon.png (1024x1024, iOS)
 echo "Generating icon.png (1024x1024)..."
-convert "$SOURCE_IMAGE" -resize 1024x1024^ -gravity center -extent 1024x1024 -background white -alpha remove "$ASSETS_DIR/icon.png"
+magick "$SOURCE_IMAGE" -resize 1024x1024^ -gravity center -extent 1024x1024 -background white -alpha remove "$ASSETS_DIR/icon.png"
+
+# Generate icon.png (512x512, iOS)
+# echo "Generating icon.png (512x512)..."
+# magick "$SOURCE_IMAGE" -resize 512x512^ -gravity center -extent 512x512 -background white -alpha remove "$ASSETS_DIR/icon.png"
 
 # Generate adaptive-icon.png (1024x1024, Android foreground)
-echo "Generating adaptive-icon.png (1024x1024)..."
-convert "$SOURCE_IMAGE" -resize 1024x1024^ -gravity center -extent 1024x1024 "$ASSETS_DIR/adaptive-icon.png"
+# Android adaptive icons only show the center 66% (safe zone), so we need to add padding
+# Resize to fit within 60% of canvas (614px) to ensure full logo is visible with extra margin
+# Maintain aspect ratio: resize to fit within bounds, then center with transparent padding
+echo "Generating adaptive-icon.png (1024x1024) with safe zone padding..."
+magick "$SOURCE_IMAGE" \
+  -resize '614x614>' \
+  -gravity center \
+  -extent 1024x1024 \
+  -background transparent \
+  "$ASSETS_DIR/adaptive-icon.png"
+
+# Generate adaptive-icon.png (512x512, Android foreground)
+# echo "Generating adaptive-icon.png (512x512)..."
+# magick "$SOURCE_IMAGE" -resize 512x512^ -gravity center -extent 512x512 "$ASSETS_DIR/adaptive-icon.png"
 
 # Generate favicon.png (512x512, web)
 echo "Generating favicon.png (512x512)..."
-convert "$SOURCE_IMAGE" -resize 512x512^ -gravity center -extent 512x512 "$ASSETS_DIR/favicon.png"
+magick "$SOURCE_IMAGE" -resize 512x512^ -gravity center -extent 512x512 "$ASSETS_DIR/favicon.png"
 
 echo ""
 echo "✓ Icons generated successfully!"
