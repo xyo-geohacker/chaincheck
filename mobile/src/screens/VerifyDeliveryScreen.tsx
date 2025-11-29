@@ -21,6 +21,7 @@ import { LocationService } from '@services/location.service';
 import { colors } from '../theme/colors';
 import { XYOMobileService } from '@services/xyo.service';
 import { haversineDistance } from '@utils/distance';
+import { hashImageFile, hashBase64Image } from '@utils/hash.utils';
 import { SignatureCapture } from '@components/SignatureCapture';
 import { NFCScan } from '@components/NFCScan';
 
@@ -262,6 +263,17 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
     setIsVerifying(true);
 
     try {
+      // Calculate SHA-256 hashes for immutable proof
+      setStatusMessage('Calculating photo hash…');
+      setStatusType('info');
+      const photoHash = await hashImageFile(capturedPhoto.uri);
+      
+      let signatureHash: string | undefined;
+      if (capturedSignature) {
+        setStatusMessage('Calculating signature hash…');
+        signatureHash = await hashBase64Image(capturedSignature);
+      }
+
       setStatusMessage('Uploading delivery photo…');
       setStatusType('info');
       await xyoService.uploadDeliveryPhoto(delivery.id, capturedPhoto.uri);
@@ -280,6 +292,8 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
         barometricPressure: barometricPressure ?? undefined,
         accelerometer: accelerometerData ?? undefined,
         notes: driverNotes.trim() || undefined,
+        photoHash,
+        signatureHash,
         nfcData: capturedNfc ? {
           record1: capturedNfc.record1,
           serialNumber: capturedNfc.serialNumber

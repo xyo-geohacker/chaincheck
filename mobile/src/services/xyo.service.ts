@@ -6,6 +6,8 @@ export class XYOMobileService {
     deliveryId: string,
     location: DeliveryLocation & { 
       notes?: string;
+      photoHash?: string;
+      signatureHash?: string;
       nfcData?: { record1: string; serialNumber: string };
     }
   ) {
@@ -21,6 +23,8 @@ export class XYOMobileService {
       barometricPressure?: number | null;
       accelerometer?: { x: number; y: number; z: number } | null;
       notes?: string;
+      photoHash?: string;
+      signatureHash?: string;
       nfcRecord1?: string;
       nfcSerialNumber?: string;
     } = {
@@ -43,6 +47,14 @@ export class XYOMobileService {
 
     if (location.notes) {
       requestBody.notes = location.notes;
+    }
+
+    if (location.photoHash) {
+      requestBody.photoHash = location.photoHash;
+    }
+
+    if (location.signatureHash) {
+      requestBody.signatureHash = location.signatureHash;
     }
 
     if (location.nfcData) {

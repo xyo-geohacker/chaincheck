@@ -19,6 +19,8 @@ export interface DeliveryVerificationPayload extends DeliveryLocation {
   deliveryId: string;
   driverId: string;
   metadata?: Record<string, unknown>;
+  photoHash?: string; // SHA-256 hash of the delivery photo for immutable proof
+  signatureHash?: string; // SHA-256 hash of the signature (if provided) for immutable proof
 }
 
 export interface DeliveryRecord {

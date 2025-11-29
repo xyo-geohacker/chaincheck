@@ -74,7 +74,7 @@ export default function ConfigurationLoginPage() {
           </Link>
           <div className="flex justify-center -mb-12">
             <Image
-              src="/images/cc-text-trans-003.png"
+              src="/images/chaincheck-text.png"
               alt="ChainCheck"
               width={360}
               height={48}
