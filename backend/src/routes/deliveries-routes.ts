@@ -366,6 +366,8 @@ router.post(
       barometricPressure,
       accelerometer,
       notes, 
+      photoHash,
+      signatureHash,
       nfcRecord1, 
       nfcSerialNumber 
     } = req.body;
@@ -408,6 +410,8 @@ router.post(
         accelerometer: accelerometer ?? undefined,
         deliveryId: delivery.id,
         driverId: delivery.driverId,
+        photoHash: photoHash ?? undefined,
+        signatureHash: signatureHash ?? undefined,
         metadata: {
           orderId: delivery.orderId,
           recipientName: delivery.recipientName,

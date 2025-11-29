@@ -133,7 +133,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.brandLabel}>Powered by</Text>
           <Image source={require('../../assets/xyo-network-logo-color.png')} style={styles.brandLogo} resizeMode="contain" />
         </View> */}
-        <Image source={require('../../assets/cc-text-trans-002.png')} style={styles.logoImage} resizeMode="contain" />
+        <Image source={require('../../assets/chaincheck-powered-text.png')} style={styles.logoImage} resizeMode="contain" />
 
         <TextInput
           style={styles.input}

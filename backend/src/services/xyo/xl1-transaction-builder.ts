@@ -44,7 +44,10 @@ export class Xl1TransactionBuilder {
         accelerometer: payload.accelerometer ?? null,
         // Include NFC data if available
         xyoNfcUserRecord: payload.metadata?.xyoNfcUserRecord as string | undefined,
-        xyoNfcSerialNumber: payload.metadata?.xyoNfcSerialNumber as string | undefined
+        xyoNfcSerialNumber: payload.metadata?.xyoNfcSerialNumber as string | undefined,
+        // Include SHA-256 hashes for immutable proof of photos and signatures
+        photoHash: payload.photoHash || null,
+        signatureHash: payload.signatureHash || null
       }
     };
 

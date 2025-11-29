@@ -109,7 +109,7 @@ export default async function DashboardPage() {
               className="transition-opacity hover:opacity-80"
             >
               <Image
-                src="/images/cc-text-trans-002.png"
+                src="/images/chaincheck-powered-text.png"
                 alt="ChainCheck"
                 width={360}
                 height={48}
