@@ -225,14 +225,14 @@ export class ConfigurationService {
         {
           category: 'backend',
           key: 'XYO_ARCHIVIST_URL',
-          value: env.xyoArchivistUrl,
+          value: this.getEnvValue('XYO_ARCHIVIST_URL') ?? env.xyoArchivistUrl,
           description: 'XYO Archivist API URL',
           isSecret: false
         },
         {
           category: 'backend',
           key: 'XYO_DIVINER_URL',
-          value: env.xyoDivinerUrl,
+          value: this.getEnvValue('XYO_DIVINER_URL') ?? env.xyoDivinerUrl,
           description: 'XYO Diviner API URL',
           isSecret: false
         },
@@ -260,7 +260,7 @@ export class ConfigurationService {
         {
           category: 'backend',
           key: 'WEB_URL',
-          value: env.webUrl,
+          value: this.getEnvValue('WEB_URL') ?? env.webUrl,
           description: 'Web application URL for CORS',
           isSecret: false
         },
@@ -358,9 +358,28 @@ export class ConfigurationService {
 
   /**
    * Get environment variable value (for fallback)
+   * For backend config, reads directly from .env file to get current values
+   * This ensures "Load from .env" always uses the latest file contents, not cached process.env
    */
   private getEnvValue(key: string): string | undefined {
-    return process.env[key];
+    // For backend configuration, read directly from .env file to get current values
+    // This ensures "Load from .env" always uses the latest file contents
+    const backendEnvPath = join(process.cwd(), '.env');
+    const fileValue = this.readEnvFileValue(backendEnvPath, key);
+    
+    if (fileValue !== undefined) {
+      // eslint-disable-next-line no-console
+      console.log(`[Config] Read ${key} from backend/.env: ${fileValue}`);
+      return fileValue;
+    }
+    
+    // Fallback to process.env (for values not in .env file or if file read fails)
+    const envValue = process.env[key];
+    if (envValue) {
+      // eslint-disable-next-line no-console
+      console.log(`[Config] Read ${key} from process.env: ${envValue}`);
+    }
+    return envValue;
   }
 
   /**
@@ -466,33 +485,38 @@ export class ConfigurationService {
 
   /**
    * Initialize default configuration in database
+   * Creates new items and updates existing ones with current .env values
    */
   async initializeDefaults(): Promise<void> {
     const defaults = this.getDefaultConfiguration();
 
     for (const [category, items] of Object.entries(defaults)) {
       for (const item of items) {
-        // Only create if doesn't exist
-        const existing = await prisma.configuration.findUnique({
+        // Use upsert to create or update with current .env values
+        // This ensures "Load from .env" updates existing entries with current values
+        await prisma.configuration.upsert({
           where: {
             category_key: {
               category: category as ConfigurationCategory,
               key: item.key
             }
+          },
+          update: {
+            // Update value with current .env value
+            value: item.value,
+            // Update description if it's missing or empty (preserve existing descriptions)
+            description: item.description,
+            // Update isSecret flag if needed
+            isSecret: item.isSecret ?? false
+          },
+          create: {
+            category: category as ConfigurationCategory,
+            key: item.key,
+            value: item.value,
+            description: item.description,
+            isSecret: item.isSecret ?? false
           }
         });
-
-        if (!existing) {
-          await prisma.configuration.create({
-            data: {
-              category: category as ConfigurationCategory,
-              key: item.key,
-              value: item.value,
-              description: item.description,
-              isSecret: item.isSecret ?? false
-            }
-          });
-        }
       }
     }
   }

@@ -64,14 +64,19 @@ if [ -d "android" ]; then
   echo "   ✓ Removed old splash screen images"
 fi
 
-# 3. Regenerate native Android assets from source assets
-echo ""
-echo "   Regenerating native Android assets from source assets..."
-if npx expo prebuild --platform android --clean 2>&1 | grep -q "Finished prebuild"; then
-  echo "   ✓ Native assets regenerated"
-else
-  echo "   ⚠️  Prebuild may have completed (check output above)"
-fi
+    # 3. Regenerate native Android assets from source assets
+    echo ""
+    echo "   Regenerating native Android assets from source assets..."
+    if npx expo prebuild --platform android --clean 2>&1 | grep -q "Finished prebuild"; then
+      echo "   ✓ Native assets regenerated"
+      # Run post-prebuild script to ensure expo-modules-core is included
+      echo "   Running post-prebuild Android script..."
+      bash "$(dirname "$0")/post-prebuild-android.sh" || true
+    else
+      echo "   ⚠️  Prebuild may have completed (check output above)"
+      # Still try to run post-prebuild script
+      bash "$(dirname "$0")/post-prebuild-android.sh" || true
+    fi
 
 # 4. Verify new assets were created
 echo ""

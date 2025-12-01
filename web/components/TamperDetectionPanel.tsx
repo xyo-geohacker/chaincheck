@@ -139,8 +139,11 @@ export function TamperDetectionPanel({ storedPayload, xl1TransactionHash, boundW
 
       // Fetch payload from Archivist using the payload hash (not the proof hash)
       // The /api/payloads/:hash endpoint fetches the payload directly from Archivist
-      // Use the backend API URL (not Next.js server)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      // Use relative URL when on HTTPS to avoid mixed content errors
+      // Next.js rewrite will proxy to backend
+      const apiUrl = typeof window !== 'undefined' && window.location.protocol === 'https:'
+        ? '' // Relative URL - Next.js rewrite handles it
+        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000');
       const response = await fetch(`${apiUrl}/api/payloads/${xl1PayloadHash}`);
       if (!response.ok) {
         if (response.status === 404) {

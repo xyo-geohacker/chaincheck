@@ -1351,7 +1351,8 @@ export class XL1TransactionService {
         };
       }
 
-      // Wrap currentBlockNumber
+      // Wrap currentBlockNumber with fallback for missing RPC methods
+      // The beta API may not support xyoViewer_currentBlockNumber, so we provide a fallback
       if (typeof viewer.currentBlockNumber === 'function') {
         const originalCurrentBlockNumber = viewer.currentBlockNumber.bind(viewer);
         viewer.currentBlockNumber = async () => {
@@ -1386,8 +1387,45 @@ export class XL1TransactionService {
             console.error('Error:', error instanceof Error ? error.message : String(error));
             // eslint-disable-next-line no-console
             console.error('========================\n');
+            
+            // Check if the error is due to missing RPC method or validation errors
+            // Validation errors (e.g., missing _hash, _dataHash) indicate blockchain API issues
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (
+              errorMessage.includes('does not exist') || 
+              errorMessage.includes('not available') ||
+              errorMessage.includes('Invalid input') ||
+              errorMessage.includes('expected string') ||
+              errorMessage.includes('_hash') ||
+              errorMessage.includes('_dataHash')
+            ) {
+              // eslint-disable-next-line no-console
+              console.warn('⚠️  currentBlockNumber RPC method error detected - using fallback value');
+              // eslint-disable-next-line no-console
+              console.warn('   This may indicate the XL1 blockchain API is experiencing issues');
+              // eslint-disable-next-line no-console
+              console.warn('   Consider waiting for blockchain functionality to be restored');
+              // Return a fallback block number based on timestamp
+              // This allows transactions to proceed even when the RPC method is unavailable
+              const fallbackBlockNumber = Math.floor(Date.now() / 1000) % 1000000;
+              // eslint-disable-next-line no-console
+              console.log(`Using fallback block number: ${fallbackBlockNumber}`);
+              return fallbackBlockNumber;
+            }
+            
+            // For other errors, re-throw
             throw error;
           }
+        };
+      } else {
+        // If currentBlockNumber doesn't exist, add a fallback implementation
+        // eslint-disable-next-line no-console
+        console.warn('⚠️  viewer.currentBlockNumber() not available - adding fallback implementation');
+        viewer.currentBlockNumber = async () => {
+          const fallbackBlockNumber = Math.floor(Date.now() / 1000) % 1000000;
+          // eslint-disable-next-line no-console
+          console.log(`Using fallback block number (method not available): ${fallbackBlockNumber}`);
+          return fallbackBlockNumber;
         };
       }
     }

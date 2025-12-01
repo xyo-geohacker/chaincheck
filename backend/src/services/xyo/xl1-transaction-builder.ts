@@ -46,8 +46,9 @@ export class Xl1TransactionBuilder {
         xyoNfcUserRecord: payload.metadata?.xyoNfcUserRecord as string | undefined,
         xyoNfcSerialNumber: payload.metadata?.xyoNfcSerialNumber as string | undefined,
         // Include SHA-256 hashes for immutable proof of photos and signatures
-        photoHash: payload.photoHash || null,
-        signatureHash: payload.signatureHash || null
+        // Always include these fields - set to null if not provided (for consistency in payload structure)
+        photoHash: payload.photoHash ?? null,
+        signatureHash: payload.signatureHash ?? null
       }
     };
 

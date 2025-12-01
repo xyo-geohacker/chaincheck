@@ -124,7 +124,7 @@ export default async function DeliveryPage({ params }: DeliveryPageProps) {
         <div className="lg:col-span-4">
           <div className="glass-card rounded-3xl border border-[#2f2862] px-6 py-6 text-slate-100">
             <h2 className="text-lg font-semibold">Delivery Details</h2>
-            <dl className="mt-4 grid gap-4">
+            <dl className="mt-4 grid gap-4 min-w-0">
               <div>
                 <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Recipient</dt>
                 <dd className="mt-1 text-sm font-medium text-white">{delivery.recipientName}</dd>
@@ -164,9 +164,9 @@ export default async function DeliveryPage({ params }: DeliveryPageProps) {
                 </>
               )}
               {delivery.notes && (
-                <div>
+                <div className="min-w-0">
                   <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Notes</dt>
-                  <dd className="mt-1 text-sm font-medium text-white">{delivery.notes}</dd>
+                  <dd className="mt-1 text-sm font-medium text-white break-all whitespace-pre-wrap overflow-wrap-anywhere min-w-0">{delivery.notes}</dd>
                 </div>
               )}
             </dl>

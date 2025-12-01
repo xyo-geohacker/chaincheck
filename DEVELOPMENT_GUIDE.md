@@ -959,15 +959,52 @@ NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token_here
 
 ### 4. Start Development Server
 
+**Standard HTTP (Default):**
 ```bash
 npm run dev
 ```
 
 The web dashboard should start on `http://localhost:3000`.
 
+**HTTPS with Custom Domain (Optional):**
+For features requiring Web Crypto API (`crypto.subtle`) with a FQDN like `www.chaincheck.com`:
+
+1. **Generate SSL certificate:**
+   ```bash
+   npm run generate-cert
+   ```
+
+2. **Add to `/etc/hosts`:**
+   ```bash
+   sudo nano /etc/hosts
+   # Add:
+   # 127.0.0.1  www.chaincheck.com
+   # 127.0.0.1  chaincheck.com
+   ```
+
+3. **Trust certificate (macOS):**
+   ```bash
+   sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/chaincheck.crt
+   ```
+
+4. **Start HTTPS server:**
+   ```bash
+   npm run dev:https
+   ```
+
+Visit: `https://www.chaincheck.com:3000`
+
+**Why HTTPS?**
+- The Web Crypto API (`crypto.subtle`) requires HTTPS when using a FQDN (not just `localhost`)
+- Enables tampering detection features that use cryptographic hashing
+- Professional-looking URL for demos (`www.chaincheck.com` instead of `localhost`)
+
 **Verify it's working:**
-- Open `http://localhost:3000` in your browser
+- HTTP: Open `http://localhost:3000` in your browser
+- HTTPS: Open `https://www.chaincheck.com:3000` in your browser
 - You should see the ChainCheck dashboard
+
+**Note:** Self-signed certificates will show a browser security warning on first visit. After trusting the certificate in macOS, Safari should not show warnings. Other browsers may still show a warning - click "Advanced" → "Proceed" to continue.
 
 ---
 

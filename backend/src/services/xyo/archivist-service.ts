@@ -89,10 +89,29 @@ export class ArchivistService {
       // - POST /:address - Post QueryBoundWitness to module address (postAddress handler)
       // - POST /node/:address - May redirect or route to /:address
       // 
+      // Production Archivist supports archive-based routes:
+      // - POST /{archive_name}/block/post - Archive-based insert (creates archive automatically)
+      // - POST /{archive_name}/dataLake/insert - Archive-based dataLake insert
+      // - POST /{archive_name}/node/:address - Archive-based module address
+      // 
       // The archivistMiddleware.ts shows: router.post('/insert', ...) mounted at /dataLake
       // This is the CORRECT endpoint for inserting payloads into the Archivist
       const cleanArchivistUrl = env.xyoArchivistUrl.replace(/\/$/, '');
       const endpoints: Array<{ url: string; archive?: string; description: string }> = [];
+      
+      // PRIORITY 1: Try archive-based routes first (production Archivist pattern)
+      // These routes are preferred for production Archivist as they support archive isolation
+      // Archive is created automatically on first insert
+      endpoints.push({ 
+        url: `${cleanArchivistUrl}/${preferredArchive}/block/post`, 
+        archive: preferredArchive,
+        description: `/${preferredArchive}/block/post (archive-based block post - production pattern)` 
+      });
+      endpoints.push({ 
+        url: `${cleanArchivistUrl}/${preferredArchive}/dataLake/insert`, 
+        archive: preferredArchive,
+        description: `/${preferredArchive}/dataLake/insert (archive-based dataLake insert)` 
+      });
       
       // Step 1: Get the Archivist module address from /Archivist route
       // CRITICAL: The /Archivist route is the SINGLE SOURCE OF TRUTH for the Archivist address
@@ -794,12 +813,29 @@ export class ArchivistService {
     const queryData = [query[0], [...query[1]]];
 
     // FIXED: Try multiple endpoint patterns (same as insertPayloads)
-    // The XYO Archivist uses module addresses in the path, not archive names
+    // Production Archivist supports archive-based routes for querying:
+    // - POST /{archive_name}/block/find - Archive-based query
+    // - POST /{archive_name}/node/:address - Archive-based module address query
+    // Local Archivist uses module addresses in the path
     // /Archivist redirects to the Archivist's module address (e.g., /bb0f0b19414badfbfefe2a060ec23579094a5543)
     // We need to POST QueryBoundWitness directly to the module address, not the redirect endpoint
     const preferredArchive = env.xyoArchive || 'chaincheck';
     const fallbackArchive = 'temp';  // Production app default
     const cleanArchivistUrl = env.xyoArchivistUrl.replace(/\/$/, '');
+    
+    // PRIORITY 1: Try archive-based routes first (production Archivist pattern)
+    // These routes are preferred for production Archivist as they support archive isolation
+    const endpoints: Array<{ url: string; archive?: string; description: string }> = [];
+    endpoints.push({ 
+      url: `${cleanArchivistUrl}/${preferredArchive}/block/find`, 
+      archive: preferredArchive,
+      description: `/${preferredArchive}/block/find (archive-based query - production pattern)` 
+    });
+    endpoints.push({ 
+      url: `${cleanArchivistUrl}/${preferredArchive}/node`, 
+      archive: preferredArchive,
+      description: `/${preferredArchive}/node (archive-based node query)` 
+    });
     
     // Try to get the Archivist module address from /Archivist redirect
     let archivistModuleAddress: string | null = null;
@@ -817,6 +853,12 @@ export class ArchivistService {
         const match = location.match(/\/([a-f0-9]{40})/);
         if (match) {
           archivistModuleAddress = match[1];
+          // Also try archive-based routes with module address
+          endpoints.push({ 
+            url: `${cleanArchivistUrl}/${preferredArchive}/node/${archivistModuleAddress}`, 
+            archive: preferredArchive,
+            description: `/${preferredArchive}/node/${archivistModuleAddress} (archive-based module address)` 
+          });
         }
       }
     } catch (error: any) {
@@ -827,6 +869,12 @@ export class ArchivistService {
           const match = location.match(/\/([a-f0-9]{40})/);
           if (match) {
             archivistModuleAddress = match[1];
+            // Also try archive-based routes with module address
+            endpoints.push({ 
+              url: `${cleanArchivistUrl}/${preferredArchive}/node/${archivistModuleAddress}`, 
+              archive: preferredArchive,
+              description: `/${preferredArchive}/node/${archivistModuleAddress} (archive-based module address)` 
+            });
           }
         }
       }
@@ -837,8 +885,6 @@ export class ArchivistService {
     // - POST /insert returns 404 "Module not found" - NOT a valid endpoint
     // - POST /node/:address returns 200 and shows payloads in response - WORKING ENDPOINT
     // - POST /:address (under /dataLake router) - may also work
-    const endpoints: Array<{ url: string; archive?: string; description: string }> = [];
-    
     // Primary: POST /node/:address (this is the working endpoint based on logs)
     if (archivistModuleAddress) {
       endpoints.push({ 

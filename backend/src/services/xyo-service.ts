@@ -660,11 +660,18 @@ export class XyoService {
         // This is a real metric even without witness nodes
         const precisionRadius = Math.round(finalAccuracy * 1.96 * 10) / 10; // 95% confidence interval
         
+        // Calculate participant count
+        // If we have XL1 data, there's at least 1 participant (the driver)
+        let participantCount = xl1Addresses.length;
+        if (hasXL1Data && participantCount === 0) {
+          participantCount = 1; // At least the driver participated
+        }
+
         return {
           accuracyScore: Math.round(finalAccuracy * 10) / 10,
           confidenceLevel: hasXL1Data ? 'medium' : 'low',
           precisionRadius: precisionRadius,
-          witnessNodeCount: xl1Addresses.length, // Show XL1 participants even without location
+          witnessNodeCount: participantCount, // Total participants (driver + witness nodes)
           gpsAccuracy: GPS_ACCURACY_METERS,
           xyoNetworkAccuracy: Math.round(finalAccuracy * 10) / 10,
           accuracyImprovement: actualDeliveryAccuracy < GPS_ACCURACY_METERS 
@@ -677,11 +684,17 @@ export class XyoService {
       }
       
       // Default fallback - no nodes and no delivery accuracy data
+      // Calculate participant count
+      let participantCount = xl1Addresses.length;
+      if (hasXL1Data && participantCount === 0) {
+        participantCount = 1; // At least the driver participated
+      }
+
       return {
         accuracyScore: GPS_ACCURACY_METERS,
         confidenceLevel: 'low',
         precisionRadius: GPS_ACCURACY_METERS,
-        witnessNodeCount: xl1Addresses.length || 0,
+        witnessNodeCount: participantCount, // Total participants (driver + witness nodes)
         gpsAccuracy: GPS_ACCURACY_METERS,
         xyoNetworkAccuracy: GPS_ACCURACY_METERS,
         accuracyImprovement: 0,
@@ -768,11 +781,21 @@ export class XyoService {
     // Final accuracy score is the actual delivery accuracy (if available) or GPS accuracy
     const finalAccuracyScore = finalAccuracy;
 
+    // Calculate participant count
+    // XL1 bound witnesses include ALL participants (driver + witness nodes)
+    // If we have XL1 data, there's at least 1 participant (the driver)
+    // If we have addresses from XL1, use that count; otherwise, if we have XL1 data, count at least 1
+    let participantCount = Math.max(nodeCount, xl1Addresses.length);
+    if (hasXL1Data && participantCount === 0) {
+      // If we have XL1 data but no addresses extracted, there's still at least the driver
+      participantCount = 1;
+    }
+
     return {
       accuracyScore: Math.round(finalAccuracyScore * 10) / 10, // Round to 1 decimal
       confidenceLevel,
       precisionRadius: Math.round(precisionRadius * 10) / 10,
-      witnessNodeCount: Math.max(nodeCount, xl1Addresses.length), // Show XL1 participants even if no location
+      witnessNodeCount: participantCount, // Total participants (driver + witness nodes)
       gpsAccuracy: GPS_ACCURACY_METERS,
       // XYO Network accuracy is the same as the actual accuracy - XYO verifies, doesn't improve GPS
       xyoNetworkAccuracy: Math.round(finalAccuracyScore * 10) / 10,

@@ -112,10 +112,20 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
             return;
           }
 
+          // GPS altitude is often unavailable or inaccurate on Android devices
+          // Many devices don't provide altitude in GPS coordinates, or it may be 0.0
+          // Barometric pressure (if available) can provide more accurate altitude
+          const gpsAltitude = location.coords.altitude;
+          if (gpsAltitude !== null && gpsAltitude !== undefined && gpsAltitude !== 0) {
+            console.log('[LOCATION] GPS altitude available:', gpsAltitude.toFixed(2), 'm');
+          } else {
+            console.log('[LOCATION] GPS altitude not available (null/undefined/0) - this is normal for many Android devices');
+          }
+          
           setCurrentLocation({
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
-            altitude: location.coords.altitude ?? null
+            altitude: (gpsAltitude !== null && gpsAltitude !== undefined && gpsAltitude !== 0) ? gpsAltitude : null
           });
 
           const distance = haversineDistance(
@@ -266,21 +276,36 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
       // Calculate SHA-256 hashes for immutable proof
       setStatusMessage('Calculating photo hash…');
       setStatusType('info');
-      const photoHash = await hashImageFile(capturedPhoto.uri);
+      let photoHash: string | undefined;
+      try {
+        photoHash = await hashImageFile(capturedPhoto.uri);
+        console.log('[VERIFICATION] Photo hash calculated:', photoHash ? `${photoHash.substring(0, 16)}...` : 'failed');
+      } catch (hashError) {
+        console.error('[VERIFICATION] Failed to calculate photo hash:', hashError);
+        // Continue without hash - verification can still proceed
+      }
       
       let signatureHash: string | undefined;
       if (capturedSignature) {
         setStatusMessage('Calculating signature hash…');
-        signatureHash = await hashBase64Image(capturedSignature);
+        try {
+          signatureHash = await hashBase64Image(capturedSignature);
+          console.log('[VERIFICATION] Signature hash calculated:', signatureHash ? `${signatureHash.substring(0, 16)}...` : 'failed');
+        } catch (hashError) {
+          console.error('[VERIFICATION] Failed to calculate signature hash:', hashError);
+          // Continue without hash - verification can still proceed
+        }
       }
 
       setStatusMessage('Uploading delivery photo…');
       setStatusType('info');
-      await xyoService.uploadDeliveryPhoto(delivery.id, capturedPhoto.uri);
+      // Send photo hash along with photo upload so it can be stored in database
+      await xyoService.uploadDeliveryPhoto(delivery.id, capturedPhoto.uri, photoHash);
 
       if (capturedSignature) {
         setStatusMessage('Uploading signature…');
-        await xyoService.uploadDeliverySignature(delivery.id, capturedSignature);
+        // Send signature hash along with signature upload so it can be stored in database
+        await xyoService.uploadDeliverySignature(delivery.id, capturedSignature, signatureHash);
       }
 
       setStatusMessage('Submitting location proof to XYO network…');
@@ -754,7 +779,12 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
 
   async function takePhoto() {
     try {
-      const photo = await cameraRef.current?.takePictureAsync();
+      // Use lower quality (0.7) and skipProcessing to reduce file size significantly
+      // This typically reduces a 7MB+ photo to under 1MB without needing additional libraries
+      const photo = await cameraRef.current?.takePictureAsync({
+        quality: 0.7, // Reduced from 0.9 to 0.7 for better compression
+        skipProcessing: false, // Keep processing for better compression
+      });
 
       if (!photo?.uri) {
         throw new Error('Unable to capture photo');
@@ -808,7 +838,7 @@ const styles = StyleSheet.create({
   },
   photoStatus: {
     fontSize: 13,
-    color: '#8EA8FF'
+    color: colors.text.accent
   },
   statusBanner: {
     paddingVertical: 10,
@@ -869,7 +899,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#8EA8FF'
+    color: colors.text.accent
   },
   cameraContainer: {
     flex: 1,

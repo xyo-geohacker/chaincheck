@@ -153,7 +153,7 @@ export function LocationAccuracyPanel({ proofHash, latitude, longitude }: Props)
                 Cryptographically Verified on XL1 Blockchain
               </div>
               <div className="text-xs text-emerald-300/80 mt-0.5">
-                Location data is immutably stored and verified by {accuracy.witnessNodeCount} participant{accuracy.witnessNodeCount !== 1 ? 's' : ''}
+                Location data is immutably stored and verified by {accuracy.witnessNodeCount} participant{accuracy.witnessNodeCount !== 1 ? 's' : ''} (driver{accuracy.witnessNodeCount > 1 ? ' + witness nodes' : ''})
               </div>
             </div>
           </div>

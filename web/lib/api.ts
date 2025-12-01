@@ -3,8 +3,26 @@ import axios from 'axios';
 import type { DeliveryRecord } from '@shared/types/delivery.types';
 import type { ProofVerificationResult, DivinerVerificationResult, LocationAccuracyResult } from '@shared/types/xyo.types';
 
+// Determine API base URL dynamically
+// If page is loaded over HTTPS, use relative URL to avoid mixed content issues
+// Next.js rewrites will proxy /api/* requests to the backend
+const getApiBaseURL = (): string | undefined => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use relative URL if page is HTTPS, otherwise use configured URL
+    if (window.location.protocol === 'https:') {
+      // Use relative URL - Next.js rewrite will proxy to backend
+      // This avoids mixed content errors (HTTPS page making HTTP requests)
+      return '';
+    }
+  }
+  // Server-side or HTTP: use configured URL
+  return process.env.NEXT_PUBLIC_API_URL;
+};
+
+// Create API client with dynamic baseURL
+// We'll set the baseURL in the request interceptor to ensure it's always current
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL
+  baseURL: process.env.NEXT_PUBLIC_API_URL // Default, will be overridden for HTTPS
 });
 
 // Authentication helper functions (must be defined before interceptor)
@@ -36,9 +54,16 @@ export function configLogout(): void {
   localStorage.removeItem('configUsername');
 }
 
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and set dynamic baseURL
 apiClient.interceptors.request.use(
   (config) => {
+    // Override baseURL for HTTPS pages to use relative URLs (avoids mixed content)
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      config.baseURL = '';
+    } else if (!config.baseURL) {
+      config.baseURL = process.env.NEXT_PUBLIC_API_URL;
+    }
+    
     // Check if this is a configuration endpoint
     const isConfigEndpoint = config.url?.includes('/configuration') || config.url?.includes('/server-status');
     

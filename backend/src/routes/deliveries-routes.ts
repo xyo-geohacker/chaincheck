@@ -1,11 +1,11 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import multer from 'multer';
-import { Prisma } from '@prisma/client';
+import { Prisma, DeliveryStatus } from '@prisma/client';
 import { z } from 'zod';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Shared types outside rootDir
-import type { LocationProofDetails } from '../../../../shared/types/xyo.types.js';
+import type { LocationProofDetails } from '../../../shared/types/xyo.types.js';
 
 import { prisma } from '../lib/prisma.js';
 import { env } from '../lib/env.js';
@@ -268,8 +268,6 @@ router.get(
  *                 nullable: true
  *                 description: Elevation in meters (from GPS). Optional sensor data for enhanced validation.
  *                 example: 45.5
- *               barometricPressure:
- *                 description: Barometric pressure in hPa (hectopascals). Optional sensor data for enhanced validation. More accurate than GPS altitude.
  *               accelerometer:
  *                 type: object
  *                 description: Device acceleration in m/s² (meters per second squared). Optional sensor data captured at verification time. Low/zero values indicate device is stationary, providing evidence driver was present at location.
@@ -373,8 +371,10 @@ router.post(
     } = req.body;
     const driverId = (req as { driverId?: string }).driverId;
 
+  // Declare delivery outside try block so it's accessible in catch block
+  let delivery = null;
   try {
-    const delivery = await prisma.delivery.findUnique({
+    delivery = await prisma.delivery.findUnique({
       where: { id }
     });
 
@@ -388,6 +388,23 @@ router.post(
       delivery.destinationLat ?? 0,
       delivery.destinationLon ?? 0
     );
+
+    // Get hashes from request or fall back to database
+    // The mobile app should send hashes during verification, but if not provided,
+    // we'll use the hashes stored when photos/signatures were uploaded
+    const finalPhotoHash = photoHash ?? delivery.photoHash ?? undefined;
+    const finalSignatureHash = signatureHash ?? delivery.signatureHash ?? undefined;
+    
+    // Log hash availability for debugging
+    // eslint-disable-next-line no-console
+    console.log('[VERIFICATION] Hash availability:', {
+      photoHashFromRequest: photoHash ? `${photoHash.substring(0, 16)}...` : 'not provided',
+      photoHashFromDB: delivery.photoHash ? `${delivery.photoHash.substring(0, 16)}...` : 'not in DB',
+      finalPhotoHash: finalPhotoHash ? `${finalPhotoHash.substring(0, 16)}...` : 'will be null',
+      signatureHashFromRequest: signatureHash ? `${signatureHash.substring(0, 16)}...` : 'not provided',
+      signatureHashFromDB: delivery.signatureHash ? `${delivery.signatureHash.substring(0, 16)}...` : 'not in DB',
+      finalSignatureHash: finalSignatureHash ? `${finalSignatureHash.substring(0, 16)}...` : 'will be null'
+    });
 
     // Step 1: Create XL1 transaction first to get blockchain proof
     // CRITICAL: Only mark delivery as verified if XL1 transaction succeeds
@@ -410,8 +427,8 @@ router.post(
         accelerometer: accelerometer ?? undefined,
         deliveryId: delivery.id,
         driverId: delivery.driverId,
-        photoHash: photoHash ?? undefined,
-        signatureHash: signatureHash ?? undefined,
+        photoHash: finalPhotoHash,
+        signatureHash: finalSignatureHash,
         metadata: {
           orderId: delivery.orderId,
           recipientName: delivery.recipientName,
@@ -628,6 +645,53 @@ router.post(
       ? 'The blockchain service is temporarily unavailable. Please try again later.'
       : 'Verification failed';
 
+    // Determine failure reason for notes
+    let failureReason = 'Verification failed';
+    if (isRpcError) {
+      failureReason = 'Blockchain service temporarily unavailable - verification cannot be completed at this time. Please retry when service is restored.';
+    } else if (error instanceof Error) {
+      failureReason = `Verification failed: ${error.message}`;
+    }
+
+    // Update delivery status and notes based on error type
+    // Only update if delivery was successfully fetched (delivery exists in scope)
+    try {
+      // Fetch delivery if not already available (in case error occurred before fetch)
+      const deliveryToUpdate = delivery || await prisma.delivery.findUnique({ where: { id } });
+      
+      if (deliveryToUpdate) {
+        // For retryable errors (RPC/blockchain issues): Keep as IN_TRANSIT to allow retry
+        // For non-retryable errors: Mark as FAILED
+        const newStatus = isRpcError ? DeliveryStatus.IN_TRANSIT : DeliveryStatus.FAILED;
+        
+        // Append failure reason to existing notes (or create new notes)
+        const existingNotes = deliveryToUpdate.notes || '';
+        const failureNote = `[${new Date().toISOString()}] ${failureReason}`;
+        const updatedNotes = existingNotes 
+          ? `${existingNotes}\n\n${failureNote}`
+          : failureNote;
+
+        await prisma.delivery.update({
+          where: { id },
+          data: {
+            status: newStatus,
+            notes: updatedNotes,
+            updatedAt: new Date().toISOString()
+          }
+        });
+
+        // eslint-disable-next-line no-console
+        console.log(`Delivery ${id} status updated to ${newStatus} due to verification failure`);
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn(`Cannot update delivery ${id} status - delivery not found`);
+      }
+    } catch (updateError) {
+      // Log but don't fail the error response if status update fails
+      // eslint-disable-next-line no-console
+      console.error('Failed to update delivery status after verification error:', updateError);
+    }
+
     const errorResponse =
       error instanceof Error
         ? {
@@ -705,10 +769,14 @@ router.post(
 
       const ipfsHash = await ipfsService.uploadBuffer(file.buffer, uniqueFilename);
 
+      // Get photoHash from request body if provided (mobile app sends it)
+      const { photoHash } = req.body as { photoHash?: string };
+
       const updatedDelivery = await prisma.delivery.update({
         where: { id },
         data: {
-          photoIpfsHash: ipfsHash
+          photoIpfsHash: ipfsHash,
+          ...(photoHash ? { photoHash } : {}) // Store hash if provided
         }
       });
 
@@ -906,10 +974,14 @@ router.post(
 
       const ipfsHash = await ipfsService.uploadBuffer(buffer, uniqueFilename);
 
+      // Get signatureHash from request body if provided (mobile app sends it)
+      const { signatureHash } = req.body as { signatureHash?: string };
+
       const updatedDelivery = await prisma.delivery.update({
         where: { id },
         data: {
-          signatureIpfsHash: ipfsHash
+          signatureIpfsHash: ipfsHash,
+          ...(signatureHash ? { signatureHash } : {}) // Store hash if provided
         }
       });
 

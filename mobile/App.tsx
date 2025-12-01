@@ -14,15 +14,26 @@ import { VerifyDeliveryScreen } from './src/screens/VerifyDeliveryScreen';
 // Suppress NativeEventEmitter warnings from third-party libraries
 // These are harmless warnings from libraries that haven't updated their native modules
 // to include the required addListener/removeListeners methods (React Native 0.65+ requirement)
+//
+// Note: Warnings in Metro bundler server logs may still appear as they originate from
+// native modules before JavaScript executes. These are cosmetic and don't affect functionality.
+// The suppression below handles warnings in the app UI and JavaScript console.
 
-// Intercept console.warn to filter out NativeEventEmitter warnings
+// Intercept console.warn and console.error to filter out NativeEventEmitter warnings
 const originalWarn = console.warn;
+const originalError = console.error;
+
+const shouldSuppressWarning = (message: string): boolean => {
+  const lowerMessage = message.toLowerCase();
+  return (
+    lowerMessage.includes('nativeeventemitter') &&
+    (lowerMessage.includes('addlistener') || lowerMessage.includes('removelisteners'))
+  );
+};
+
 console.warn = (...args: unknown[]) => {
   const message = String(args[0] || '');
-  if (
-    message.includes('NativeEventEmitter') &&
-    (message.includes('addListener') || message.includes('removeListeners'))
-  ) {
+  if (shouldSuppressWarning(message)) {
     // Suppress this warning - don't call original warn
     return;
   }
@@ -30,11 +41,35 @@ console.warn = (...args: unknown[]) => {
   originalWarn.apply(console, args);
 };
 
-// Also use LogBox to suppress these warnings (as a backup)
-LogBox.ignoreLogs([
-  'new NativeEventEmitter() was called with a non-null argument without the required addListener method',
-  'new NativeEventEmitter() was called with a non-null argument without the required removeListeners method'
-]);
+console.error = (...args: unknown[]) => {
+  const message = String(args[0] || '');
+  if (shouldSuppressWarning(message)) {
+    // Suppress this error - don't call original error
+    return;
+  }
+  // Call original error for other messages
+  originalError.apply(console, args);
+};
+
+// Use LogBox to suppress these warnings in the UI (yellow box warnings)
+// LogBox.ignoreLogs supports both string patterns and regex (React Native 0.63+)
+// We include both exact strings and regex patterns to catch all variations
+try {
+  LogBox.ignoreLogs([
+    // Regex patterns (more flexible, catches variations)
+    /NativeEventEmitter.*addListener/i,
+    /NativeEventEmitter.*removeListeners/i,
+    // Exact string matches (with and without periods)
+    'new NativeEventEmitter() was called with a non-null argument without the required addListener method',
+    'new NativeEventEmitter() was called with a non-null argument without the required addListener method.',
+    'new NativeEventEmitter() was called with a non-null argument without the required removeListeners method',
+    'new NativeEventEmitter() was called with a non-null argument without the required removeListeners method.',
+  ]);
+} catch (error) {
+  // Fallback if LogBox.ignoreLogs doesn't support regex in this React Native version
+  // In that case, console interception above will still work
+  console.debug('LogBox.ignoreLogs configuration skipped:', error);
+}
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

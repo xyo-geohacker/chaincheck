@@ -49,7 +49,7 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
     navigation.setOptions({
       headerStyle: { backgroundColor: '#05060F' },
       headerTitleStyle: { color: '#F7F8FD' },
-      headerTintColor: '#8EA8FF',
+      headerTintColor: colors.text.accent,
       headerRight: () => (
         <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton} activeOpacity={0.85}>
           <Text style={styles.logoutText}>Sign Out</Text>
@@ -140,7 +140,7 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       {isLoading ? (
         <View style={styles.loadingState}>
-          <ActivityIndicator size="large" color="#8EA8FF" />
+          <ActivityIndicator size="large" color={colors.text.accent} />
           <Text style={styles.loadingText}>Loading deliveries…</Text>
         </View>
       ) : (
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#8EA8FF'
+    color: colors.text.accent
   },
   listContent: {
     padding: 18,

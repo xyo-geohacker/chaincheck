@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { authenticateConfigToken } from '../middleware/config-auth-middleware.js';
 import { env } from '../lib/env.js';
 import axios from 'axios';
+import https from 'https';
 
 const router = Router();
 
@@ -23,28 +24,83 @@ interface ServiceStatus {
  * Check backend service status
  */
 async function checkBackendStatus(): Promise<ServiceStatus> {
-  try {
-    const backendHost = env.backendHost;
-    const healthUrl = `http://${backendHost}:${env.port}/health`;
-    const response = await axios.get(healthUrl, { timeout: 2000 });
-    
-    return {
-      name: 'Backend',
-      status: response.status === 200 ? 'running' : 'stopped',
-      url: `http://${backendHost}:${env.port}`,
-      port: env.port,
-      lastChecked: new Date().toISOString()
-    };
-  } catch (error) {
-    return {
-      name: 'Backend',
-      status: 'stopped',
-      url: `http://${env.backendHost}:${env.port}`,
-      port: env.port,
-      lastChecked: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Service unavailable'
-    };
+  const backendHost = env.backendHost;
+  const backendPort = env.port;
+  const backendUrl = `http://${backendHost}:${backendPort}`;
+  const healthUrl = `${backendUrl}/health`;
+  
+  // Build list of URLs to try
+  // If using FQDN, try localhost first (faster) then FQDN
+  // If using localhost, just try that
+  const urlsToTry: string[] = [];
+  const isFQDN = backendHost !== 'localhost' && backendHost !== '127.0.0.1' && backendHost.includes('.');
+  
+  if (isFQDN) {
+    // Try localhost first (faster, more reliable), then FQDN
+    urlsToTry.push(`http://localhost:${backendPort}/health`);
+    urlsToTry.push(healthUrl);
+  } else {
+    // Just use the configured host
+    urlsToTry.push(healthUrl);
   }
+  
+  // Try each URL until one succeeds
+  let lastError: Error | null = null;
+  for (const urlToTry of urlsToTry) {
+    try {
+      // eslint-disable-next-line no-console
+      console.log(`[Status Check] Backend: Trying ${urlToTry}...`);
+      const response = await axios.get(urlToTry, { 
+        timeout: 5000, // Increased timeout
+        validateStatus: () => true // Don't throw on any status code
+      });
+      
+      // eslint-disable-next-line no-console
+      console.log(`[Status Check] Backend: ${urlToTry} responded with status ${response.status}`);
+      
+      // Success - return status
+      return {
+        name: 'Backend',
+        status: response.status === 200 ? 'running' : 'stopped',
+        url: backendUrl, // Return original URL (not fallback localhost) for display
+        port: backendPort,
+        lastChecked: new Date().toISOString()
+      };
+    } catch (error) {
+      // Store error and try next URL
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // eslint-disable-next-line no-console
+      console.log(`[Status Check] Backend: ${urlToTry} failed: ${errorMsg}`);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      continue;
+    }
+  }
+  
+  // All URLs failed - use last error
+  const error = lastError || new Error('All connection attempts failed');
+  
+  // Extract more detailed error information
+  let errorMessage = 'Service unavailable';
+  if (error instanceof Error) {
+    if (error.message.includes('timeout')) {
+      errorMessage = `timeout of 5000ms exceeded`;
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+      errorMessage = `DNS resolution failed - ensure ${backendHost} is in /etc/hosts or DNS`;
+    } else if (error.message.includes('ECONNREFUSED')) {
+      errorMessage = `Connection refused - server may not be running on port ${backendPort}`;
+    } else {
+      errorMessage = error.message;
+    }
+  }
+  
+  return {
+    name: 'Backend',
+    status: 'stopped',
+    url: backendUrl,
+    port: backendPort,
+    lastChecked: new Date().toISOString(),
+    error: errorMessage
+  };
 }
 
 /**
@@ -52,29 +108,134 @@ async function checkBackendStatus(): Promise<ServiceStatus> {
  */
 async function checkWebStatus(): Promise<ServiceStatus> {
   try {
-    // Try to check web service health endpoint
-    // Default Next.js dev server runs on port 3000
-    const webPort = process.env.WEB_PORT || 3000;
-    const webHost = env.webHost;
-    const webUrl = `http://${webHost}:${webPort}`;
+    // Use WEB_URL if available (includes protocol), otherwise construct from host/port
+    let webUrl: string;
+    let webPort: number;
     
-    const response = await axios.get(webUrl, { timeout: 2000 });
+    if (env.webUrl) {
+      // Parse WEB_URL to extract protocol and port
+      try {
+        const url = new URL(env.webUrl);
+        webUrl = env.webUrl; // Use full URL (includes protocol: http:// or https://)
+        webPort = url.port ? Number(url.port) : (url.protocol === 'https:' ? 443 : 80);
+      } catch {
+        // If WEB_URL is not a valid URL, fall back to constructing from host/port
+        const webPortEnv = process.env.WEB_PORT || 3000;
+        const webHost = env.webHost;
+        webUrl = `http://${webHost}:${webPortEnv}`;
+        webPort = Number(webPortEnv);
+      }
+    } else {
+      // Fallback: construct URL from host and port (defaults to HTTP)
+      const webPortEnv = process.env.WEB_PORT || 3000;
+      const webHost = env.webHost;
+      const webProtocol = process.env.WEB_PROTOCOL || 'http'; // Allow override via WEB_PROTOCOL
+      webUrl = `${webProtocol}://${webHost}:${webPortEnv}`;
+      webPort = Number(webPortEnv);
+    }
     
-    return {
-      name: 'Web',
-      status: response.status === 200 ? 'running' : 'stopped',
-      url: webUrl,
-      port: Number(webPort),
-      lastChecked: new Date().toISOString()
-    };
+    // Extract hostname for potential fallback
+    let webHostname: string;
+    try {
+      const url = new URL(webUrl);
+      webHostname = url.hostname;
+    } catch {
+      webHostname = env.webHost;
+    }
+    
+    // Build list of URLs to try
+    // If using FQDN, try localhost first (faster) then FQDN
+    // If using localhost, just try that
+    const urlsToTry: string[] = [];
+    const isFQDN = webHostname !== 'localhost' && webHostname !== '127.0.0.1' && webHostname.includes('.');
+    
+    if (isFQDN) {
+      // Try localhost first (faster, more reliable), then FQDN
+      try {
+        const url = new URL(webUrl);
+        const localhostUrl = `${url.protocol}//localhost:${url.port || (url.protocol === 'https:' ? '443' : '80')}`;
+        urlsToTry.push(localhostUrl);
+        urlsToTry.push(webUrl);
+      } catch {
+        // If URL parsing fails, just try the original URL
+        urlsToTry.push(webUrl);
+      }
+    } else {
+      // Just use the configured URL
+      urlsToTry.push(webUrl);
+    }
+    
+    // Try each URL until one succeeds
+    let lastError: Error | null = null;
+    for (const urlToTry of urlsToTry) {
+      try {
+        // Try HTTPS first if URL uses HTTPS, otherwise try HTTP
+        // Also handle self-signed certificates by rejecting unauthorized errors
+        // Increase timeout for HTTPS (self-signed certs may take longer)
+        const response = await axios.get(urlToTry, { 
+          timeout: 5000, // Increased timeout for HTTPS with self-signed certs
+          validateStatus: () => true, // Don't throw on any status code
+          httpsAgent: urlToTry.startsWith('https://') ? new https.Agent({
+            rejectUnauthorized: false // Allow self-signed certificates for local dev
+          }) : undefined,
+          // Add headers to help with connection
+          headers: {
+            'User-Agent': 'ChainCheck-Backend-Status-Check/1.0'
+          }
+        });
+        
+        // Success - return status (use original URL for display, not fallback)
+        return {
+          name: 'Web',
+          status: response.status === 200 ? 'running' : 'stopped',
+          url: webUrl, // Return original URL (not fallback localhost) for display
+          port: webPort !== 443 && webPort !== 80 ? webPort : undefined,
+          lastChecked: new Date().toISOString()
+        };
+      } catch (error) {
+        // Store error and try next URL
+        lastError = error instanceof Error ? error : new Error(String(error));
+        continue;
+      }
+    }
+    
+    // All URLs failed - use last error
+    throw lastError || new Error('All connection attempts failed');
   } catch (error) {
+    // Determine URL for error response
+    let errorUrl: string;
+    if (env.webUrl) {
+      errorUrl = env.webUrl;
+    } else {
+      const webPortEnv = process.env.WEB_PORT || 3000;
+      const webHost = env.webHost;
+      const webProtocol = process.env.WEB_PROTOCOL || 'http';
+      errorUrl = `${webProtocol}://${webHost}:${webPortEnv}`;
+    }
+    
+    // Extract more detailed error information
+    let errorMessage = 'Service unavailable';
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        errorMessage = `timeout of 5000ms exceeded`;
+      } else if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+        errorMessage = `DNS resolution failed - ensure ${new URL(errorUrl).hostname} is in /etc/hosts or DNS`;
+      } else if (error.message.includes('ECONNREFUSED')) {
+        errorMessage = `Connection refused - server may not be running on port ${new URL(errorUrl).port || 3000}`;
+      } else if (error.message.includes('certificate') || error.message.includes('SSL')) {
+        errorMessage = `SSL/TLS error: ${error.message}`;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return {
       name: 'Web',
       status: 'stopped',
-      url: `http://${env.webHost}:${process.env.WEB_PORT || 3000}`,
+      url: errorUrl,
       port: Number(process.env.WEB_PORT || 3000),
       lastChecked: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Service unavailable'
+      error: errorMessage
     };
   }
 }
@@ -83,31 +244,83 @@ async function checkWebStatus(): Promise<ServiceStatus> {
  * Check mobile service status (Expo dev server)
  */
 async function checkMobileStatus(): Promise<ServiceStatus> {
-  try {
-    // Expo dev server typically runs on port 8081
-    const expoPort = process.env.EXPO_PORT || 8081;
-    const mobileHost = env.mobileHost;
-    const expoUrl = `http://${mobileHost}:${expoPort}`;
-    
-    const response = await axios.get(expoUrl, { timeout: 2000 });
-    
-    return {
-      name: 'Mobile',
-      status: response.status === 200 ? 'running' : 'stopped',
-      url: expoUrl,
-      port: Number(expoPort),
-      lastChecked: new Date().toISOString()
-    };
-  } catch (error) {
-    return {
-      name: 'Mobile',
-      status: 'stopped',
-      url: `http://${env.mobileHost}:${process.env.EXPO_PORT || 8081}`,
-      port: Number(process.env.EXPO_PORT || 8081),
-      lastChecked: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Service unavailable'
-    };
+  // Expo dev server typically runs on port 8081
+  const expoPort = Number(process.env.EXPO_PORT || 8081);
+  const mobileHost = env.mobileHost;
+  const expoUrl = `http://${mobileHost}:${expoPort}`;
+  
+  // Build list of URLs to try
+  // If using FQDN, try localhost first (faster) then FQDN
+  // If using localhost, just try that
+  const urlsToTry: string[] = [];
+  const isFQDN = mobileHost !== 'localhost' && mobileHost !== '127.0.0.1' && mobileHost.includes('.');
+  
+  if (isFQDN) {
+    // Try localhost first (faster, more reliable), then FQDN
+    urlsToTry.push(`http://localhost:${expoPort}`);
+    urlsToTry.push(expoUrl);
+  } else {
+    // Just use the configured host
+    urlsToTry.push(expoUrl);
   }
+  
+  // Try each URL until one succeeds
+  let lastError: Error | null = null;
+  for (const urlToTry of urlsToTry) {
+    try {
+      // eslint-disable-next-line no-console
+      console.log(`[Status Check] Mobile: Trying ${urlToTry}...`);
+      const response = await axios.get(urlToTry, { 
+        timeout: 5000, // Increased timeout
+        validateStatus: () => true // Don't throw on any status code
+      });
+      
+      // eslint-disable-next-line no-console
+      console.log(`[Status Check] Mobile: ${urlToTry} responded with status ${response.status}`);
+      
+      // Success - return status
+      return {
+        name: 'Mobile',
+        status: response.status === 200 ? 'running' : 'stopped',
+        url: expoUrl, // Return original URL (not fallback localhost) for display
+        port: expoPort,
+        lastChecked: new Date().toISOString()
+      };
+    } catch (error) {
+      // Store error and try next URL
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // eslint-disable-next-line no-console
+      console.log(`[Status Check] Mobile: ${urlToTry} failed: ${errorMsg}`);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      continue;
+    }
+  }
+  
+  // All URLs failed - use last error
+  const error = lastError || new Error('All connection attempts failed');
+  
+  // Extract more detailed error information
+  let errorMessage = 'Service unavailable';
+  if (error instanceof Error) {
+    if (error.message.includes('timeout')) {
+      errorMessage = `timeout of 5000ms exceeded`;
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+      errorMessage = `DNS resolution failed - ensure ${mobileHost} is in /etc/hosts or DNS`;
+    } else if (error.message.includes('ECONNREFUSED')) {
+      errorMessage = `Connection refused - server may not be running on port ${expoPort}`;
+    } else {
+      errorMessage = error.message;
+    }
+  }
+  
+  return {
+    name: 'Mobile',
+    status: 'stopped',
+    url: expoUrl,
+    port: expoPort,
+    lastChecked: new Date().toISOString(),
+    error: errorMessage
+  };
 }
 
 /**
