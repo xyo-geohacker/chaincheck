@@ -310,6 +310,37 @@ cp env.local.example .env.local
 npm run dev
 ```
 
+#### HTTPS Setup (Optional - for Web Crypto API)
+
+The Web Crypto API (`crypto.subtle`) requires HTTPS when using a FQDN. To use `www.chaincheck.com` instead of `localhost`:
+
+1. **Generate SSL certificate:**
+   ```bash
+   cd web
+   npm run generate-cert
+   ```
+
+2. **Add to `/etc/hosts`:**
+   ```bash
+   sudo nano /etc/hosts
+   # Add:
+   # 127.0.0.1  www.chaincheck.com
+   # 127.0.0.1  chaincheck.com
+   ```
+
+3. **Trust certificate (macOS):**
+   ```bash
+   cd web
+   sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/chaincheck.crt
+   ```
+
+4. **Start HTTPS server:**
+   ```bash
+   npm run dev:https
+   ```
+
+Visit: `https://www.chaincheck.com:3000`
+
 ### Archivist (Local Development)
 
 The Archivist stores off-chain payload data. For local development:

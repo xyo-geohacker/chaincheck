@@ -146,6 +146,15 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
             mapboxAccessToken={mapboxToken}
             style={{ width: '100%', height: '100%' }}
             mapStyle="mapbox://styles/mapbox/dark-v11"
+            onClick={(e) => {
+              // Only close popup if clicking on the map itself (not on a marker)
+              // Markers will handle their own clicks and stop propagation
+              const target = e.originalEvent?.target as Element | null;
+              if (target && (target.closest('[role="button"]') || target.closest('button'))) {
+                return; // Don't close if clicking on a button or marker
+              }
+              setSelectedNode(null);
+            }}
           >
             {nodes
               .filter(node => node.location?.latitude && node.location?.longitude)
@@ -156,13 +165,50 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
                   longitude={node.location!.longitude}
                   anchor="bottom"
                 >
-                  <button
-                    onClick={() => setSelectedNode(node)}
-                    className="text-2xl cursor-pointer hover:scale-110 transition-transform"
-                    style={{ filter: `drop-shadow(0 0 4px ${getNodeColor(node.type)})` }}
+                  <div
+                    onClick={(e) => {
+                      // Stop event propagation to prevent map from handling the click
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setSelectedNode(node);
+                    }}
+                    onMouseDown={(e) => {
+                      // Stop mousedown propagation - this fires before map click handlers
+                      // preventDefault prevents default browser behavior
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    onMouseUp={(e) => {
+                      // Also stop mouseup to ensure event is fully handled
+                      e.stopPropagation();
+                    }}
+                    onTouchStart={(e) => {
+                      // Handle touch events for mobile
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setSelectedNode(node);
+                    }}
+                    className="text-2xl cursor-pointer hover:scale-110 transition-transform relative select-none"
+                    style={{ 
+                      filter: `drop-shadow(0 0 4px ${getNodeColor(node.type)})`,
+                      pointerEvents: 'auto',
+                      zIndex: 1000,
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation'
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View details for ${node.type || 'node'} node`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedNode(node);
+                      }
+                    }}
                   >
                     {getNodeIcon(node.type)}
-                  </button>
+                  </div>
                 </Marker>
               ))}
 

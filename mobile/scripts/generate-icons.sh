@@ -54,9 +54,6 @@ echo "Generating icon.png (1024x1024)..."
 magick "$SOURCE_IMAGE" -resize 1024x1024^ -gravity center -extent 1024x1024 -background black -alpha remove "$ASSETS_DIR/icon.png"
 
 # Generate adaptive-icon.png (1024x1024, Android foreground)
-# Android adaptive icons only show the center 66-80% (safe zone), so we need to add padding
-# Resize to fit within 80% of canvas (819px) to maximize icon size while staying in safe zone
-# Maintain aspect ratio: resize to fit within bounds, then center with transparent padding
 echo "Generating adaptive-icon.png (1024x1024) with safe zone padding..."
 magick "$SOURCE_IMAGE" \
   -resize '1024x1024>' \

@@ -53,9 +53,47 @@ export async function calculatePayloadHash(payload: unknown): Promise<string> {
   const canonicalJson = JSON.stringify(sortedPayload);
   
   // Calculate SHA-256 hash
+  // Use Web Crypto API (available in browsers and Node.js 15+)
+  // In browser: window.crypto.subtle
+  // In Node.js: globalThis.crypto.subtle (Node.js 19+) or require('crypto').webcrypto.subtle
+  let cryptoSubtle: SubtleCrypto | null = null;
+  
+  // Try browser environment first
+  if (typeof window !== 'undefined') {
+    try {
+      if (window.crypto && window.crypto.subtle) {
+        cryptoSubtle = window.crypto.subtle;
+      }
+    } catch (e) {
+      // window.crypto might not be accessible in some contexts
+    }
+  }
+  
+  // Fall back to globalThis (Node.js 19+)
+  if (!cryptoSubtle && typeof globalThis !== 'undefined') {
+    try {
+      if (globalThis.crypto && globalThis.crypto.subtle) {
+        cryptoSubtle = globalThis.crypto.subtle;
+      }
+    } catch (e) {
+      // globalThis.crypto might not be accessible
+    }
+  }
+  
+  if (!cryptoSubtle) {
+    // Provide more helpful error message
+    const env = typeof window !== 'undefined' ? 'browser' : 'server';
+    throw new Error(
+      `crypto.subtle is not available in ${env} environment. ` +
+      `This function requires Web Crypto API support. ` +
+      `In browsers, ensure you're using HTTPS or localhost. ` +
+      `In Node.js, ensure you're using Node.js 19+ or have webcrypto polyfill.`
+    );
+  }
+  
   const encoder = new TextEncoder();
   const data = encoder.encode(canonicalJson);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await cryptoSubtle.digest('SHA-256', data);
   
   // Convert to hex string (lowercase, matching XYO SDK format)
   const hashArray = Array.from(new Uint8Array(hashBuffer));

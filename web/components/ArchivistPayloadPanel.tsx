@@ -153,6 +153,28 @@ export function ArchivistPayloadPanel({ archivistResponse, xl1TransactionHash, a
                   </p>
                 </div>
               )}
+              {payloadData.photoHash != null && (
+                <div>
+                  <dt className="text-xs text-slate-400">Photo Hash</dt>
+                  <dd className="mt-1">
+                    <div className="text-sm font-mono text-[#8fa5ff] break-all">{String(payloadData.photoHash)}</div>
+                    <p className="mt-1 text-[10px] text-slate-500 italic">
+                      SHA-256 hash of delivery photo for tamper detection
+                    </p>
+                  </dd>
+                </div>
+              )}
+              {payloadData.signatureHash != null && (
+                <div>
+                  <dt className="text-xs text-slate-400">Signature Hash</dt>
+                  <dd className="mt-1">
+                    <div className="text-sm font-mono text-[#8fa5ff] break-all">{String(payloadData.signatureHash)}</div>
+                    <p className="mt-1 text-[10px] text-slate-500 italic">
+                      SHA-256 hash of recipient signature for tamper detection
+                    </p>
+                  </dd>
+                </div>
+              )}
               {payloadData.timestamp != null && (
                 <div>
                   <dt className="text-xs text-slate-400">Timestamp</dt>

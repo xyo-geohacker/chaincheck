@@ -49,13 +49,23 @@ export class XYOMobileService {
       requestBody.notes = location.notes;
     }
 
-    if (location.photoHash) {
+    // Always include hashes if provided (even if empty string, though they shouldn't be)
+    // This ensures they're sent to the backend for storage
+    if (location.photoHash !== undefined && location.photoHash !== null) {
       requestBody.photoHash = location.photoHash;
+      console.log('[XYO SERVICE] Including photoHash in request:', location.photoHash ? `${location.photoHash.substring(0, 16)}...` : 'empty');
+    } else {
+      console.log('[XYO SERVICE] photoHash not provided (undefined or null)');
     }
 
-    if (location.signatureHash) {
+    if (location.signatureHash !== undefined && location.signatureHash !== null) {
       requestBody.signatureHash = location.signatureHash;
+      console.log('[XYO SERVICE] Including signatureHash in request:', location.signatureHash ? `${location.signatureHash.substring(0, 16)}...` : 'empty');
+    } else {
+      console.log('[XYO SERVICE] signatureHash not provided (undefined or null)');
     }
+    
+    console.log('[XYO SERVICE] Final request body keys:', Object.keys(requestBody));
 
     if (location.nfcData) {
       requestBody.nfcRecord1 = location.nfcData.record1;
@@ -67,7 +77,7 @@ export class XYOMobileService {
     return response.data;
   }
 
-  async uploadDeliveryPhoto(deliveryId: string, photoUri: string) {
+  async uploadDeliveryPhoto(deliveryId: string, photoUri: string, photoHash?: string) {
     if (!apiClient.defaults.baseURL) {
       throw new Error('Missing EXPO_PUBLIC_API_URL configuration');
     }
@@ -78,6 +88,12 @@ export class XYOMobileService {
       type: 'image/jpeg',
       name: 'delivery.jpg'
     } as any);
+    
+    // Include photo hash if provided
+    if (photoHash) {
+      formData.append('photoHash', photoHash);
+      console.log('[XYO SERVICE] Sending photoHash with photo upload:', photoHash.substring(0, 16) + '...');
+    }
 
     const response = await apiClient.post(`/api/deliveries/${deliveryId}/photo`, formData, {
       headers: {
@@ -88,7 +104,7 @@ export class XYOMobileService {
     return response.data;
   }
 
-  async uploadDeliverySignature(deliveryId: string, signatureBase64: string) {
+  async uploadDeliverySignature(deliveryId: string, signatureBase64: string, signatureHash?: string) {
     if (!apiClient.defaults.baseURL) {
       throw new Error('Missing EXPO_PUBLIC_API_URL configuration');
     }
@@ -110,9 +126,19 @@ export class XYOMobileService {
 
     // Send base64 directly in JSON body (backend handles conversion)
     // This is more reliable than file-based upload on Android devices
+    const requestBody: { signatureBase64: string; signatureHash?: string } = {
+      signatureBase64: signatureDataUri
+    };
+    
+    // Include signature hash if provided
+    if (signatureHash) {
+      requestBody.signatureHash = signatureHash;
+      console.log('[XYO SERVICE] Sending signatureHash with signature upload:', signatureHash.substring(0, 16) + '...');
+    }
+    
     const response = await apiClient.post(
       `/api/deliveries/${deliveryId}/signature`,
-      { signatureBase64: signatureDataUri },
+      requestBody,
       {
         headers: {
           'Content-Type': 'application/json'

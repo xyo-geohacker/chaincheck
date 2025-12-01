@@ -207,8 +207,11 @@ Thumbs.db
 desktop.ini
 
 # Sample code and documentation (not committed to source control)
-backend/xyo-sample-projects/
+xyo-sample-projects/
 untracked/
+
+# Video files
+video/
 
 # Keep these files (referenced in README/DEVELOPMENT_GUIDE):
 # - env.example files (kept - users copy these)

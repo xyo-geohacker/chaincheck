@@ -84,11 +84,13 @@ export function ROIDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-300">Period:</label>
+          <label htmlFor="roi-period-select" className="text-sm text-slate-300">Period:</label>
           <select
+            id="roi-period-select"
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as '30' | '90' | '365' | 'all')}
             className="rounded-lg border border-[#2f2862] bg-[#0a0815] px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#8ea8ff]"
+            title="Select time period for ROI metrics"
           >
             <option value="30">Last 30 Days</option>
             <option value="90">Last 90 Days</option>
@@ -124,6 +126,29 @@ export function ROIDashboard() {
                   ? 'Negative ROI'
                   : 'Break-even'}
           </div>
+          <div className="mt-3 pt-3 border-t border-[#8ea8ff]/20">
+            <details className="text-xs text-[#8ea8ff]/70">
+              <summary className="cursor-pointer hover:text-[#8ea8ff]/90 transition-colors">
+                How is ROI calculated?
+              </summary>
+              <div className="mt-2 space-y-1.5 text-[#8ea8ff]/60">
+                <p>
+                  <strong className="text-[#8ea8ff]/80">Formula:</strong> ROI = ((Total Savings - $10,000 Implementation Cost) / $10,000) × 100
+                </p>
+                <p>
+                  <strong className="text-[#8ea8ff]/80">Total Savings</strong> includes:
+                </p>
+                <ul className="list-disc list-inside ml-2 space-y-0.5">
+                  <li>Dispute reduction savings (verified deliveries reduce disputes by ~60%)</li>
+                  <li>Fraud prevention savings (verified deliveries reduce fraud by ~80%)</li>
+                  <li>Operational efficiency savings (reduced customer service calls)</li>
+                </ul>
+                <p className="mt-1.5 italic">
+                  Negative ROI is expected early on until savings exceed the $10,000 implementation cost.
+                </p>
+              </div>
+            </details>
+          </div>
         </div>
 
         <div className="glass-card rounded-3xl border border-amber-500/40 bg-amber-500/10 px-6 py-6">
@@ -135,6 +160,74 @@ export function ROIDashboard() {
             {formatNumber(metrics.fraudPrevention.verificationRate)}% verification rate
           </div>
         </div>
+      </div>
+
+      {/* ROI Calculation Explanation */}
+      <div className="glass-card rounded-3xl border border-[#2f2862] px-6 py-6">
+        <details open className="group">
+          <summary className="cursor-pointer list-none">
+            <h2 className="text-lg font-semibold text-white mb-0 inline-block group-hover:text-[#8ea8ff] transition-colors">
+              ROI Calculation Details
+              <span className="ml-2 text-sm text-slate-400 group-open:hidden">(Click to expand)</span>
+              <span className="ml-2 text-sm text-slate-400 hidden group-open:inline">(Click to collapse)</span>
+            </h2>
+          </summary>
+          <div className="space-y-4 text-sm text-slate-300 mt-4">
+          <div>
+            <h3 className="font-semibold text-white mb-2">Formula</h3>
+            <p className="text-slate-400 font-mono bg-[#0a0815] px-3 py-2 rounded border border-[#2f2862]">
+              ROI = ((Total Cost Savings - Implementation Cost) / Implementation Cost) × 100
+            </p>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <h3 className="font-semibold text-white mb-2">Implementation Cost</h3>
+              <p className="text-slate-400">
+                <span className="font-mono text-emerald-200">$10,000</span> - Estimated first-year implementation and setup cost
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-white mb-2">Total Cost Savings</h3>
+              <p className="text-slate-400">
+                Sum of all savings categories shown below
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-white mb-2">Savings Components</h3>
+            <div className="space-y-2 text-slate-400">
+              <div className="bg-[#0a0815] px-3 py-2 rounded border border-[#2f2862]">
+                <p className="font-semibold text-emerald-200 mb-1">1. Dispute Reduction Savings</p>
+                <p className="text-xs">Estimated disputes prevented = Verified Deliveries × 0.6% × 60% reduction</p>
+                <p className="text-xs">Savings = Disputes Prevented × $50 (avg dispute resolution cost)</p>
+              </div>
+              
+              <div className="bg-[#0a0815] px-3 py-2 rounded border border-[#2f2862]">
+                <p className="font-semibold text-emerald-200 mb-1">2. Fraud Prevention Savings</p>
+                <p className="text-xs">Estimated fraud prevented = Verified Deliveries × 0.8% × 80% reduction</p>
+                <p className="text-xs">Savings = Fraud Prevented × $100 (avg fraud cost per delivery)</p>
+              </div>
+              
+              <div className="bg-[#0a0815] px-3 py-2 rounded border border-[#2f2862]">
+                <p className="font-semibold text-emerald-200 mb-1">3. Operational Efficiency Savings</p>
+                <p className="text-xs">CS calls reduced = Verified Deliveries × 0.1 calls per delivery</p>
+                <p className="text-xs">Savings = CS Calls Reduced × $5 (avg cost per customer service call)</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#2f2862]">
+            <p className="text-xs text-slate-400 italic">
+              <strong className="text-amber-300">Note:</strong> Negative ROI is expected during the initial period until total savings exceed the $10,000 implementation cost. 
+              As verified deliveries increase over time, ROI will become positive. The calculation uses industry-standard estimates 
+              for dispute rates, fraud rates, and operational costs.
+            </p>
+          </div>
+          </div>
+        </details>
       </div>
 
       {/* Detailed Metrics */}

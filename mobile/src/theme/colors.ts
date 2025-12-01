@@ -27,7 +27,7 @@ export const colors = {
     secondary: '#DADDF9',
     muted: '#9aa5d8',
     placeholder: '#8B8FA8',
-    accent: '#8EA8FF',
+    accent: '#A896C8', // Purple accent matching the button theme (was blue #8EA8FF)
   },
 
   // Button colors (with opacity for transparency)

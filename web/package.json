@@ -16,6 +16,8 @@
   "homepage": "https://github.com/xyo-geohacker/chaincheck#readme",
   "scripts": {
     "dev": "next dev",
+    "dev:https": "node server.js",
+    "generate-cert": "bash scripts/generate-ssl-cert.sh",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

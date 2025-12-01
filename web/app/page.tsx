@@ -85,15 +85,36 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-12 text-slate-100">
-      {/* XL1 Wallet Info Link - Upper Right Corner */}
-      <div className="flex justify-end">
+      {/* Info Links - Left and Right Justified */}
+      <div className="flex justify-between items-center gap-3">
+        <Link
+          href="https://coinapp.co/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg border border-[#8ea8ff]/40 bg-[#8ea8ff]/10 px-4 py-2 text-xs font-medium text-[#8ea8ff] hover:bg-[#8ea8ff]/20 transition-colors flex items-center gap-2"
+        >
+          <Image
+            src="/images/coin-logo-color.png"
+            alt="COIN App"
+            width={16}
+            height={16}
+            className="w-4 h-4 object-contain"
+          />
+          <span>Drivers - Earn Rewards and Contribute to XYO Network</span>
+        </Link>
         <Link
           href="https://docs.xyo.network/developers/xl1-wallet/get-xl1-browser-wallet"
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-lg border border-[#8ea8ff]/40 bg-[#8ea8ff]/10 px-4 py-2 text-xs font-medium text-[#8ea8ff] hover:bg-[#8ea8ff]/20 transition-colors flex items-center gap-2"
         >
-          <span>ℹ️</span>
+          <Image
+            src="/images/xl1-logo-color.png"
+            alt="COIN App"
+            width={16}
+            height={16}
+            className="w-4 h-4 object-contain"
+          />
           <span>XL1 Wallet Required for Blockchain Transactions</span>
         </Link>
       </div>
