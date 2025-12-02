@@ -47,6 +47,12 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chaincheck_test
 
+      - name: Backend - Run database migrations
+        working-directory: ./backend
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chaincheck_test
+
       - name: Backend - Run tests with coverage
         working-directory: ./backend
         run: npm test -- --coverage

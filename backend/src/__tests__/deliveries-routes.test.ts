@@ -5,6 +5,17 @@ import { app } from '../index.js';
 import { prisma } from '../lib/prisma.js';
 import { generateToken } from '../lib/jwt.js';
 
+// Mock IPFS service
+vi.mock('../services/ipfs-service', () => {
+  const uploadBufferMock = vi.fn().mockResolvedValue('QmMockIPFSHash123456789');
+  
+  return {
+    IpfsService: vi.fn().mockImplementation(() => ({
+      uploadBuffer: uploadBufferMock
+    }))
+  };
+});
+
 // Mock XL1 service to use mock mode
 vi.mock('../services/xyo-service', () => {
   class MockXyoService {
