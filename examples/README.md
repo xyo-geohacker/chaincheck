@@ -38,7 +38,7 @@ Standalone helper functions that can be dropped into any codebase.
 **Features:**
 - `createXYOProof()` - Create blockchain proof
 - `verifyXYOProof()` - Verify existing proof
-- `getProofChain()` - Get driver proof chain
+- `getProofChain()` - Get bound witness chain (with optional max depth)
 - `getXYONetworkStats()` - Network statistics
 
 ### 4. `integration-with-sensor-data.ts`

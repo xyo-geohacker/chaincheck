@@ -14,6 +14,11 @@ async function main() {
     await prisma.driver.deleteMany();
     await prisma.configurationUser.deleteMany();
 
+    // ⚠️ WARNING: Development-only default passwords
+    // These passwords are for development/testing purposes only.
+    // In production, users should set their own secure passwords.
+    // DO NOT use these default passwords in production environments.
+    
     // Create drivers with default password "Password1"
     const defaultPassword = 'Password1';
     const passwordHash = hashPassword(defaultPassword);
@@ -32,6 +37,9 @@ async function main() {
     console.log(`Created ${driverIds.length} drivers with default password "${defaultPassword}"`);
 
     // Create configuration admin user
+    // ⚠️ WARNING: Default admin credentials are for development only
+    // Username: "admin", Password: "admin"
+    // Change these credentials immediately in production environments.
     const adminPassword = 'admin';
     const adminPasswordHash = hashPassword(adminPassword);
     

@@ -84,7 +84,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { proofHash: string } }
 ) {
-  const { proofHash } = params.proofHash;
+  const { proofHash } = params;
 
   try {
     const result = await xyoService.verifyLocationProof(proofHash);
