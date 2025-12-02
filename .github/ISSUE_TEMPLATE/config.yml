@@ -1,9 +1,9 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or Discussion
-    url: https://github.com/YOUR_USERNAME/YOUR_REPO/discussions
+    url: https://github.com/xyo-geohacker/chaincheck/discussions
     about: Ask questions or start discussions about the project
   - name: Security Issue
-    url: https://github.com/YOUR_USERNAME/YOUR_REPO/security/advisories/new
+    url: https://github.com/xyo-geohacker/chaincheck/security/advisories/new
     about: Report a security vulnerability (do not use public issues)
 
