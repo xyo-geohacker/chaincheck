@@ -40,7 +40,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'npm'
+          # No cache at root level since this is a monorepo with lock files in subdirectories
 
       # Backend Analysis
       - name: Install backend dependencies
@@ -95,4 +95,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # Skip dependency analysis since this is a monorepo with lock files in subdirectories
+          # SonarCloud will still analyze code quality, security, and coverage
+          args: >
+            -Dsonar.dependencyCheck.skip=true
 
