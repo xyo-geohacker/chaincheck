@@ -1,5 +1,3 @@
-# ChainCheck - XYO Network Integration Reference
-
 <div align="center">
   <img src="chaincheck-logo.png" alt="ChainCheck Logo" width="300">
 </div>

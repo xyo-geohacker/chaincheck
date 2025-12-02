@@ -35,7 +35,9 @@ install! 'cocoapods',
 prepare_react_native_project!
 
 # @generated begin @rnmapbox/maps-rnmapboxmapsimpl - expo prebuild (DO NOT MODIFY) sync-833bbb7fc98dd43f0a324dee71fee75ba1440e15
-$RNMapboxMapsDownloadToken = '***REMOVED***'
+# Modified to read from environment variable instead of hardcoded token
+# This prevents committing secrets to the repository
+$RNMapboxMapsDownloadToken = ENV['MAPBOX_DOWNLOADS_TOKEN'] || ENV['EXPO_PUBLIC_MAPBOX_DOWNLOADS_TOKEN'] || ''
 # @generated end @rnmapbox/maps-rnmapboxmapsimpl
 target 'ChainCheck' do
   use_expo_modules!

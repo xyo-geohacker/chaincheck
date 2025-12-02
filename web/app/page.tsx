@@ -5,6 +5,7 @@ import type { DeliveryRecord } from "@shared/types/delivery.types";
 import { DeliveryStatus } from "@shared/types/delivery.types";
 import { fetchDeliveries } from "@lib/api";
 import { DashboardContent } from "@components/DashboardContent";
+import { CollapsibleLinksPanel } from "@components/CollapsibleLinksPanel";
 
 export default async function DashboardPage() {
   let deliveries: DeliveryRecord[] = [];
@@ -197,39 +198,16 @@ export default async function DashboardPage() {
             </div> */}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/wallet-generator"
-              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40 flex items-center justify-center gap-2"
-            >
-              {/*<Image
-                src="/images/xl1-logo-color.png"
-                alt="XL1 Wallet"
-                width={18}
-                height={18}
-                className="w-4.5 h-4.5 object-contain"
-              />*/}
-              <span>Generate XL1 Wallet Seed</span>
-            </Link>
-            <Link
-              href="/network"
-              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
-            >
-              XYO Network Overview →
-            </Link>
-            <Link
-              href="/configuration/login"
-              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
-            >
-              ChainCheck Configuration →
-            </Link>
-            <Link
-              href="/roi"
-              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
-            >
-              ROI Dashboard →
-            </Link>
-          </div>
+          <CollapsibleLinksPanel
+            title="ChainCheck Links"
+            links={[
+              { href: '/wallet-generator', label: 'Generate XL1 Wallet Seed' },
+              { href: '/network', label: 'XYO Network Overview' },
+              { href: '/configuration/login', label: 'ChainCheck Configuration' },
+              { href: '/roi', label: 'ROI Dashboard' },
+            ]}
+            defaultExpanded={false}
+          />
         </div>
       </header>
 
