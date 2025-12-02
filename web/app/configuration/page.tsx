@@ -22,6 +22,7 @@ export default function ConfigurationPage() {
     backend: ConfigurationItem[];
     web: ConfigurationItem[];
     mobile: ConfigurationItem[];
+    'xyo-services'?: ConfigurationItem[];
   }>({
     backend: [],
     web: [],
@@ -132,7 +133,7 @@ export default function ConfigurationPage() {
     }
   };
 
-  const currentConfig = configurations[activeCategory] || [];
+  const currentConfig = (activeCategory === 'xyo-services' ? [] : configurations[activeCategory]) || [];
   const currentStatus = activeCategory === 'xyo-services' ? null : serverStatus?.[activeCategory];
 
   return (
@@ -343,7 +344,7 @@ export default function ConfigurationPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {currentConfig.map((item) => (
+              {currentConfig.map((item: ConfigurationItem) => (
                 <div
                   key={item.key}
                   className="border border-[#2f2862] rounded-lg p-4 bg-white/5"

@@ -57,7 +57,7 @@ export function CollapsibleLinksPanel({
           {links.map((link, index) => (
             <Link
               key={index}
-              href={link.href}
+              href={link.href as any}
               target={link.external ? '_blank' : undefined}
               rel={link.external ? 'noopener noreferrer' : undefined}
               className="rounded-xl bg-[#100e1d]/60 px-4 py-3 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-md shadow-black/20"

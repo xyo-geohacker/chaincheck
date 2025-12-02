@@ -153,7 +153,7 @@ export default async function DeliveryPage({ params }: DeliveryPageProps) {
                       {delivery.actualLat.toFixed(6)}, {delivery.actualLon.toFixed(6)}
                     </dd>
                   </div>
-                  {delivery.distanceFromDest !== null && (
+                  {delivery.distanceFromDest !== null && delivery.distanceFromDest !== undefined && (
                     <div>
                       <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Distance from Destination</dt>
                       <dd className="mt-1 text-sm font-medium text-white">

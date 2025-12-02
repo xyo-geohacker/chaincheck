@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { fetchLocationAccuracy, type LocationAccuracyResult } from '@lib/api';
+import { fetchLocationAccuracy } from '@lib/api';
+import type { LocationAccuracyResult } from '@shared/types/xyo.types';
 
 type Props = {
   proofHash: string;
@@ -77,8 +78,8 @@ export function LocationAccuracyPanel({ proofHash, latitude, longitude }: Props)
               🧪 Mock
             </span>
           )}
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${confidenceColors[accuracy.confidenceLevel]}`}>
-            {confidenceLabels[accuracy.confidenceLevel]}
+          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${confidenceColors[accuracy.confidenceLevel as keyof typeof confidenceColors]}`}>
+            {confidenceLabels[accuracy.confidenceLevel as keyof typeof confidenceLabels]}
           </span>
         </div>
       </div>

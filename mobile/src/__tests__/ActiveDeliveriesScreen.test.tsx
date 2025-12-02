@@ -5,6 +5,7 @@ import { ActiveDeliveriesScreen } from '../screens/ActiveDeliveriesScreen';
 import { useDriverStore } from '../store/useDriverStore';
 import { apiClient } from '../services/api.service';
 import type { DeliveryRecord } from '@shared/types/delivery.types';
+import { DeliveryStatus } from '@shared/types/delivery.types';
 
 // Mock the store
 jest.mock('../store/useDriverStore');
@@ -39,7 +40,7 @@ const mockDeliveries: DeliveryRecord[] = [
     deliveryAddress: '123 Main St',
     destinationLat: 37.7749,
     destinationLon: -122.4194,
-    status: 'IN_TRANSIT',
+    status: DeliveryStatus.IN_TRANSIT,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -52,7 +53,7 @@ const mockDeliveries: DeliveryRecord[] = [
     deliveryAddress: '456 Oak Ave',
     destinationLat: 37.7849,
     destinationLon: -122.4094,
-    status: 'PENDING',
+    status: DeliveryStatus.PENDING,
     createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
     updatedAt: new Date(Date.now() - 86400000).toISOString()
   }

@@ -4,8 +4,13 @@ import axios from 'axios';
 import { env } from '../lib/env.js';
 
 // Mock axios
-vi.mock('axios');
-const mockedAxios = vi.mocked(axios);
+vi.mock('axios', () => ({
+  default: {
+    post: vi.fn()
+  }
+}));
+
+const mockedAxiosPost = vi.mocked(axios.post);
 
 // Mock env
 vi.mock('../lib/env.js', () => ({
@@ -29,7 +34,7 @@ describe('IPFS Service', () => {
       const buffer = Buffer.from('test image data');
       const filename = 'test-image.jpg';
 
-      mockedAxios.post.mockResolvedValue({
+      mockedAxiosPost.mockResolvedValue({
         data: {
           IpfsHash: mockHash,
           PinSize: buffer.length
@@ -39,7 +44,7 @@ describe('IPFS Service', () => {
       const hash = await ipfsService.uploadBuffer(buffer, filename);
 
       expect(hash).toBe(mockHash);
-      expect(mockedAxios.post).toHaveBeenCalledWith(
+      expect(mockedAxiosPost).toHaveBeenCalledWith(
         'https://api.pinata.cloud/pinning/pinFileToIPFS',
         expect.any(Object), // FormData
         expect.objectContaining({
@@ -68,15 +73,19 @@ describe('IPFS Service', () => {
       );
 
       // Restore
-      (env as { pinataApiKey: string }).pinataApiKey = originalApiKey;
-      (env as { pinataSecretKey: string }).pinataSecretKey = originalSecretKey;
+      if (originalApiKey !== undefined) {
+        (env as { pinataApiKey: string }).pinataApiKey = originalApiKey;
+      }
+      if (originalSecretKey !== undefined) {
+        (env as { pinataSecretKey: string }).pinataSecretKey = originalSecretKey;
+      }
     });
 
     it('should throw error if response does not contain IPFS hash', async () => {
       const buffer = Buffer.from('test image data');
       const filename = 'test-image.jpg';
 
-      mockedAxios.post.mockResolvedValue({
+      mockedAxiosPost.mockResolvedValue({
         data: {
           // Missing IpfsHash
           PinSize: buffer.length
@@ -92,7 +101,7 @@ describe('IPFS Service', () => {
       const mockHash = 'QmTestHash';
       const buffer = Buffer.from('test data');
 
-      mockedAxios.post.mockResolvedValue({
+      mockedAxiosPost.mockResolvedValue({
         data: {
           IpfsHash: mockHash,
           PinSize: buffer.length
@@ -117,7 +126,7 @@ describe('IPFS Service', () => {
       const buffer = Buffer.from('test data');
       const filename = 'test-image.jpg';
 
-      mockedAxios.post.mockResolvedValue({
+      mockedAxiosPost.mockResolvedValue({
         data: {
           IpfsHash: mockHash,
           PinSize: buffer.length
@@ -127,7 +136,7 @@ describe('IPFS Service', () => {
       await ipfsService.uploadBuffer(buffer, filename);
 
       // Verify FormData was created with metadata
-      const formDataCall = mockedAxios.post.mock.calls[0][1];
+      const formDataCall = mockedAxiosPost.mock.calls[0]?.[1];
       expect(formDataCall).toBeDefined();
     });
 
@@ -135,7 +144,7 @@ describe('IPFS Service', () => {
       const buffer = Buffer.from('test data');
       const filename = 'test.jpg';
 
-      mockedAxios.post.mockRejectedValue(new Error('Network error'));
+      mockedAxiosPost.mockRejectedValue(new Error('Network error'));
 
       await expect(ipfsService.uploadBuffer(buffer, filename)).rejects.toThrow('Network error');
     });

@@ -256,7 +256,7 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
                               ✓ Real Location
                             </div>
                             <div className="text-xs text-slate-600 mt-1">
-                              {selectedNode.metadata.locationNote || 'Location from actual delivery verification'}
+                              {String(selectedNode.metadata.locationNote || 'Location from actual delivery verification')}
                             </div>
                           </>
                         ) : (
@@ -265,7 +265,7 @@ export function WitnessNodeMap({ filters, isMocked }: Props) {
                               ⚠️ Mock Location
                             </div>
                             <div className="text-xs text-slate-600 mt-1">
-                              {selectedNode.metadata.locationNote || 'Location data requires Diviner access'}
+                              {String(selectedNode.metadata.locationNote || 'Location data requires Diviner access')}
                             </div>
                           </>
                         )}

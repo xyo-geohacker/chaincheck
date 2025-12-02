@@ -82,7 +82,10 @@ export function NetworkStatsPanel() {
         <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200">
           <div className="font-semibold mb-1">ℹ️ Data Source</div>
           <div>Node counts, delivery statistics, and coverage area are extracted from XL1 blockchain transactions and delivery records.</div>
-          {stats.deliveries && stats.deliveries.total > 0 && (
+          {(() => {
+            const deliveries = (stats as any).deliveries as { total: number } | undefined;
+            return deliveries && deliveries.total > 0;
+          })() && (
             <div className="mt-1">Coverage calculated from actual delivery locations.</div>
           )}
         </div>
@@ -130,29 +133,32 @@ export function NetworkStatsPanel() {
         </div>
 
         {/* Delivery Statistics */}
-        {stats.deliveries && (
-          <div>
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">Delivery Activity</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
-                <div className="text-xs text-slate-400">Total Deliveries</div>
-                <div className="mt-1 text-lg font-semibold text-white">{stats.deliveries.total.toLocaleString()}</div>
-              </div>
-              <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
-                <div className="text-xs text-slate-400">Verified</div>
-                <div className="mt-1 text-lg font-semibold text-emerald-200">{stats.deliveries.verified.toLocaleString()}</div>
-              </div>
-              <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
-                <div className="text-xs text-slate-400">Active Drivers</div>
-                <div className="mt-1 text-lg font-semibold text-white">{stats.deliveries.uniqueDrivers.toLocaleString()}</div>
-              </div>
-              <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
-                <div className="text-xs text-slate-400">Locations</div>
-                <div className="mt-1 text-lg font-semibold text-white">{stats.deliveries.uniqueLocations.toLocaleString()}</div>
+        {(() => {
+          const deliveries = (stats as any).deliveries as { total: number; verified: number; uniqueDrivers: number; uniqueLocations: number } | undefined;
+          return deliveries && (
+            <div>
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Delivery Activity</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
+                  <div className="text-xs text-slate-400">Total Deliveries</div>
+                  <div className="mt-1 text-lg font-semibold text-white">{deliveries.total.toLocaleString()}</div>
+                </div>
+                <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
+                  <div className="text-xs text-slate-400">Verified</div>
+                  <div className="mt-1 text-lg font-semibold text-emerald-200">{deliveries.verified.toLocaleString()}</div>
+                </div>
+                <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
+                  <div className="text-xs text-slate-400">Active Drivers</div>
+                  <div className="mt-1 text-lg font-semibold text-white">{deliveries.uniqueDrivers.toLocaleString()}</div>
+                </div>
+                <div className="rounded-lg border border-[#2f2862] bg-white/5 p-4">
+                  <div className="text-xs text-slate-400">Locations</div>
+                  <div className="mt-1 text-lg font-semibold text-white">{deliveries.uniqueLocations.toLocaleString()}</div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Coverage Area */}
         <div>
@@ -167,7 +173,10 @@ export function NetworkStatsPanel() {
                   ? `${(stats.coverageArea.totalKm2 / 1_000).toFixed(1)}K km²`
                   : `${stats.coverageArea.totalKm2.toLocaleString()} km²`}
               </div>
-              {stats.deliveries && stats.deliveries.uniqueLocations === 1 && (
+              {(() => {
+                const deliveries = (stats as any).deliveries as { uniqueLocations: number } | undefined;
+                return deliveries && deliveries.uniqueLocations === 1;
+              })() && (
                 <div className="text-xs text-slate-500 mt-1">(estimated from single location)</div>
               )}
             </div>

@@ -53,7 +53,9 @@ describe('JWT Utilities', () => {
       expect(() => generateToken('test-driver')).toThrow('JWT_SECRET is not configured');
       
       // Restore
-      (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      if (originalSecret !== undefined) {
+        (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      }
     });
   });
 
@@ -91,7 +93,9 @@ describe('JWT Utilities', () => {
       expect(decoded).toBeNull();
       
       // Restore
-      (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      if (originalSecret !== undefined) {
+        (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      }
     });
   });
 
@@ -119,7 +123,9 @@ describe('JWT Utilities', () => {
       expect(() => generateConfigToken('admin')).toThrow('JWT_SECRET is not configured');
       
       // Restore
-      (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      if (originalSecret !== undefined) {
+        (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      }
     });
   });
 
@@ -156,7 +162,9 @@ describe('JWT Utilities', () => {
       expect(decoded).toBeNull();
       
       // Restore
-      (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      if (originalSecret !== undefined) {
+        (env as { jwtSecret: string }).jwtSecret = originalSecret;
+      }
     });
   });
 

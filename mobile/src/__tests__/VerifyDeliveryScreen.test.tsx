@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { VerifyDeliveryScreen } from '../screens/VerifyDeliveryScreen';
 import { useDriverStore } from '../store/useDriverStore';
 import type { DeliveryRecord } from '@shared/types/delivery.types';
+import { DeliveryStatus } from '@shared/types/delivery.types';
 
 // Mock the store
 jest.mock('../store/useDriverStore');
@@ -117,7 +118,7 @@ const mockDelivery: DeliveryRecord = {
   deliveryAddress: '123 Main St',
   destinationLat: 37.7749,
   destinationLon: -122.4194,
-  status: 'IN_TRANSIT',
+  status: DeliveryStatus.IN_TRANSIT,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString()
 };

@@ -207,8 +207,9 @@ describe('ROI Analytics Service', () => {
       await roiService.calculateROI();
 
       expect(prisma.delivery.findMany).toHaveBeenCalled();
-      const callArgs = vi.mocked(prisma.delivery.findMany).mock.calls[0][0];
-      expect(callArgs.where.createdAt).toBeDefined();
+      const callArgs = vi.mocked(prisma.delivery.findMany).mock.calls[0]?.[0];
+      expect(callArgs).toBeDefined();
+      expect(callArgs?.where?.createdAt).toBeDefined();
     });
   });
 });

@@ -88,6 +88,16 @@ export function BlockchainProofPanel({ proofHash, proofDataForDisplay, orderId, 
     setValidationError(null);
   };
 
+  // Render bound witness data if available
+  const boundWitnessDisplay = proofDataForDisplay && typeof proofDataForDisplay === 'object' ? (
+    <div>
+      <h3 className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff] mb-2">Bound Witness Data</h3>
+      <pre className="max-h-72 overflow-auto rounded-2xl border border-[#2f2862] bg-[#07060e] p-4 text-xs text-[#8fa5ff]">
+        {String(JSON.stringify(proofDataForDisplay, null, 2))}
+      </pre>
+    </div>
+  ) : null;
+
   return (
     <>
       <div className="glass-card rounded-3xl border border-[#2f2862] px-8 py-8 text-slate-100">
@@ -101,17 +111,10 @@ export function BlockchainProofPanel({ proofHash, proofDataForDisplay, orderId, 
         </div>
         <div className="mt-4 space-y-4">
           {/* Show bound witness data if available */}
-          {proofDataForDisplay && typeof proofDataForDisplay === 'object' && (
-            <div>
-              <h3 className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff] mb-2">Bound Witness Data</h3>
-              <pre className="max-h-72 overflow-auto rounded-2xl border border-[#2f2862] bg-[#07060e] p-4 text-xs text-[#8fa5ff]">
-                {JSON.stringify(proofDataForDisplay, null, 2)}
-              </pre>
-            </div>
-          )}
+          {boundWitnessDisplay}
           
           {/* Show payload hashes if available in bound witness */}
-          {proofDataForDisplay && typeof proofDataForDisplay === 'object' && 'tuple' in proofDataForDisplay && Array.isArray((proofDataForDisplay as any).tuple) && (proofDataForDisplay as any).tuple.length > 0 && (
+          {proofDataForDisplay && typeof proofDataForDisplay === 'object' && 'tuple' in proofDataForDisplay && Array.isArray((proofDataForDisplay as any).tuple) && (proofDataForDisplay as any).tuple.length > 0 ? (
             <div>
               <h3 className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff] mb-2">Payload Hashes</h3>
               <div className="rounded-lg border border-[#2f2862] bg-[#0a0815] p-4">
@@ -141,7 +144,7 @@ export function BlockchainProofPanel({ proofHash, proofDataForDisplay, orderId, 
                 })()}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
         <div className="mt-4 flex flex-col items-center gap-3">
           <a

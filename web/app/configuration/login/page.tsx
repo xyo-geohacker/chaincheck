@@ -19,7 +19,7 @@ export default function ConfigurationLoginPage() {
     const token = localStorage.getItem('configToken');
     if (token) {
       // Redirect to configuration page
-      const redirectTo = searchParams.get('redirect') || '/configuration';
+      const redirectTo = (searchParams.get('redirect') || '/configuration') as '/configuration';
       router.push(redirectTo);
     }
   }, [router, searchParams]);
@@ -49,7 +49,7 @@ export default function ConfigurationLoginPage() {
         }
         
         // Redirect to configuration page
-        const redirectTo = searchParams.get('redirect') || '/configuration';
+        const redirectTo = (searchParams.get('redirect') || '/configuration') as '/configuration';
         router.push(redirectTo);
       } else {
         setError(result.error || 'Login failed');
