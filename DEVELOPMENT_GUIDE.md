@@ -1,5 +1,9 @@
 # ChainCheck Development Guide
 
+<div align="center">
+  <img src="chaincheck-logo.png" alt="ChainCheck Logo" width="300">
+</div>
+
 Complete guide for setting up and developing the ChainCheck delivery verification system from scratch.
 
 ## Table of Contents

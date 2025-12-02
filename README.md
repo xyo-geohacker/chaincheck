@@ -1,5 +1,9 @@
 # ChainCheck - XYO Network Integration Reference
 
+<div align="center">
+  <img src="chaincheck-logo.png" alt="ChainCheck Logo" width="300">
+</div>
+
 **Reference implementation** for integrating XYO Network and XL1 blockchain proof-of-location into existing supply chain and delivery systems. Designed for partners like FedEx to add cryptographic verification to their existing processes with minimal effort.
 
 ## Purpose

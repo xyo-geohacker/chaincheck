@@ -110,18 +110,20 @@ export async function verifyXYOProof(proofHash: string): Promise<{
  * Get proof chain for a driver
  * 
  * @param proofHash - Starting proof hash
- * @param address - Optional address to track (defaults to wallet address)
- * @returns Array of proof hashes in chain order
+ * @param maxDepth - Maximum depth to traverse (default: 5)
+ * @param storedBoundWitnessData - Optional stored bound witness data to use
+ * @returns Array of bound witness objects in chain order
  */
 export async function getProofChain(
   proofHash: string,
-  address?: string
-): Promise<string[]> {
+  maxDepth: number = 5,
+  storedBoundWitnessData?: unknown
+): Promise<unknown[]> {
   const xyoService = getXyoService();
 
   try {
-    const chain = await xyoService.getBoundWitnessChain(proofHash, address);
-    return chain.map((link: { proofHash?: string }) => link.proofHash || '').filter(Boolean);
+    const chain = await xyoService.getBoundWitnessChain(proofHash, maxDepth, storedBoundWitnessData);
+    return chain;
   } catch (error) {
     console.error('Failed to get proof chain:', error);
     return [];
