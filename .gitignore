@@ -134,7 +134,9 @@ backend/prisma/migrations/.migrate/
 .npm
 .npm-cache
 .yarn-integrity
-package-lock.json
+# Note: package-lock.json files should be committed for reproducible builds
+# Only ignore root-level package-lock.json if it exists
+/package-lock.json
 yarn.lock
 pnpm-lock.yaml
 .pnpm-store/
