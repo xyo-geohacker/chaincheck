@@ -58,4 +58,12 @@ EX_DEV_CLIENT_NETWORK_INSPECTOR=true
 # Use legacy packaging to compress native libraries in the resulting APK.
 expo.useLegacyPackaging=false
 
-MAPBOX_DOWNLOADS_TOKEN=***REMOVED***
+# Mapbox Downloads Token (required for @rnmapbox/maps Android native SDK)
+# IMPORTANT: This must be a SECRET token (starts with 'sk.') with 'Downloads:Read' scope
+# Get your secret token from: https://account.mapbox.com/access-tokens/
+# Copy this file to gradle.properties and add your token:
+#   cp gradle.properties.example gradle.properties
+#   # Then edit gradle.properties and add your token after the = sign
+# Or set it as an environment variable: MAPBOX_DOWNLOADS_TOKEN
+MAPBOX_DOWNLOADS_TOKEN=your_mapbox_downloads_token_here
+

@@ -1119,7 +1119,16 @@ Before building the iOS app, you need to configure Mapbox authentication:
    # MAPBOX_DOWNLOADS_TOKEN=sk.your_secret_token_here
    ```
 
-3. **Configure Mapbox SDK Downloads:**
+3. **Configure Android Gradle Properties (Required for Android builds):**
+   ```bash
+   cd mobile/android
+   cp gradle.properties.example gradle.properties
+   # Edit gradle.properties and add your MAPBOX_DOWNLOADS_TOKEN after the = sign
+   # Example: MAPBOX_DOWNLOADS_TOKEN=sk.your_secret_token_here
+   ```
+   **Important**: The `gradle.properties` file is gitignored and will NOT be committed. This is intentional to keep your token secure.
+
+4. **Configure Mapbox SDK Downloads:**
    ```bash
    # Create ~/.netrc file for Mapbox SDK authentication
    cat > ~/.netrc << EOF

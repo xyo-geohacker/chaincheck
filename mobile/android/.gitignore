@@ -14,3 +14,7 @@ local.properties
 
 # Bundle artifacts
 *.jsbundle
+
+# Gradle properties with secrets (user-specific, not committed)
+# Copy from gradle.properties.example and add your MAPBOX_DOWNLOADS_TOKEN
+gradle.properties
