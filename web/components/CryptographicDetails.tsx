@@ -352,7 +352,7 @@ export function CryptographicDetails({ proofHash }: Props) {
             <div className="space-y-6">
               <div>
                 <h3 className="text-2xl font-semibold text-white mb-2">
-                  What Does "Cryptographically Verified" Mean?
+                  What Does &quot;Cryptographically Verified&quot; Mean?
                 </h3>
                 <p className="text-sm text-slate-400">
                   In simple terms, this means your delivery proof has been mathematically verified and cannot be faked or tampered with.
@@ -368,11 +368,11 @@ export function CryptographicDetails({ proofHash }: Props) {
                   <ul className="space-y-2 text-sm text-slate-300">
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-1">•</span>
-                      <span><strong>Authenticity:</strong> The delivery proof was created by the actual delivery system and hasn't been altered.</span>
+                      <span><strong>Authenticity:</strong> The delivery proof was created by the actual delivery system and hasn&apos;t been altered.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-1">•</span>
-                      <span><strong>Integrity:</strong> All the data (location, time, photos, signatures) is exactly as it was recorded and hasn't been changed.</span>
+                      <span><strong>Integrity:</strong> All the data (location, time, photos, signatures) is exactly as it was recorded and hasn&apos;t been changed.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-1">•</span>
@@ -400,7 +400,7 @@ export function CryptographicDetails({ proofHash }: Props) {
                       <li className="list-disc">Links the proof to the blockchain for permanent verification</li>
                     </ul>
                     <p className="mt-3">
-                      The "Cryptographically Verified" status means all these checks have passed, and your delivery proof is authentic and tamper-proof.
+                      The &quot;Cryptographically Verified&quot; status means all these checks have passed, and your delivery proof is authentic and tamper-proof.
                     </p>
                   </div>
                 </div>
@@ -410,7 +410,7 @@ export function CryptographicDetails({ proofHash }: Props) {
                     Why This Matters
                   </h4>
                   <p className="text-sm text-emerald-100">
-                    This verification ensures that delivery records can be trusted for legal, insurance, or business purposes. The cryptographic proof provides mathematical certainty that the data is authentic and hasn't been modified since it was originally recorded.
+                    This verification ensures that delivery records can be trusted for legal, insurance, or business purposes. The cryptographic proof provides mathematical certainty that the data is authentic and hasn&apos;t been modified since it was originally recorded.
                   </p>
                 </div>
               </div>

@@ -96,7 +96,7 @@ export default function NetworkPage() {
             <div>
               <h4 className="font-semibold text-slate-200 mb-2">Sentinels</h4>
               <p className="text-slate-400">
-                Devices that witness and record location data, creating the foundation of the XYO Network's location verification system.
+                Devices that witness and record location data, creating the foundation of the XYO Network&apos;s location verification system.
               </p>
             </div>
             <div>

@@ -43,6 +43,21 @@ const circleGeoJson = (lat: number, lon: number, radiusMeters = 50) => ({
 export function DeliveryMap({ destination, actualLocation }: Props) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
+  // Calculate circle data before any early returns (React hooks must be called unconditionally)
+  const circleData = useMemo(
+    () => {
+      if (!destination || 
+          typeof destination.lat !== 'number' || 
+          isNaN(destination.lat) ||
+          typeof destination.lon !== 'number' || 
+          isNaN(destination.lon)) {
+        return null;
+      }
+      return circleGeoJson(destination.lat, destination.lon);
+    },
+    [destination?.lat, destination?.lon]
+  );
+
   // Validate destination coordinates
   if (!destination || 
       typeof destination.lat !== 'number' || 
@@ -56,15 +71,19 @@ export function DeliveryMap({ destination, actualLocation }: Props) {
     );
   }
 
-  const circleData = useMemo(
-    () => circleGeoJson(destination.lat, destination.lon),
-    [destination.lat, destination.lon]
-  );
-
   if (!mapboxToken) {
     return (
       <div className="rounded-3xl border border-dashed border-[#3b2e6f] bg-[#100e1d]/70 p-6 text-center text-sm text-[#8ea8ff]">
         Map preview unavailable. Set NEXT_PUBLIC_MAPBOX_TOKEN to enable Mapbox visualization.
+      </div>
+    );
+  }
+
+  // circleData should be valid at this point due to early return above
+  if (!circleData) {
+    return (
+      <div className="rounded-3xl border border-dashed border-[#3b2e6f] bg-[#100e1d]/70 p-6 text-center text-sm text-[#8ea8ff]">
+        Invalid destination coordinates
       </div>
     );
   }

@@ -437,7 +437,7 @@ export function TamperDetectionPanel({ storedPayload, xl1TransactionHash, boundW
             <li>Fetches the current payload data from the XYO Archivist</li>
             <li>Recalculates the cryptographic hash from the actual payload data</li>
             <li>Compares the recalculated hash with the hash stored on the XL1 blockchain</li>
-            <li>Detects any changes made after the original recording, even if the stored hash field wasn't updated</li>
+            <li>Detects any changes made after the original recording, even if the stored hash field wasn&apos;t updated</li>
           </ol>
           <p className="text-xs text-slate-400 italic">
             Note: By recalculating the hash from the actual data, this method ensures that any tampering is detected, even if someone modifies the data but forgets to update the stored hash field.
