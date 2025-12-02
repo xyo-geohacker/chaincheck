@@ -167,6 +167,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity
+          testID="sign-in-button"
           onPress={handleLogin}
           activeOpacity={0.85}
           style={[

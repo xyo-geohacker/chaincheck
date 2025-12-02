@@ -99,20 +99,6 @@ export class ArchivistService {
       const cleanArchivistUrl = env.xyoArchivistUrl.replace(/\/$/, '');
       const endpoints: Array<{ url: string; archive?: string; description: string }> = [];
       
-      // PRIORITY 1: Try archive-based routes first (production Archivist pattern)
-      // These routes are preferred for production Archivist as they support archive isolation
-      // Archive is created automatically on first insert
-      endpoints.push({ 
-        url: `${cleanArchivistUrl}/${preferredArchive}/block/post`, 
-        archive: preferredArchive,
-        description: `/${preferredArchive}/block/post (archive-based block post - production pattern)` 
-      });
-      endpoints.push({ 
-        url: `${cleanArchivistUrl}/${preferredArchive}/dataLake/insert`, 
-        archive: preferredArchive,
-        description: `/${preferredArchive}/dataLake/insert (archive-based dataLake insert)` 
-      });
-      
       // Step 1: Get the Archivist module address from /Archivist route
       // CRITICAL: The /Archivist route is the SINGLE SOURCE OF TRUTH for the Archivist address
       // It always resolves to the correct MongoDB Archivist for this environment
@@ -139,7 +125,8 @@ export class ArchivistService {
             archivistModuleAddress = match[1];
             // eslint-disable-next-line no-console
             console.log(`✓ Found Archivist module address: ${archivistModuleAddress}`);
-            // PRIMARY: POST /node/:address (QueryBoundWitness format - creates bound witness + stores payloads)
+            
+            // PRIORITY 1: Module address routes (WORKING on production Archivist)
             // CRITICAL: QueryBoundWitness endpoints create BOTH bound witnesses AND store payloads
             // /dataLake/insert only stores payloads (no bound witness) - this is why bound_witnesses collection is empty
             // The Diviner relies on bound witnesses to query and understand payload relationships
@@ -152,6 +139,21 @@ export class ArchivistService {
               url: `${cleanArchivistUrl}/${archivistModuleAddress}`, 
               description: `/${archivistModuleAddress} (QueryBoundWitness to module address)` 
             });
+            
+            // PRIORITY 2: Archive-based routes (NOT SUPPORTED on production Archivist - returns 404)
+            // NOTE: Production Archivist at https://beta.api.archivist.xyo.network does NOT support
+            // archive-based routes in the URL path. These are kept as fallback for other Archivist instances.
+            endpoints.push({ 
+              url: `${cleanArchivistUrl}/${preferredArchive}/block/post`, 
+              archive: preferredArchive,
+              description: `/${preferredArchive}/block/post (archive-based - may not work on production)` 
+            });
+            endpoints.push({ 
+              url: `${cleanArchivistUrl}/${preferredArchive}/dataLake/insert`, 
+              archive: preferredArchive,
+              description: `/${preferredArchive}/dataLake/insert (archive-based - may not work on production)` 
+            });
+            
             // FALLBACK: POST /dataLake/insert (only stores payloads, no bound witness - use only if QueryBoundWitness fails)
             endpoints.push({ 
               url: `${cleanArchivistUrl}/dataLake/insert`, 
@@ -169,20 +171,30 @@ export class ArchivistService {
               archivistModuleAddress = match[1];
               // eslint-disable-next-line no-console
               console.log(`✓ Found Archivist module address from redirect error: ${archivistModuleAddress}`);
-              // PRIMARY: POST /node/:address (QueryBoundWitness format - creates bound witness + stores payloads)
-              // CRITICAL: QueryBoundWitness endpoints create BOTH bound witnesses AND store payloads
-              // /dataLake/insert only stores payloads (no bound witness) - this is why bound_witnesses collection is empty
-              // The Diviner relies on bound witnesses to query and understand payload relationships
+              
+              // PRIORITY 1: Module address routes (WORKING on production Archivist)
               endpoints.push({ 
                 url: `${cleanArchivistUrl}/node/${archivistModuleAddress}`, 
                 description: `/node/${archivistModuleAddress} (QueryBoundWitness - creates bound witness + payloads)` 
               });
-              // SECONDARY: POST /:address (QueryBoundWitness to module address - alternative format)
               endpoints.push({ 
                 url: `${cleanArchivistUrl}/${archivistModuleAddress}`, 
                 description: `/${archivistModuleAddress} (QueryBoundWitness to module address)` 
               });
-              // FALLBACK: POST /dataLake/insert (only stores payloads, no bound witness - use only if QueryBoundWitness fails)
+              
+              // PRIORITY 2: Archive-based routes (NOT SUPPORTED on production Archivist)
+              endpoints.push({ 
+                url: `${cleanArchivistUrl}/${preferredArchive}/block/post`, 
+                archive: preferredArchive,
+                description: `/${preferredArchive}/block/post (archive-based - may not work on production)` 
+              });
+              endpoints.push({ 
+                url: `${cleanArchivistUrl}/${preferredArchive}/dataLake/insert`, 
+                archive: preferredArchive,
+                description: `/${preferredArchive}/dataLake/insert (archive-based - may not work on production)` 
+              });
+              
+              // FALLBACK: POST /dataLake/insert
               endpoints.push({ 
                 url: `${cleanArchivistUrl}/dataLake/insert`, 
                 description: '/dataLake/insert (payloads only, no bound witness - fallback)' 
@@ -813,29 +825,15 @@ export class ArchivistService {
     const queryData = [query[0], [...query[1]]];
 
     // FIXED: Try multiple endpoint patterns (same as insertPayloads)
-    // Production Archivist supports archive-based routes for querying:
-    // - POST /{archive_name}/block/find - Archive-based query
-    // - POST /{archive_name}/node/:address - Archive-based module address query
-    // Local Archivist uses module addresses in the path
-    // /Archivist redirects to the Archivist's module address (e.g., /bb0f0b19414badfbfefe2a060ec23579094a5543)
-    // We need to POST QueryBoundWitness directly to the module address, not the redirect endpoint
+    // NOTE: Production Archivist at https://beta.api.archivist.xyo.network does NOT support
+    // archive-based routes in the URL path. Module address routes work correctly.
+    // /Archivist redirects to the Archivist's module address (e.g., /e95a6c70c8848a8e8773244fb39d701f3097ef8f)
+    // We need to POST QueryBoundWitness directly to the module address
     const preferredArchive = env.xyoArchive || 'chaincheck';
-    const fallbackArchive = 'temp';  // Production app default
     const cleanArchivistUrl = env.xyoArchivistUrl.replace(/\/$/, '');
     
-    // PRIORITY 1: Try archive-based routes first (production Archivist pattern)
-    // These routes are preferred for production Archivist as they support archive isolation
+    // PRIORITY 1: Module address routes (WORKING on production Archivist)
     const endpoints: Array<{ url: string; archive?: string; description: string }> = [];
-    endpoints.push({ 
-      url: `${cleanArchivistUrl}/${preferredArchive}/block/find`, 
-      archive: preferredArchive,
-      description: `/${preferredArchive}/block/find (archive-based query - production pattern)` 
-    });
-    endpoints.push({ 
-      url: `${cleanArchivistUrl}/${preferredArchive}/node`, 
-      archive: preferredArchive,
-      description: `/${preferredArchive}/node (archive-based node query)` 
-    });
     
     // Try to get the Archivist module address from /Archivist redirect
     let archivistModuleAddress: string | null = null;
@@ -853,11 +851,23 @@ export class ArchivistService {
         const match = location.match(/\/([a-f0-9]{40})/);
         if (match) {
           archivistModuleAddress = match[1];
-          // Also try archive-based routes with module address
+          
+          // PRIORITY 1: Module address routes (WORKING on production Archivist)
+          endpoints.push({ 
+            url: `${cleanArchivistUrl}/node/${archivistModuleAddress}`, 
+            description: `/node/${archivistModuleAddress} (QueryBoundWitness - working on production)` 
+          });
+          
+          // PRIORITY 2: Archive-based routes (NOT SUPPORTED on production - returns 404)
           endpoints.push({ 
             url: `${cleanArchivistUrl}/${preferredArchive}/node/${archivistModuleAddress}`, 
             archive: preferredArchive,
-            description: `/${preferredArchive}/node/${archivistModuleAddress} (archive-based module address)` 
+            description: `/${preferredArchive}/node/${archivistModuleAddress} (archive-based - may not work on production)` 
+          });
+          endpoints.push({ 
+            url: `${cleanArchivistUrl}/${preferredArchive}/block/find`, 
+            archive: preferredArchive,
+            description: `/${preferredArchive}/block/find (archive-based - may not work on production)` 
           });
         }
       }
@@ -869,32 +879,38 @@ export class ArchivistService {
           const match = location.match(/\/([a-f0-9]{40})/);
           if (match) {
             archivistModuleAddress = match[1];
-            // Also try archive-based routes with module address
+            
+            // PRIORITY 1: Module address routes (WORKING on production Archivist)
+            endpoints.push({ 
+              url: `${cleanArchivistUrl}/node/${archivistModuleAddress}`, 
+              description: `/node/${archivistModuleAddress} (QueryBoundWitness - working on production)` 
+            });
+            
+            // PRIORITY 2: Archive-based routes (NOT SUPPORTED on production - returns 404)
             endpoints.push({ 
               url: `${cleanArchivistUrl}/${preferredArchive}/node/${archivistModuleAddress}`, 
               archive: preferredArchive,
-              description: `/${preferredArchive}/node/${archivistModuleAddress} (archive-based module address)` 
+              description: `/${preferredArchive}/node/${archivistModuleAddress} (archive-based - may not work on production)` 
+            });
+            endpoints.push({ 
+              url: `${cleanArchivistUrl}/${preferredArchive}/block/find`, 
+              archive: preferredArchive,
+              description: `/${preferredArchive}/block/find (archive-based - may not work on production)` 
             });
           }
         }
       }
     }
       
-    // Build list of endpoints to try (in order of preference)
-    // Based on DEBUG logs and testing:
-    // - POST /insert returns 404 "Module not found" - NOT a valid endpoint
-    // - POST /node/:address returns 200 and shows payloads in response - WORKING ENDPOINT
-    // - POST /:address (under /dataLake router) - may also work
-    // Primary: POST /node/:address (this is the working endpoint based on logs)
+    // Additional fallback endpoints (module address routes already added above as PRIORITY 1)
+    // NOTE: Production Archivist does NOT support archive-based routes in URL path
+    // Module address routes work correctly: /node/{archivistModuleAddress}
+    // Archive-based routes return 404: /{archive}/block/post, /{archive}/dataLake/insert, etc.
     if (archivistModuleAddress) {
-      endpoints.push({ 
-        url: `${cleanArchivistUrl}/node/${archivistModuleAddress}`, 
-        description: `/node/${archivistModuleAddress} (primary - module address endpoint)` 
-      });
-      // Also try direct address endpoint (under /dataLake router)
+      // Direct address endpoint (alternative format)
       endpoints.push({ 
         url: `${cleanArchivistUrl}/${archivistModuleAddress}`, 
-        description: `/${archivistModuleAddress} (direct module address)` 
+        description: `/${archivistModuleAddress} (direct module address - alternative format)` 
       });
     }
     

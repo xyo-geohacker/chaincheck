@@ -14,7 +14,9 @@
     "studio": "prisma studio --port 5556",
     "postinstall": "patch-package",
     "generate-mnemonic": "tsx scripts/generate-mnemonic.ts",
-    "validate-env": "tsx scripts/validate-env.ts"
+    "validate-env": "tsx scripts/validate-env.ts",
+    "retrieve-payload": "tsx scripts/test/compute-and-retrieve-payload.ts",
+    "test-archive": "tsx scripts/test/test-archive-routes.ts"
   },
   "keywords": [
     "chaincheck",

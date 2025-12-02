@@ -401,7 +401,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.loadingContainer} testID="loading-state">
         <ActivityIndicator size="large" />
         <Text style={styles.loadingText}>Fetching current location…</Text>
       </View>
@@ -409,7 +409,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="verify-delivery-screen">
       <Mapbox.MapView style={styles.map} styleURL={Mapbox.StyleURL.Street}>
         <Camera
           centerCoordinate={mapCenter}
@@ -469,6 +469,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
       <View style={styles.controls}>
         <View style={styles.photoRow}>
         <TouchableOpacity
+          testID="capture-photo-button"
           onPress={openCamera}
           activeOpacity={0.85}
           style={styles.photoButton}
@@ -477,13 +478,14 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
               {capturedPhoto ? 'Retake photo' : 'Capture photo'}
             </Text>
           </TouchableOpacity>
-          <Text style={styles.photoStatus}>
+          <Text testID="photo-status" style={styles.photoStatus}>
             {capturedPhoto ? '✓ Photo captured' : 'No photo captured'}
           </Text>
         </View>
 
         <View style={styles.photoRow}>
           <TouchableOpacity
+            testID="capture-signature-button"
             onPress={() => setIsSignatureOpen(true)}
             activeOpacity={0.85}
             style={styles.photoButton}
@@ -493,13 +495,14 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
               {capturedSignature ? 'Resign' : 'Capture signature'}
             </Text>
           </TouchableOpacity>
-          <Text style={styles.photoStatus}>
+          <Text testID="signature-status" style={styles.photoStatus}>
             {capturedSignature ? '✓ Signature captured' : 'No signature captured'}
           </Text>
         </View>
 
         <View style={styles.photoRow}>
           <TouchableOpacity
+            testID="verify-driver-button"
             onPress={() => setIsNfcOpen(true)}
             activeOpacity={0.85}
             style={styles.photoButton}
@@ -509,7 +512,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
               {capturedNfc ? 'Rescan NFC' : 'Verify Driver'}
             </Text>
           </TouchableOpacity>
-          <Text style={styles.photoStatus}>
+          <Text testID="nfc-status" style={styles.photoStatus}>
             {capturedNfc ? '✓ Driver verified' : 'No NFC scan'}
           </Text>
         </View>
@@ -539,6 +542,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
         <View style={styles.notesContainer}>
           <Text style={styles.notesLabel}>Delivery Notes (Optional)</Text>
           <TextInput
+            testID="delivery-notes-input"
             style={styles.notesInput}
             placeholder="Add any notes about this delivery..."
             placeholderTextColor="#6B7280"
@@ -571,6 +575,7 @@ export const VerifyDeliveryScreen: React.FC<Props> = ({ route, navigation }) => 
         </Text>
 
         <TouchableOpacity
+          testID="verify-delivery-button"
           onPress={handleVerifyDelivery}
           activeOpacity={0.85}
           style={[

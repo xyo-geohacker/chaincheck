@@ -35,14 +35,12 @@ const mockDeliveries: DeliveryRecord[] = [
 ];
 
 describe('DeliveryTable', () => {
-  const mockOnDeliveryClick = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should render delivery table with data', () => {
-    render(<DeliveryTable deliveries={mockDeliveries} onDeliveryClick={mockOnDeliveryClick} />);
+    render(<DeliveryTable deliveries={mockDeliveries} />);
 
     expect(screen.getByText('ORD-001')).toBeInTheDocument();
     expect(screen.getByText('ORD-002')).toBeInTheDocument();
@@ -51,16 +49,16 @@ describe('DeliveryTable', () => {
   });
 
   it('should filter by status', () => {
-    render(<DeliveryTable deliveries={mockDeliveries} onDeliveryClick={mockOnDeliveryClick} initialStatusFilter="DELIVERED" />);
+    render(<DeliveryTable deliveries={mockDeliveries} initialStatusFilter="DELIVERED" />);
 
     expect(screen.getByText('ORD-001')).toBeInTheDocument();
     expect(screen.queryByText('ORD-002')).not.toBeInTheDocument();
   });
 
   it('should filter by driver', () => {
-    render(<DeliveryTable deliveries={mockDeliveries} onDeliveryClick={mockOnDeliveryClick} />);
+    render(<DeliveryTable deliveries={mockDeliveries} />);
 
-    const driverFilter = screen.getByLabelText(/all drivers/i);
+    const driverFilter = screen.getByLabelText(/filter by driver/i);
     fireEvent.change(driverFilter, { target: { value: 'driver-001' } });
 
     expect(screen.getByText('ORD-001')).toBeInTheDocument();
@@ -68,30 +66,20 @@ describe('DeliveryTable', () => {
   });
 
   it('should sort by date', () => {
-    render(<DeliveryTable deliveries={mockDeliveries} onDeliveryClick={mockOnDeliveryClick} />);
+    render(<DeliveryTable deliveries={mockDeliveries} />);
 
-    const sortSelect = screen.getByLabelText(/sort by date/i);
-    fireEvent.change(sortSelect, { target: { value: 'newest' } });
+    const sortSelect = screen.getByLabelText(/sort deliveries/i);
+    fireEvent.change(sortSelect, { target: { value: 'orderId' } });
 
-    // Should still show both deliveries
+    // Should still show both deliveries, but sorted differently
     expect(screen.getByText('ORD-001')).toBeInTheDocument();
     expect(screen.getByText('ORD-002')).toBeInTheDocument();
   });
 
-  it('should call onDeliveryClick when row is clicked', () => {
-    render(<DeliveryTable deliveries={mockDeliveries} onDeliveryClick={mockOnDeliveryClick} />);
-
-    const row = screen.getByText('ORD-001').closest('tr');
-    if (row) {
-      fireEvent.click(row);
-      expect(mockOnDeliveryClick).toHaveBeenCalledWith(mockDeliveries[0]);
-    }
-  });
-
   it('should display empty state when no deliveries', () => {
-    render(<DeliveryTable deliveries={[]} onDeliveryClick={mockOnDeliveryClick} />);
+    render(<DeliveryTable deliveries={[]} />);
 
-    expect(screen.getByText(/no deliveries found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no deliveries match your filters/i)).toBeInTheDocument();
   });
 });
 

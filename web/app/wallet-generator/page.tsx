@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 type MnemonicResponse = {
   success: boolean;
@@ -66,6 +67,12 @@ export default function WalletGeneratorPage() {
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-12 text-slate-100">
+      <Link
+        href="/"
+        className="rounded-lg border border-[#2f2862] bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors inline-block w-fit"
+      >
+        ← Back to Dashboard
+      </Link>
       <header className="glass-card relative overflow-hidden rounded-3xl p-10">
         <div className="absolute inset-0 bg-gradient-to-br from-[#6d4afe]/30 via-transparent to-[#40baf7]/20" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -73,19 +80,18 @@ export default function WalletGeneratorPage() {
             <p className="text-sm uppercase tracking-[0.2em] text-[#8ea8ff]">XL1 Wallet Generator</p>
             <h1 className="mt-2 text-4xl font-semibold leading-tight">Generate Mnemonic Seed Phrase</h1>
             <p className="mt-4 max-w-2xl text-sm text-slate-300">
-              Generate a secure 12-word mnemonic seed phrase for your XL1 blockchain wallet. 
+              Generate a secure 24-word mnemonic seed phrase for your XL1 blockchain wallet. 
               Keep this phrase secure - it provides full access to your wallet.
             </p>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-[#100e1d]/60 px-6 py-4 shadow-lg shadow-black/40">
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Powered by</span>
+          <div className="flex items-center gap-3 rounded-2xl">
             <Image
-              src="/images/xyo-network-logo-color.png"
+              src="/images/xl1-logo-color.png"
               alt="XYO Network"
               width={140}
               height={32}
               priority
-              className="h-8 w-auto object-contain"
+              
             />
           </div>
         </div>
@@ -123,7 +129,7 @@ export default function WalletGeneratorPage() {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">12-Word Mnemonic</label>
+                  <label className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">24-Word Mnemonic</label>
                   <div className="mt-2 flex items-center gap-2">
                     <div className="flex-1 rounded-lg border border-[#2f2862] bg-[#07060e] p-4 font-mono text-sm text-[#8fa5ff]">
                       {mnemonic}
@@ -167,7 +173,7 @@ export default function WalletGeneratorPage() {
 
           {!mnemonic && !error && !isGenerating && (
             <div className="rounded-lg border border-[#2f2862] bg-[#07060e] p-6 text-center text-sm text-slate-400">
-              Click &quot;Generate Mnemonic&quot; to create a new 12-word seed phrase
+              Click &quot;Generate Mnemonic&quot; to create a new 24-word seed phrase
             </div>
           )}
         </div>
@@ -176,7 +182,7 @@ export default function WalletGeneratorPage() {
       <div className="glass-card rounded-3xl border border-[#2f2862] p-6">
         <h3 className="text-lg font-semibold text-white mb-4">How to Use</h3>
         <ol className="list-decimal list-inside space-y-2 text-sm text-slate-300">
-          <li>Click &quot;Generate Mnemonic&quot; to create a new 12-word seed phrase</li>
+          <li>Click &quot;Generate Mnemonic&quot; to create a new 24-word seed phrase</li>
           <li>Copy the mnemonic and store it securely (password manager, encrypted file, etc.)</li>
           <li>Copy the environment variable line and add it to your <code className="rounded bg-[#1b1631] px-1 py-0.5">backend/.env</code> file</li>
           <li>Restart your backend server to use the new wallet</li>
