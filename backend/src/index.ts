@@ -64,15 +64,22 @@ app.get('/health', (_req, res) => {
   });
 });
 
-const server = app.listen(env.port, () => {
-  logger.info(`ChainCheck backend listening on port ${env.port}`, { mode: env.nodeEnv });
-});
-
-process.on('SIGTERM', () => {
-  server.close(() => {
-    logger.info('Gracefully shutting down');
+// Only start the server if not in test mode
+// Tests import the app but don't need the server to listen
+let server: ReturnType<typeof app.listen> | null = null;
+if (env.nodeEnv !== 'test') {
+  server = app.listen(env.port, () => {
+    logger.info(`ChainCheck backend listening on port ${env.port}`, { mode: env.nodeEnv });
   });
-});
+
+  process.on('SIGTERM', () => {
+    if (server) {
+      server.close(() => {
+        logger.info('Gracefully shutting down');
+      });
+    }
+  });
+}
 
 export { app };
 

@@ -59,11 +59,13 @@ describe('Wallet Routes', () => {
     });
 
     it('should reject invalid mnemonic', async () => {
-      const invalidMnemonic = 'invalid mnemonic phrase';
+      // Use a mnemonic with 12 words (passes schema validation) but invalid format
+      const invalidMnemonic = 'word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 invalidword';
       
-      // Mock to throw error for invalid mnemonic
-      const { generateXyoBaseWalletFromPhrase } = await import('@xyo-network/xl1-protocol-sdk');
-      vi.mocked(generateXyoBaseWalletFromPhrase).mockRejectedValueOnce(new Error('Invalid mnemonic'));
+      // Get the mocked function and set it to reject for this test
+      const xl1Sdk = await import('@xyo-network/xl1-protocol-sdk');
+      const mockFn = vi.mocked(xl1Sdk.generateXyoBaseWalletFromPhrase);
+      mockFn.mockRejectedValueOnce(new Error('Invalid mnemonic'));
 
       const response = await request(app)
         .post('/api/wallet/validate-mnemonic')
@@ -72,6 +74,9 @@ describe('Wallet Routes', () => {
       expect(response.status).toBe(400);
       expect(response.body.valid).toBe(false);
       expect(response.body.error).toBeDefined();
+      
+      // Restore the mock for other tests
+      mockFn.mockRestore();
     });
 
     it('should reject missing mnemonic', async () => {

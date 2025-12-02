@@ -9,15 +9,17 @@ import { generateToken } from '../lib/jwt.js';
 vi.mock('../services/xyo-service', () => {
   class MockXyoService {
     async createLocationProofXL1() {
+      // Use a valid 64-character hex string for proof hash (matches real hash format)
+      const mockHash = 'a'.repeat(64); // 64 hex characters
       return {
-        proofHash: 'mock-xl1-hash-1234567890abcdef',
-        xl1TransactionHash: 'mock-xl1-hash-1234567890abcdef',
+        proofHash: mockHash,
+        xl1TransactionHash: mockHash,
         xl1BlockNumber: 12345,
         blockNumber: 12345,
         boundWitness: [
           {
             schema: 'network.xyo.boundwitness',
-            _hash: 'mock-xl1-hash-1234567890abcdef'
+            _hash: mockHash
           },
           []
         ],
@@ -26,14 +28,16 @@ vi.mock('../services/xyo-service', () => {
           success: true,
           data: {
             schema: 'network.xyo.boundwitness',
-            _hash: 'mock-xl1-hash-1234567890abcdef'
+            _hash: mockHash
           }
         }
       };
     }
 
     async verifyLocationProof() {
-      return { isValid: true, data: { proofHash: 'mock-proof-hash' } };
+      // Use a valid 64-character hex string for proof hash
+      const mockHash = 'b'.repeat(64); // 64 hex characters
+      return { isValid: true, data: { proofHash: mockHash } };
     }
 
     async validateBoundWitness() {
@@ -104,10 +108,19 @@ describe('Deliveries API', () => {
   });
 
   afterAll(async () => {
-    await prisma.delivery.deleteMany();
+    // Only delete test data, not all deliveries
+    await prisma.delivery.deleteMany({
+      where: {
+        orderId: {
+          startsWith: 'TEST-ORDER-'
+        }
+      }
+    });
     await prisma.driver.deleteMany({
       where: {
-        driverId
+        driverId: {
+          startsWith: 'test-driver-'
+        }
       }
     });
     await prisma.$disconnect();
@@ -339,10 +352,30 @@ describe('Deliveries API', () => {
           timestamp: Date.now()
         });
 
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.body.proof).toBeDefined();
+      
       const proofHash = verifyResponse.body.proof.hash;
+      
+      // Ensure proof hash exists and is valid
+      expect(proofHash).toBeDefined();
+      expect(typeof proofHash).toBe('string');
+      expect(proofHash.length).toBeGreaterThan(0);
 
       const response = await request(app)
         .get(`/api/deliveries/by-proof/${proofHash}`);
+
+      // If validation fails, log the error details
+      if (response.status !== 200) {
+        // eslint-disable-next-line no-console
+        console.error('Proof hash validation failed:', {
+          status: response.status,
+          body: response.body,
+          proofHash,
+          proofHashLength: proofHash.length,
+          proofHashType: typeof proofHash
+        });
+      }
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(deliveryId);
@@ -358,7 +391,8 @@ describe('Deliveries API', () => {
     });
 
     it('should return 404 for non-existent proof hash', async () => {
-      const fakeHash = 'a'.repeat(64); // Valid hex format but non-existent
+      // Use a different hash that won't match any real delivery (mock uses 'a'.repeat(64))
+      const fakeHash = 'f'.repeat(64); // Valid hex format but non-existent
       const response = await request(app)
         .get(`/api/deliveries/by-proof/${fakeHash}`);
 
@@ -379,10 +413,30 @@ describe('Deliveries API', () => {
           timestamp: Date.now()
         });
 
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.body.proof).toBeDefined();
+      
       const proofHash = verifyResponse.body.proof.hash;
+      
+      // Ensure proof hash exists and is valid
+      expect(proofHash).toBeDefined();
+      expect(typeof proofHash).toBe('string');
+      expect(proofHash.length).toBeGreaterThan(0);
 
       const response = await request(app)
         .get(`/api/proofs/${proofHash}/validate`);
+
+      // If validation fails, log the error details
+      if (response.status !== 200) {
+        // eslint-disable-next-line no-console
+        console.error('Proof hash validation failed:', {
+          status: response.status,
+          body: response.body,
+          proofHash,
+          proofHashLength: proofHash.length,
+          proofHashType: typeof proofHash
+        });
+      }
 
       expect(response.status).toBe(200);
       expect(response.body.isValid).toBeDefined();

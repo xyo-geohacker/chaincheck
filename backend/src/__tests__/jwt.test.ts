@@ -34,11 +34,12 @@ describe('JWT Utilities', () => {
       expect(token1).not.toBe(token2);
     });
 
-    it('should generate different tokens for the same driver at different times', () => {
+    it('should generate different tokens for the same driver at different times', async () => {
       const driverId = 'test-driver';
       const token1 = generateToken(driverId);
       
-      // Wait a tiny bit to ensure different iat
+      // Wait a bit to ensure different iat (JWT iat is in seconds)
+      await new Promise(resolve => setTimeout(resolve, 1100));
       const token2 = generateToken(driverId);
       
       // Tokens should be different (different iat)

@@ -51,7 +51,12 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
       headerTitleStyle: { color: '#F7F8FD' },
       headerTintColor: colors.text.accent,
       headerRight: () => (
-        <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton} activeOpacity={0.85}>
+        <TouchableOpacity 
+          testID="sign-out-button"
+          onPress={handleSignOut} 
+          style={styles.logoutButton} 
+          activeOpacity={0.85}
+        >
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       )
@@ -137,14 +142,15 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="active-deliveries-screen">
       {isLoading ? (
-        <View style={styles.loadingState}>
+        <View style={styles.loadingState} testID="loading-state">
           <ActivityIndicator size="large" color={colors.text.accent} />
           <Text style={styles.loadingText}>Loading deliveries…</Text>
         </View>
       ) : (
         <FlatList
+          testID="deliveries-list"
           data={sortedDeliveries}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
@@ -153,6 +159,7 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
           }
           renderItem={({ item }) => (
             <Pressable
+              testID={`delivery-card-${item.id}`}
               style={styles.card}
               onPress={() => navigation.navigate('VerifyDelivery', { delivery: item })}
             >
@@ -173,9 +180,9 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
+            <View style={styles.emptyState} testID="empty-state">
               <Text style={styles.emptyTitle}>No active deliveries</Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={styles.emptySubtitle} testID="empty-state-message">
                 {error ?? 'New assignments will appear here when they are available.'}
               </Text>
             </View>

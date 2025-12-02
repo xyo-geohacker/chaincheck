@@ -99,12 +99,25 @@ export const deliveryIdParamSchema = z.object({
 
 /**
  * Proof hash parameter schema
+ * Accepts hex strings with or without 0x prefix
+ * Proof hashes are typically hex strings from bound witness hashes
  */
 export const proofHashParamSchema = z.object({
   proofHash: z
     .string()
     .min(1, 'Proof hash is required and cannot be empty')
-    .regex(/^[a-f0-9]+$/i, 'Proof hash must be a valid hexadecimal string')
+    .refine(
+      (val) => {
+        // Accept hex strings (with or without 0x prefix)
+        // Remove 0x prefix if present for validation
+        const cleanVal = val.toLowerCase().startsWith('0x') ? val.slice(2) : val;
+        // Check if remaining string is valid hex
+        return /^[a-f0-9]+$/i.test(cleanVal);
+      },
+      {
+        message: 'Proof hash must be a valid hexadecimal string (with or without 0x prefix)'
+      }
+    )
 });
 
 /**

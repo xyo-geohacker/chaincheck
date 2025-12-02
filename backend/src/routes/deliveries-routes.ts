@@ -1037,13 +1037,30 @@ router.get(
   '/deliveries/by-proof/:proofHash',
   validateRequest(proofHashParamSchema, 'params'),
   async (req, res) => {
-    const { proofHash } = req.params;
+    // Normalize proof hash (remove 0x prefix if present for database lookup)
+    const { proofHash: originalHash } = req.params;
+    const normalizedHash = originalHash.toLowerCase().startsWith('0x') ? originalHash.toLowerCase().slice(2) : originalHash.toLowerCase();
 
     try {
-      const delivery = await prisma.delivery.findUnique({
-        where: { proofHash }
+      // Try both with and without 0x prefix in case database has different format
+      let delivery = await prisma.delivery.findUnique({
+        where: { proofHash: normalizedHash }
         // Note: Driver relation not available, fetch driver separately if needed
       });
+      
+      // If not found with normalized hash, try with original format (in case it's stored with 0x or different case)
+      if (!delivery) {
+        delivery = await prisma.delivery.findUnique({
+          where: { proofHash: originalHash.toLowerCase() }
+        });
+      }
+      
+      // Also try with 0x prefix if original didn't have it
+      if (!delivery && !originalHash.toLowerCase().startsWith('0x')) {
+        delivery = await prisma.delivery.findUnique({
+          where: { proofHash: `0x${normalizedHash}` }
+        });
+      }
 
     if (!delivery) {
       return res.status(404).json({ error: 'Delivery not found' });
@@ -1162,7 +1179,9 @@ router.get(
   '/proofs/:proofHash/validate',
   validateRequest(proofHashParamSchema, 'params'),
   async (req, res) => {
-    const { proofHash } = req.params;
+    // Normalize proof hash (remove 0x prefix if present)
+    let { proofHash } = req.params;
+    proofHash = proofHash.toLowerCase().startsWith('0x') ? proofHash.toLowerCase().slice(2) : proofHash.toLowerCase();
 
   try {
     const validation = await xyoService.validateBoundWitness(proofHash);

@@ -85,37 +85,66 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-12 text-slate-100">
-      {/* Info Links - Left and Right Justified */}
-      <div className="flex justify-between items-center gap-3">
+      {/* External Resources - Subtle top utility bar */}
+      <div className="flex items-center justify-center gap-4 flex-wrap">
         <Link
           href="https://coinapp.co/"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-lg border border-[#8ea8ff]/40 bg-[#8ea8ff]/10 px-4 py-2 text-xs font-medium text-[#8ea8ff] hover:bg-[#8ea8ff]/20 transition-colors flex items-center gap-2"
+          className="text-sm text-slate-400 hover:text-[#8ea8ff] transition-colors flex items-center gap-1.5"
         >
           <Image
             src="/images/coin-logo-color.png"
             alt="COIN App"
-            width={16}
-            height={16}
-            className="w-4 h-4 object-contain"
+            width={24}
+            height={24}
+            className="w-13.5 h-13.5 object-contain opacity-70"
           />
-          <span>Drivers - Earn Rewards and Contribute to XYO Network</span>
+          <span>Drivers - Earn Rewards</span>
+          <svg
+            className="w-3 h-3 opacity-60"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
         </Link>
+        <span className="text-slate-600">•</span>
         <Link
           href="https://docs.xyo.network/developers/xl1-wallet/get-xl1-browser-wallet"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-lg border border-[#8ea8ff]/40 bg-[#8ea8ff]/10 px-4 py-2 text-xs font-medium text-[#8ea8ff] hover:bg-[#8ea8ff]/20 transition-colors flex items-center gap-2"
+          className="text-sm text-slate-400 hover:text-[#8ea8ff] transition-colors flex items-center gap-1.5"
         >
           <Image
             src="/images/xl1-logo-color.png"
-            alt="COIN App"
-            width={16}
-            height={16}
-            className="w-4 h-4 object-contain"
+            alt="XL1 Wallet"
+            width={24}
+            height={24}
+            className="w-13.5 h-13.5 object-contain opacity-70"
           />
-          <span>XL1 Wallet Required for Blockchain Transactions</span>
+          <span>XL1 Wallet Setup</span>
+          <svg
+            className="w-3 h-3 opacity-60"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
         </Link>
       </div>
 
@@ -170,22 +199,35 @@ export default async function DashboardPage() {
 
           <div className="flex flex-col gap-3">
             <Link
+              href="/wallet-generator"
+              className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40 flex items-center justify-center gap-2"
+            >
+              {/*<Image
+                src="/images/xl1-logo-color.png"
+                alt="XL1 Wallet"
+                width={18}
+                height={18}
+                className="w-4.5 h-4.5 object-contain"
+              />*/}
+              <span>Generate XL1 Wallet Seed</span>
+            </Link>
+            <Link
               href="/network"
               className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
             >
-              View XYO Network Overview →
+              XYO Network Overview →
             </Link>
             <Link
               href="/configuration/login"
               className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
             >
-              View ChainCheck Configuration →
+              ChainCheck Configuration →
             </Link>
             <Link
               href="/roi"
               className="rounded-2xl bg-[#100e1d]/60 px-6 py-4 text-sm font-semibold text-white hover:bg-[#100e1d]/80 transition-colors text-center shadow-lg shadow-black/40"
             >
-              View ROI Dashboard →
+              ROI Dashboard →
             </Link>
           </div>
         </div>
