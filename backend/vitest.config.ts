@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     coverage: {
+      provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/**/*.ts'],
       exclude: ['src/prisma/**']
