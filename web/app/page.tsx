@@ -7,13 +7,21 @@ import { fetchDeliveries } from "@lib/api";
 import { DashboardContent } from "@components/DashboardContent";
 import { CollapsibleLinksPanel } from "@components/CollapsibleLinksPanel";
 
+// Force dynamic rendering to avoid build-time API calls
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   let deliveries: DeliveryRecord[] = [];
   try {
     deliveries = await fetchDeliveries();
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Failed to load deliveries", error);
+    // Silently handle errors during build/SSR - data will be fetched client-side
+    // Only log in development to avoid build failures
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load deliveries", error);
+    }
   }
 
   // Calculate statistics

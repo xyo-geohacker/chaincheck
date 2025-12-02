@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { configLogin } from '@lib/api';
 
-export default function ConfigurationLoginPage() {
+function ConfigurationLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [username, setUsername] = useState('');
@@ -147,6 +147,22 @@ export default function ConfigurationLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ConfigurationLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0818] via-[#1a1528] to-[#0f0d1a] text-white flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="glass-card rounded-3xl border border-[#2f2862] px-8 py-8 text-center">
+            <p className="text-slate-400">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ConfigurationLoginForm />
+    </Suspense>
   );
 }
 

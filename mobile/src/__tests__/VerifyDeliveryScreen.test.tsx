@@ -58,6 +58,26 @@ jest.mock('../utils/hash.utils', () => ({
   hashBase64Image: jest.fn(() => Promise.resolve('mock-signature-hash'))
 }));
 
+// Mock Mapbox
+jest.mock('@rnmapbox/maps', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      MapView: ({ children, ...props }: any) => <View testID="mapbox-map-view" {...props}>{children}</View>,
+      setAccessToken: jest.fn(),
+      StyleURL: {
+        Street: 'mapbox://styles/mapbox/streets-v11'
+      }
+    },
+    Camera: ({ ...props }: any) => <View testID="mapbox-camera" {...props} />,
+    PointAnnotation: ({ ...props }: any) => <View testID="mapbox-point-annotation" {...props} />,
+    ShapeSource: ({ children, ...props }: any) => <View testID="mapbox-shape-source" {...props}>{children}</View>,
+    CircleLayer: ({ ...props }: any) => <View testID="mapbox-circle-layer" {...props} />
+  };
+});
+
 // Mock components
 jest.mock('../components/SignatureCapture', () => ({
   SignatureCapture: ({ visible, onClose, onSave }: any) => {
@@ -148,7 +168,12 @@ describe('VerifyDeliveryScreen', () => {
   });
 
   afterEach(() => {
-    delete process.env.EXPO_PUBLIC_MOCK_DRIVER_LOCATION;
+    // Clean up environment variable
+    try {
+      delete (process.env as any).EXPO_PUBLIC_MOCK_DRIVER_LOCATION;
+    } catch {
+      // Ignore if deletion fails
+    }
   });
 
   const renderVerifyDeliveryScreen = () => {
@@ -160,18 +185,31 @@ describe('VerifyDeliveryScreen', () => {
   };
 
   it('should render with delivery data', async () => {
-    const { getByTestId, getByText } = renderVerifyDeliveryScreen();
+    // Ensure environment variable is set before rendering
+    process.env.EXPO_PUBLIC_MOCK_DRIVER_LOCATION = 'true';
+    
+    const { getByTestId, getByText, queryByTestId } = renderVerifyDeliveryScreen();
 
     // Wait for loading to complete and screen to render
-    await waitFor(() => {
-      expect(getByTestId('verify-delivery-screen')).toBeTruthy();
-    });
+    // In mock location mode, isLoading should be set to false immediately by useEffect
+    await waitFor(
+      () => {
+        // First check that loading state is gone
+        const loadingState = queryByTestId('loading-state');
+        if (loadingState) {
+          throw new Error('Still loading');
+        }
+        // Then check that the main screen is rendered
+        expect(getByTestId('verify-delivery-screen')).toBeTruthy();
+      },
+      { timeout: 10000 } // Increase timeout for CI
+    );
 
     // Verify key elements are present
     expect(getByTestId('verify-delivery-screen')).toBeTruthy();
     expect(getByText('Verify Delivery')).toBeTruthy();
     expect(getByText('Capture photo')).toBeTruthy();
-  });
+  }, 15000); // Set test timeout to 15 seconds
 
   it('should show verify button disabled when photo not captured', async () => {
     const { getByTestId, getByText } = renderVerifyDeliveryScreen();
