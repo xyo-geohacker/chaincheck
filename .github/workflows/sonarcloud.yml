@@ -98,6 +98,19 @@ jobs:
         with:
           # Skip dependency analysis since this is a monorepo with lock files in subdirectories
           # SonarCloud will still analyze code quality, security, and coverage
+          # 
+          # IMPORTANT: You must set these as repository secrets in GitHub:
+          # - SONAR_PROJECT_KEY: Your SonarCloud project key (found in SonarCloud project settings)
+          # - SONAR_ORGANIZATION: Your SonarCloud organization key (found in SonarCloud organization settings)
+          # 
+          # To find these values:
+          # 1. Go to https://sonarcloud.io
+          # 2. Navigate to your project settings
+          # 3. The project key is shown in the project settings
+          # 4. The organization key is shown in the organization settings
+          projectBaseDir: .
           args: >
             -Dsonar.dependencyCheck.skip=true
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
 
