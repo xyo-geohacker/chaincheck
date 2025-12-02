@@ -57,7 +57,7 @@ jobs:
           XYO_WALLET_MNEMONIC: test test test test test test test test test test test test
 
       - name: Backend - Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: ./backend/coverage/coverage-final.json
           flags: backend
@@ -76,7 +76,7 @@ jobs:
           CI: true
 
       - name: Web - Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: ./web/coverage/coverage-final.json
           flags: web
@@ -95,7 +95,7 @@ jobs:
           CI: true
 
       - name: Mobile - Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: ./mobile/coverage/coverage-final.json
           flags: mobile
