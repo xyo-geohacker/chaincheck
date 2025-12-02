@@ -41,7 +41,7 @@
     "@rnmapbox/maps": "10.1.45",
     "axios": "^1.13.2",
     "expo": "~51.0.28",
-    "expo-camera": "~15.0.16",
+    "expo-camera": "~17.0.9",
     "expo-crypto": "~13.0.2",
     "expo-file-system": "~17.0.1",
     "expo-location": "~17.0.1",
