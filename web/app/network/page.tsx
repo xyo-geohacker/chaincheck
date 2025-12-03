@@ -44,8 +44,9 @@ export default function NetworkPage() {
         {/* Filters */}
         <div className="mb-6 flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-300">Node Type:</label>
+            <label htmlFor="node-type-filter" className="text-sm text-slate-300">Node Type:</label>
             <select
+              id="node-type-filter"
               value={nodeTypeFilter || ''}
               onChange={(e) => setNodeTypeFilter(e.target.value as 'sentinel' | 'bridge' | 'diviner' | '' || undefined)}
               className="rounded-lg border border-[#2f2862] bg-white/5 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#6654dd]"
@@ -57,8 +58,9 @@ export default function NetworkPage() {
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-300">Status:</label>
+            <label htmlFor="status-filter" className="text-sm text-slate-300">Status:</label>
             <select
+              id="status-filter"
               value={statusFilter || ''}
               onChange={(e) => setStatusFilter(e.target.value as 'active' | 'inactive' | '' || undefined)}
               className="rounded-lg border border-[#2f2862] bg-white/5 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#6654dd]"
