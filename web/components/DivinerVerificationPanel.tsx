@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { DivinerVerificationResult } from '@shared/types/xyo.types';
 
 type Props = {
@@ -24,14 +24,7 @@ export function DivinerVerificationPanel({ proofHash, latitude, longitude, times
     }
   }, [propDivinerVerification]);
 
-  useEffect(() => {
-    // Only fetch if we don't have data from props
-    if (proofHash && !propDivinerVerification) {
-      fetchDivinerVerification();
-    }
-  }, [proofHash, propDivinerVerification]);
-
-  const fetchDivinerVerification = async () => {
+  const fetchDivinerVerification = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -60,7 +53,14 @@ export function DivinerVerificationPanel({ proofHash, latitude, longitude, times
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [proofHash]);
+
+  useEffect(() => {
+    // Only fetch if we don't have data from props
+    if (proofHash && !propDivinerVerification) {
+      fetchDivinerVerification();
+    }
+  }, [proofHash, propDivinerVerification, fetchDivinerVerification]);
 
   if (isLoading) {
     return (

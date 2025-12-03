@@ -108,7 +108,8 @@ describe('API Service', () => {
       const calls = mockAxiosCreate.mock.calls;
       if (calls.length > 0) {
         const lastCall = calls[calls.length - 1];
-        expect(lastCall[0].timeout).toBe(30000);
+        const config = lastCall[0] as { timeout?: number };
+        expect(config.timeout).toBe(30000);
       }
     });
 
@@ -117,7 +118,8 @@ describe('API Service', () => {
       const calls = mockAxiosCreate.mock.calls;
       if (calls.length > 0) {
         const lastCall = calls[calls.length - 1];
-        expect(lastCall[0].headers['Content-Type']).toBe('application/json');
+        const config = lastCall[0] as { headers?: { 'Content-Type'?: string } };
+        expect(config.headers?.['Content-Type']).toBe('application/json');
       }
     });
   });

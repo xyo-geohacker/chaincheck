@@ -55,7 +55,7 @@ export function DeliveryMap({ destination, actualLocation }: Props) {
       }
       return circleGeoJson(destination.lat, destination.lon);
     },
-    [destination?.lat, destination?.lon]
+    [destination]
   );
 
   // Validate destination coordinates
