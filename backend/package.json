@@ -47,7 +47,7 @@
     "@xyo-network/archivist-wrapper": "^5.2.10",
     "@xyo-network/boundwitness-builder": "^5.2.10",
     "@xyo-network/payload-builder": "^5.2.10",
-    "@xyo-network/sdk-js": "^5.2.10",
+    "@xyo-network/sdk-js": "^5.2.17",
     "@xyo-network/sdk-xyo-client-js": "^2.110.10",
     "@xyo-network/wallet": "^5.2.10",
     "@xyo-network/xl1-protocol": "^1.14.15",
