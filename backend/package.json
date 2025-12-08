@@ -41,7 +41,7 @@
     "@prisma/client": "^5.22.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "@xylabs/object": "^5.0.42",
+    "@xylabs/object": "^5.0.50",
     "@xylabs/sdk-api-express-ecs": "^2.2.0",
     "@xyo-network/api": "^5.2.10",
     "@xyo-network/archivist-wrapper": "^5.2.10",
