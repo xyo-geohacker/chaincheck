@@ -22,10 +22,11 @@ Complete guide for setting up and developing the ChainCheck delivery verificatio
    - [Debugging Mobile Apps](#9-debugging-mobile-apps)
    - [Common Mobile Issues](#10-common-mobile-development-issues)
 8. [Environment Configuration](#environment-configuration)
-9. [Running the Application](#running-the-application)
-10. [Development Workflow](#development-workflow)
-11. [Testing](#testing)
-12. [Troubleshooting](#troubleshooting)
+9. [Ethereum Escrow Payment Configuration](#10-ethereum-escrow-payment-configuration)
+10. [Running the Application](#running-the-application)
+11. [Development Workflow](#development-workflow)
+12. [Testing](#testing)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -926,6 +927,381 @@ This opens Prisma Studio at `http://localhost:5556` in your default browser.
   - `divinerVerification`: Diviner network verification data
 
 **Note:** Prisma Studio is read-only for some complex operations. For advanced queries, use Prisma Client in code or direct SQL queries.
+
+---
+
+### 10. Ethereum Escrow Payment Configuration
+
+ChainCheck supports Ethereum-based escrow payments for secure payment-on-delivery. Funds are locked in a smart contract until delivery verification, then automatically released to the seller.
+
+#### 10.1. Overview
+
+The escrow payment system provides:
+
+- **Secure Payment Holding**: Buyer funds are locked in a smart contract until delivery is verified
+- **Automatic Release**: Funds are automatically released to the seller upon successful delivery verification
+- **Smart Contract Security**: Payments are managed by an immutable smart contract on Ethereum
+- **Refund Capability**: Funds can be refunded to the buyer if delivery fails or is disputed
+- **30-Day Auto-Refund**: Automatic refund after 30 days if delivery is not verified
+
+#### 10.2. Architecture
+
+**Payment Flow:**
+1. **Order Creation**: Buyer deposits ETH into escrow contract (or order is created with `requiresPaymentOnDelivery=true`)
+2. **Escrow Lock**: Funds are locked in the smart contract with delivery ID
+3. **Delivery Verification**: Driver verifies delivery via mobile app
+4. **Automatic Release**: Backend service calls contract `release()` function
+5. **Fund Transfer**: ETH is transferred from escrow to seller wallet
+
+**Authorization:**
+- The escrow contract uses an **owner-based authorization model**
+- The contract owner (set at deployment) is the only address that can call `release()` or `refund()`
+- The backend service wallet (configured via `ETHEREUM_PRIVATE_KEY`) must be the contract owner
+
+#### 10.3. Prerequisites
+
+**Required:**
+- Ethereum wallet with ETH for gas fees (for contract deployment and transactions)
+- Ethereum RPC endpoint (Infura, Alchemy, or local node)
+- Solidity development environment (Hardhat, Foundry, or Remix IDE) for contract compilation
+
+**Optional:**
+- Testnet ETH (Sepolia) for testing without real funds
+- MetaMask or similar wallet for contract interaction testing
+
+#### 10.4. Smart Contract Deployment
+
+**Step 1: Compile the Contract**
+
+The escrow contract is located at `backend/contracts/DeliveryEscrow.sol`. You can compile it using:
+
+**Option A: Remix IDE (Recommended for Quick Testing)**
+1. Go to [Remix IDE](https://remix.ethereum.org)
+2. Create a new file and paste the contract code from `backend/contracts/DeliveryEscrow.sol`
+3. Select Solidity compiler version 0.8.20 or higher
+4. Click "Compile DeliveryEscrow.sol"
+
+**Option B: Hardhat (Recommended for Production)**
+```bash
+cd backend
+npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
+npx hardhat init
+# Copy contracts/DeliveryEscrow.sol to hardhat/contracts/
+npx hardhat compile
+```
+
+**Step 2: Deploy the Contract**
+
+**Using Remix:**
+1. In Remix, go to "Deploy & Run Transactions"
+2. Select "Injected Web3" (MetaMask) or your preferred environment
+3. Select the network (Sepolia testnet recommended for testing)
+4. Click "Deploy"
+5. Copy the deployed contract address
+
+**Using Hardhat:**
+```bash
+# Create deployment script in hardhat/scripts/deploy.ts
+npx hardhat run scripts/deploy.ts --network sepolia
+```
+
+**Important:** The wallet used to deploy the contract becomes the contract owner. This wallet must match the `ETHEREUM_PRIVATE_KEY` in your backend `.env` file.
+
+**Step 3: Verify Contract Deployment**
+
+1. Copy the deployed contract address
+2. View on Etherscan (e.g., [Sepolia Etherscan](https://sepolia.etherscan.io))
+3. Verify the contract owner matches your backend wallet address
+
+#### 10.5. Backend Configuration
+
+Add the following environment variables to `backend/.env`:
+
+```env
+#####################
+# Ethereum Payment Configuration #
+#####################
+
+# Enable automatic payment release on successful delivery verification
+ENABLE_PAYMENT_ON_VERIFICATION=true
+
+# Payment mock mode (for development/testing)
+# When enabled, payment transfers are simulated without actual blockchain transactions
+PAYMENT_MOCK_MODE=false  # Set to true for testing without real ETH
+
+# Ethereum RPC URL for payment transactions
+# Mainnet: https://mainnet.infura.io/v3/YOUR_PROJECT_ID
+# Sepolia (testnet): https://sepolia.infura.io/v3/YOUR_PROJECT_ID
+# Local: http://localhost:8545
+ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID
+
+# Ethereum private key for payment service/escrow wallet
+# WARNING: Keep this secure! This wallet must be the contract owner.
+# In production, use a hardware wallet or secure key management service.
+ETHEREUM_PRIVATE_KEY=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+
+# Ethereum Chain ID (optional, auto-detected if not provided)
+# Mainnet: 1
+# Sepolia: 11155111
+# Goerli: 5
+ETHEREUM_CHAIN_ID=11155111
+
+#####################
+# Ethereum Escrow Configuration #
+#####################
+
+# Escrow contract address (deployed smart contract)
+# Deploy using: npm run deploy-escrow (or manually via Remix/Hardhat)
+ETHEREUM_ESCROW_CONTRACT_ADDRESS=0xD5Dad3D8cd01d05Bcb8E9E85f77948105853aeC0
+
+# Use escrow for payments (true) or direct transfer (false)
+# When true, funds are locked in escrow contract until delivery verification
+# When false, uses direct transfer from service wallet (original implementation)
+USE_ESCROW=true
+```
+
+#### 10.6. Obtaining Ethereum RPC Endpoint
+
+**Option A: Infura (Recommended)**
+1. Sign up at [Infura](https://infura.io)
+2. Create a new project
+3. Select "Ethereum" network
+4. Copy the project ID
+5. Use: `https://sepolia.infura.io/v3/YOUR_PROJECT_ID` (testnet) or `https://mainnet.infura.io/v3/YOUR_PROJECT_ID` (mainnet)
+
+**Option B: Alchemy**
+1. Sign up at [Alchemy](https://www.alchemy.com)
+2. Create a new app
+3. Select network (Sepolia or Mainnet)
+4. Copy the API key
+5. Use: `https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY` (testnet) or `https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY` (mainnet)
+
+**Option C: Local Node**
+- Run a local Ethereum node (Geth, Erigon, etc.)
+- Use: `http://localhost:8545`
+
+#### 10.7. Wallet Configuration
+
+**Critical Requirement:** The wallet used for `ETHEREUM_PRIVATE_KEY` must be the same wallet that deployed the escrow contract (contract owner).
+
+**Getting a Private Key:**
+
+**Option A: Generate New Wallet**
+```bash
+# Using Node.js
+node -e "const { ethers } = require('ethers'); const wallet = ethers.Wallet.createRandom(); console.log('Address:', wallet.address); console.log('Private Key:', wallet.privateKey);"
+```
+
+**Option B: Export from MetaMask**
+1. Open MetaMask
+2. Click account icon → Settings → Security & Privacy
+3. Click "Show Private Key" (enter password)
+4. Copy the private key (starts with `0x`)
+
+**Option C: Use Existing Wallet**
+- If you already have a wallet, export its private key
+- Ensure this wallet has sufficient ETH for gas fees
+
+**Security Warning:**
+- **Never commit private keys to version control**
+- Store private keys securely (environment variables, secret management services)
+- Use a dedicated service wallet (not your personal wallet)
+- In production, consider using hardware wallets or key management services (AWS KMS, HashiCorp Vault, etc.)
+
+#### 10.8. Buyer and Seller Wallet Addresses
+
+Buyer and seller wallet addresses are stored in the `Delivery` model:
+
+- **`buyerWalletAddress`**: Ethereum address of the buyer (who pays)
+- **`sellerWalletAddress`**: Ethereum address of the seller (who receives payment)
+
+**Setting Buyer/Seller Addresses:**
+
+**Option A: Via Database Seed Script**
+The seed script (`backend/prisma/seed.ts`) includes sample buyer and seller addresses. You can modify these:
+
+```typescript
+const sampleBuyerWallets = [
+  '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb', // Buyer 1
+  '0x8ba1f109551bD432803012645Hac136c22C1779', // Buyer 2
+  // ... more addresses
+];
+
+const sampleSellerWallets = [
+  '0x1234567890123456789012345678901234567890', // Seller 1
+  '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', // Seller 2
+  // ... more addresses
+];
+```
+
+**Option B: Via API (When Creating Deliveries)**
+When creating a delivery via API, include buyer and seller addresses:
+
+```json
+{
+  "orderId": "ORD-1001",
+  "buyerWalletAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  "sellerWalletAddress": "0x1234567890123456789012345678901234567890",
+  "paymentAmount": 0.001,
+  "requiresPaymentOnDelivery": true,
+  "paymentCurrency": "ETH"
+}
+```
+
+**Option C: Via Prisma Studio**
+1. Open Prisma Studio: `cd backend && npm run studio`
+2. Navigate to `Delivery` table
+3. Edit a delivery record
+4. Set `buyerWalletAddress` and `sellerWalletAddress` fields
+5. Save changes
+
+#### 10.9. Escrow Deposit Process
+
+**For Testing/Demo:**
+The backend can simulate escrow deposits for testing. In production, buyers would typically deposit directly from their wallet.
+
+**Manual Deposit (Production):**
+1. Buyer connects wallet (MetaMask, etc.) to the escrow contract
+2. Buyer calls `deposit(deliveryIdBytes32, sellerAddress)` with ETH value
+3. Contract locks funds in escrow
+4. Delivery status updates to `ESCROWED`
+
+**Backend-Assisted Deposit (Testing):**
+The `EthereumEscrowService.createEscrowDeposit()` method can be used for testing, but requires the buyer to approve/transfer funds first.
+
+#### 10.10. Payment Release Flow
+
+**Automatic Release (Default):**
+1. Driver verifies delivery via mobile app
+2. XL1 transaction is posted successfully
+3. Backend checks: `ENABLE_PAYMENT_ON_VERIFICATION=true` and `USE_ESCROW=true`
+4. Backend checks: `paymentStatus === 'ESCROWED'`
+5. Backend calls `escrowService.releaseEscrow(deliveryId)`
+6. Contract verifies: `msg.sender == owner` (authorization check)
+7. Contract releases funds to seller
+8. Database updates: `paymentStatus = 'PAID'`, `escrowReleaseTxHash` and `escrowReleaseBlock` are set
+
+**Manual Release (If Automatic Fails):**
+```bash
+# Via API
+POST /api/deliveries/:id/payment/release
+Authorization: Bearer <token>
+```
+
+#### 10.11. Payment Status Values
+
+The `paymentStatus` field can have the following values:
+
+- **`PENDING`**: Payment not yet initiated (no escrow deposit)
+- **`ESCROWED`**: Funds locked in escrow contract (awaiting delivery verification)
+- **`PAID`**: Payment successfully released to seller
+- **`FAILED`**: Payment transfer failed (check `paymentError` field)
+- **`REFUNDED`**: Payment refunded to buyer
+
+#### 10.12. Testing Escrow Payments
+
+**Step 1: Enable Mock Mode (Recommended for Initial Testing)**
+```env
+PAYMENT_MOCK_MODE=true
+USE_ESCROW=true
+ENABLE_PAYMENT_ON_VERIFICATION=true
+```
+
+This simulates transactions without real blockchain calls.
+
+**Step 2: Test with Real Contract (Sepolia Testnet)**
+```env
+PAYMENT_MOCK_MODE=false
+USE_ESCROW=true
+ENABLE_PAYMENT_ON_VERIFICATION=true
+ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID
+ETHEREUM_PRIVATE_KEY=0x...  # Contract owner wallet
+ETHEREUM_ESCROW_CONTRACT_ADDRESS=0x...  # Deployed contract
+```
+
+**Step 3: Get Testnet ETH**
+- Sepolia Faucet: [https://cloud.google.com/application/web3/faucet/ethereum/sepolia](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+- Or use other Sepolia faucets
+
+**Step 4: Create Test Delivery with Escrow**
+1. Create a delivery with `requiresPaymentOnDelivery=true`
+2. Set `buyerWalletAddress` and `sellerWalletAddress`
+3. Set `paymentCurrency='ETH'` and `paymentAmount` (e.g., 0.001)
+4. Manually deposit to escrow (or use backend-assisted deposit for testing)
+5. Verify delivery via mobile app
+6. Check that payment status changes to `PAID`
+
+#### 10.13. Troubleshooting
+
+**Error: "Not authorized"**
+- **Cause**: Backend wallet is not the contract owner
+- **Solution**: Verify contract owner matches `ETHEREUM_PRIVATE_KEY` wallet address
+- **Check**: Call `contract.owner()` on Etherscan or Remix
+
+**Error: "Escrow contract not initialized"**
+- **Cause**: Missing or invalid configuration
+- **Solution**: Verify all required environment variables are set:
+  - `ETHEREUM_RPC_URL`
+  - `ETHEREUM_PRIVATE_KEY`
+  - `ETHEREUM_ESCROW_CONTRACT_ADDRESS`
+  - `USE_ESCROW=true`
+
+**Error: "Insufficient funds for gas"**
+- **Cause**: Owner wallet doesn't have enough ETH for gas fees
+- **Solution**: Fund the owner wallet with ETH (for gas, not for payments)
+
+**Payment Status Stuck on ESCROWED**
+- **Cause**: Automatic release failed (check logs)
+- **Solution**: Manually release via API: `POST /api/deliveries/:id/payment/release`
+
+**Contract Not Found**
+- **Cause**: Invalid contract address or wrong network
+- **Solution**: Verify contract address on Etherscan matches the network (Sepolia/Mainnet)
+
+#### 10.14. Security Best Practices
+
+1. **Private Key Security**:
+   - Never commit `ETHEREUM_PRIVATE_KEY` to version control
+   - Use environment variables or secret management services
+   - Rotate keys periodically
+   - Use hardware wallets for production
+
+2. **Contract Ownership**:
+   - Use a dedicated service wallet for contract owner
+   - Don't use the owner wallet for other purposes
+   - Consider multi-sig wallets for production
+
+3. **Network Selection**:
+   - Use testnet (Sepolia) for development and testing
+   - Only use mainnet after thorough testing
+   - Verify contract address matches the network
+
+4. **Gas Management**:
+   - Monitor owner wallet balance
+   - Set up alerts for low balance
+   - Estimate gas costs before transactions
+
+5. **Access Control**:
+   - Secure backend API endpoints
+   - Use authentication for payment operations
+   - Implement rate limiting
+
+#### 10.15. Production Deployment Checklist
+
+Before deploying to production:
+
+- [ ] Contract deployed to mainnet
+- [ ] Contract address verified on Etherscan
+- [ ] Owner wallet is dedicated service wallet
+- [ ] Owner wallet has sufficient ETH for gas
+- [ ] `ETHEREUM_PRIVATE_KEY` stored securely (not in code)
+- [ ] `PAYMENT_MOCK_MODE=false`
+- [ ] `USE_ESCROW=true`
+- [ ] `ENABLE_PAYMENT_ON_VERIFICATION=true`
+- [ ] RPC endpoint is production-grade (Infura/Alchemy)
+- [ ] Monitoring set up for payment transactions
+- [ ] Backup/restore procedures documented
+- [ ] Security audit completed (for production contracts)
 
 ---
 

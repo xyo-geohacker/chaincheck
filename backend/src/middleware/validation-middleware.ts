@@ -69,7 +69,7 @@ export function validateRequest(
       }
 
       // Unexpected error
-      // eslint-disable-next-line no-console
+       
       console.error('Validation middleware error:', error);
       res.status(500).json({
         error: 'Internal validation error',

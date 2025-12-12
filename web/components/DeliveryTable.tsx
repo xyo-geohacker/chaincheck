@@ -291,9 +291,9 @@ export function DeliveryTable({ deliveries, initialStatusFilter = 'all' }: Props
                       <span className="text-slate-500">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
                     <Link
-                      className="text-sm font-semibold text-[#7aa7ff] transition hover:text-[#9b7bff]"
+                      className="inline-block text-sm font-semibold text-[#7aa7ff] transition hover:text-[#9b7bff]"
                       href={
                         delivery.proofHash && delivery.verifiedAt
                           ? `/verify/${delivery.proofHash}`

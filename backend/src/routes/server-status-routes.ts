@@ -48,14 +48,14 @@ async function checkBackendStatus(): Promise<ServiceStatus> {
   let lastError: Error | null = null;
   for (const urlToTry of urlsToTry) {
     try {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Status Check] Backend: Trying ${urlToTry}...`);
       const response = await axios.get(urlToTry, { 
         timeout: 5000, // Increased timeout
         validateStatus: () => true // Don't throw on any status code
       });
       
-      // eslint-disable-next-line no-console
+       
       console.log(`[Status Check] Backend: ${urlToTry} responded with status ${response.status}`);
       
       // Success - return status
@@ -69,7 +69,7 @@ async function checkBackendStatus(): Promise<ServiceStatus> {
     } catch (error) {
       // Store error and try next URL
       const errorMsg = error instanceof Error ? error.message : String(error);
-      // eslint-disable-next-line no-console
+       
       console.log(`[Status Check] Backend: ${urlToTry} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
       continue;
@@ -268,14 +268,14 @@ async function checkMobileStatus(): Promise<ServiceStatus> {
   let lastError: Error | null = null;
   for (const urlToTry of urlsToTry) {
     try {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Status Check] Mobile: Trying ${urlToTry}...`);
       const response = await axios.get(urlToTry, { 
         timeout: 5000, // Increased timeout
         validateStatus: () => true // Don't throw on any status code
       });
       
-      // eslint-disable-next-line no-console
+       
       console.log(`[Status Check] Mobile: ${urlToTry} responded with status ${response.status}`);
       
       // Success - return status
@@ -289,7 +289,7 @@ async function checkMobileStatus(): Promise<ServiceStatus> {
     } catch (error) {
       // Store error and try next URL
       const errorMsg = error instanceof Error ? error.message : String(error);
-      // eslint-disable-next-line no-console
+       
       console.log(`[Status Check] Mobile: ${urlToTry} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
       continue;
@@ -538,7 +538,7 @@ router.get('/server-status', authenticateConfigToken, async (_req, res) => {
       }
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to check server status:', error);
     return res.status(500).json({
       error: 'Failed to check server status',
@@ -582,7 +582,7 @@ router.get('/server-status/:service', authenticateConfigToken, async (req, res) 
       service: status
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to check service status:', error);
     return res.status(500).json({
       error: 'Failed to check service status',
@@ -731,7 +731,7 @@ router.get('/xyo-services/verify', authenticateConfigToken, async (_req, res) =>
       }
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to verify XYO services:', error);
     return res.status(500).json({
       error: 'Failed to verify XYO services',

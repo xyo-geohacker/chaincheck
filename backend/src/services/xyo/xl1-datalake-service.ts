@@ -20,7 +20,7 @@ export class Xl1DataLakeService {
   async getPayloadFromDataLake(hash: string): Promise<unknown | null> {
     // Check if Archivist is disabled via feature flag
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), skipping Data Lake payload retrieval');
       return null;
     }
@@ -75,7 +75,7 @@ export class Xl1DataLakeService {
 
       return result || null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to get payload from Data Lake via RPC:', error);
       return null;
     }
@@ -102,7 +102,7 @@ export class Xl1DataLakeService {
 
       return Array.isArray(results) ? results : [];
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to get payloads from Data Lake via RPC:', error);
       return [];
     }
@@ -127,7 +127,7 @@ export class Xl1DataLakeService {
 
       return await storage.has(hash);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to check payload existence in Data Lake via RPC:', error);
       return false;
     }
@@ -143,7 +143,7 @@ export class Xl1DataLakeService {
 
       const endpoint = env.xyoChainRpcUrl;
       if (!endpoint) {
-        // eslint-disable-next-line no-console
+         
         console.warn('XYO_CHAIN_RPC_URL not configured');
         return null;
       }
@@ -157,7 +157,7 @@ export class Xl1DataLakeService {
       }
 
       if (!HttpRpcXyoConnection) {
-        // eslint-disable-next-line no-console
+         
         console.warn('HttpRpcXyoConnection not found');
         return null;
       }
@@ -182,7 +182,7 @@ export class Xl1DataLakeService {
             // Wrap it in SimpleDataLakeViewer
             storage = new SimpleDataLakeViewer({ map: archivistMap });
           } catch (error) {
-            // eslint-disable-next-line no-console
+             
             console.warn('⚠ Failed to create SimpleDataLakeViewer with map:', error);
             // Fallback to direct custom wrapper
             storage = this.createArchivistDataLakeViewer();
@@ -194,26 +194,26 @@ export class Xl1DataLakeService {
       }
 
       // Create connection with storage (if available)
-      const HttpRpcXyoConnectionClass = HttpRpcXyoConnection as any;
+      const HttpRpcXyoConnectionClass = HttpRpcXyoConnection;
       const connectionParams: any = { endpoint };
       
       if (storage) {
         connectionParams.storage = storage;
       } else {
-        // eslint-disable-next-line no-console
+         
         console.warn('⚠ Creating connection without Data Lake storage (will use direct HTTP calls as fallback)');
       }
 
       const connection = new HttpRpcXyoConnectionClass(connectionParams);
 
       if (!connection.storage) {
-        // eslint-disable-next-line no-console
+         
         console.warn('⚠ Connection does not have storage property');
       }
 
       return connection;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to create RPC connection with Data Lake storage:', error);
       return null;
     }
@@ -308,7 +308,7 @@ export class Xl1DataLakeService {
                 }
               }
             } else {
-              // eslint-disable-next-line no-console
+               
               console.warn('⚠ Failed to discover Archivist address from /Archivist route:', error instanceof Error ? error.message : String(error));
             }
           }
@@ -316,9 +316,9 @@ export class Xl1DataLakeService {
           // CRITICAL: We MUST have an Archivist address to proceed
           // The /Archivist route is the single source of truth
           if (!archivistModuleAddress) {
-            // eslint-disable-next-line no-console
+             
             console.error('❌ Could not discover Archivist module address from /Archivist route');
-            // eslint-disable-next-line no-console
+             
             console.error('❌ Cannot retrieve payload without valid Archivist address');
             return undefined;
           }
@@ -353,7 +353,7 @@ export class Xl1DataLakeService {
               const Account = accountModule.Account;
               
               if (!Account || !PayloadBuilder || !QueryBoundWitnessBuilder || !ArchivistGetQuerySchema) {
-                // eslint-disable-next-line no-console
+                 
                 console.warn('⚠ Required SDK modules not available for QueryBoundWitness');
                 return undefined;
               }
@@ -409,7 +409,7 @@ export class Xl1DataLakeService {
                 
                 // Check for errors
                 if (Array.isArray(errors) && errors.length > 0) {
-                  // eslint-disable-next-line no-console
+                   
                   console.warn(`⚠ Archivist query returned errors:`, errors);
                 }
                 
@@ -433,10 +433,10 @@ export class Xl1DataLakeService {
                 if (matchingPayload) {
                   return matchingPayload;
                 } else {
-                  // eslint-disable-next-line no-console
+                   
                   console.log(`⚠ QueryBoundWitness returned ${payloads.length} payload(s), but none matched hash ${hash}`);
                   if (payloads.length > 0) {
-                    // eslint-disable-next-line no-console
+                     
                     console.log(`Available payload hashes:`, payloads.map((p: unknown) => {
                       if (typeof p === 'object' && p !== null) {
                         const payload = p as Record<string, unknown>;
@@ -447,25 +447,25 @@ export class Xl1DataLakeService {
                   }
                 }
               } else {
-                // eslint-disable-next-line no-console
+                 
                 console.log(`⚠ QueryBoundWitness request returned status ${response.status}`);
                 if (response.data) {
-                  // eslint-disable-next-line no-console
+                   
                   console.log(`Response data:`, JSON.stringify(response.data, null, 2));
                 }
               }
             } catch (error) {
-              // eslint-disable-next-line no-console
+               
               console.warn('QueryBoundWitness retrieval failed:', error instanceof Error ? error.message : String(error));
               if (error instanceof Error && error.stack) {
-                // eslint-disable-next-line no-console
+                 
                 console.warn('Error stack:', error.stack);
               }
               // Don't fall through to GET endpoints - QueryBoundWitness is the only valid method
               return undefined;
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.warn('⚠ Could not determine Archivist module address, cannot use QueryBoundWitness');
             return undefined;
           }
@@ -473,11 +473,11 @@ export class Xl1DataLakeService {
           // NOTE: GET endpoints are NOT supported by Archivist - all return 404
           // QueryBoundWitness POST to /node/:address is the ONLY valid method
           // If QueryBoundWitness failed above, we cannot retrieve the payload
-          // eslint-disable-next-line no-console
+           
           console.log(`\n✗ QueryBoundWitness retrieval failed - GET endpoints are not supported by Archivist`);
-          // eslint-disable-next-line no-console
+           
           console.log(`Note: Archivist requires POST with QueryBoundWitness format, not GET requests`);
-          // eslint-disable-next-line no-console
+           
           console.log(`========================\n`);
           
           return undefined;
@@ -566,7 +566,7 @@ export class Xl1DataLakeService {
           return undefined;
           */
         } catch (error) {
-          // eslint-disable-next-line no-console
+           
           console.warn('Archivist map.get() failed:', error);
           return undefined;
         }
@@ -596,7 +596,7 @@ export class Xl1DataLakeService {
    * Used as fallback when SimpleDataLakeViewer is not available
    */
   private createArchivistDataLakeViewer(): any {
-    // eslint-disable-next-line no-console
+     
     console.log('Creating custom Archivist DataLakeViewer wrapper...');
 
     // Use the same map implementation
@@ -608,11 +608,11 @@ export class Xl1DataLakeService {
                   },
 
                   async fetch(hashes: string[], maxDepth?: number): Promise<unknown[]> {
-                    // eslint-disable-next-line no-console
+                     
                     console.log(`\n--- Custom DataLakeViewer.fetch() called ---`);
-                    // eslint-disable-next-line no-console
+                     
                     console.log(`Hashes: ${hashes.length}, maxDepth: ${maxDepth || 'unlimited'}`);
-                    // eslint-disable-next-line no-console
+                     
                     console.log('Note: fetch() follows hash payloads, but our implementation uses get() for now');
                     
                     // For now, implement fetch() by calling get() for each hash
@@ -630,7 +630,7 @@ export class Xl1DataLakeService {
                           if (typeof result === 'object' && result !== null) {
                             const payload = result as Record<string, unknown>;
                             if (payload.schema === 'network.xyo.hash' && payload.hash) {
-                              // eslint-disable-next-line no-console
+                               
                               console.log(`Found hash payload, could follow to: ${payload.hash}`);
                               // For now, we don't follow - just return the hash payload itself
                             }

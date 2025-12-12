@@ -25,7 +25,7 @@ export class ArchivistService {
   async insertPayloads(payloads: unknown[]): Promise<{ success: boolean; inserted: number; error?: string; archivistBoundWitnessHash?: string }> {
     // Check if Archivist is disabled via feature flag
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), skipping payload insertion');
       return { success: false, inserted: 0, error: 'Archivist is disabled' };
     }
@@ -123,7 +123,7 @@ export class ArchivistService {
           const match = location.match(/\/([a-f0-9]{40})/);
           if (match) {
             archivistModuleAddress = match[1];
-            // eslint-disable-next-line no-console
+             
             console.log(`✓ Found Archivist module address: ${archivistModuleAddress}`);
             
             // PRIORITY 1: Module address routes (WORKING on production Archivist)
@@ -169,7 +169,7 @@ export class ArchivistService {
             const match = location.match(/\/([a-f0-9]{40})/);
             if (match) {
               archivistModuleAddress = match[1];
-              // eslint-disable-next-line no-console
+               
               console.log(`✓ Found Archivist module address from redirect error: ${archivistModuleAddress}`);
               
               // PRIORITY 1: Module address routes (WORKING on production Archivist)
@@ -229,21 +229,21 @@ export class ArchivistService {
         const endpoint = endpointConfig.url;
         const archiveName = endpointConfig.archive || 'default';
         
-        // eslint-disable-next-line no-console
+         
         console.log('=== ARCHIVIST INSERT REQUEST ===');
-        // eslint-disable-next-line no-console
+         
         console.log('Endpoint:', endpoint);
-        // eslint-disable-next-line no-console
+         
         console.log('Pattern:', endpointConfig.description);
-        // eslint-disable-next-line no-console
+         
         console.log('Archive:', archiveName);
-        // eslint-disable-next-line no-console
+         
         console.log('Payloads count:', payloads.length);
-        // eslint-disable-next-line no-console
+         
         console.log('Payload schemas:', payloads.map((p: any) => p?.schema).filter(Boolean));
-        // eslint-disable-next-line no-console
+         
         console.log('Query Bound Witness:', JSON.stringify(query[0], null, 2));
-        // eslint-disable-next-line no-console
+         
         console.log('Query Payloads Count:', Array.isArray(query[1]) ? query[1].length : 'not an array');
         
         // Determine request body format based on endpoint
@@ -257,28 +257,28 @@ export class ArchivistService {
           // It uses PayloadBuilder.hashPairs to process the body and calls archivist.insert(payloads)
           // We should send the original payloads array, not query[1] which includes the query payload
           requestBody = payloads; // Send original data payloads, not QueryBoundWitness payloads
-          // eslint-disable-next-line no-console
+           
           console.warn('⚠ Using /dataLake/insert - this will NOT create bound witnesses (bound_witnesses collection will remain empty)');
-          // eslint-disable-next-line no-console
+           
           console.log('Request format: Original data payloads array only (for /dataLake/insert)');
-          // eslint-disable-next-line no-console
+           
           console.log(`   - Sending ${Array.isArray(requestBody) ? requestBody.length : 0} data payload(s) (excluding query payload)`);
         } else {
           // QueryBoundWitness endpoints expect: [boundWitness, payloads[]]
           // This format creates BOTH bound witnesses AND stores payloads
           // The bound witness links the payloads together and enables Diviner queries
           requestBody = queryData;
-          // eslint-disable-next-line no-console
+           
           console.log('Request format: QueryBoundWitness [boundWitness, payloads[]]');
-          // eslint-disable-next-line no-console
+           
           console.log('   - This will create bound witness entries in bound_witnesses collection');
-          // eslint-disable-next-line no-console
+           
           console.log('   - Bound witnesses are required for Diviner queries to work properly');
         }
         
         if (endpoints.indexOf(endpointConfig) === 0) {
           // Only log full payload for first attempt (to avoid spam)
-          // eslint-disable-next-line no-console
+           
           console.log('Full Request Payload:', JSON.stringify(requestBody, null, 2));
         }
 
@@ -289,13 +289,13 @@ export class ArchivistService {
             timeout: 30000  // 30 second timeout
           });
 
-          // eslint-disable-next-line no-console
+           
           console.log('=== ARCHIVIST INSERT RESPONSE ===');
-          // eslint-disable-next-line no-console
+           
           console.log('Endpoint:', endpoint);
-          // eslint-disable-next-line no-console
+           
           console.log('Status:', response.status);
-          // eslint-disable-next-line no-console
+           
           console.log('Response Data:', JSON.stringify(response.data, null, 2));
           
           // NOTE: Archivist logs show "router standardErrors" for /node/:address endpoint
@@ -349,17 +349,17 @@ export class ArchivistService {
           
           // Log bound witness details for debugging
           if (responseBoundWitness) {
-            // eslint-disable-next-line no-console
+             
             console.log(`✓ Bound witness created in response (should be persisted to MongoDB)`);
             if (typeof responseBoundWitness === 'object' && responseBoundWitness !== null) {
               const bw = responseBoundWitness as Record<string, unknown>;
-              // eslint-disable-next-line no-console
+               
               console.log(`   - Bound witness hash: ${bw._hash || bw.hash || 'unknown'}`);
-              // eslint-disable-next-line no-console
+               
               console.log(`   - Payload hashes: ${Array.isArray(bw.payload_hashes) ? bw.payload_hashes.length : 0}`);
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.warn(`⚠ No bound witness in QueryBoundWitness response - this may indicate a problem`);
           }
         }
@@ -371,7 +371,7 @@ export class ArchivistService {
             }
             return String(e);
           });
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ Archivist insert returned errors:`, errorMessages);
           return { success: false, inserted: insertedPayloads?.length || 0, error: errorMessages.join('; ') };
         }
@@ -385,18 +385,18 @@ export class ArchivistService {
           // Success: payloads were inserted and no errors
           if (endpoint.includes('/dataLake/insert')) {
             // Using the correct /dataLake/insert endpoint with proper payload format
-            // eslint-disable-next-line no-console
+             
             console.log(`✓ Successfully inserted ${insertedCount} payload(s) into Archivist via /dataLake/insert`);
-            // eslint-disable-next-line no-console
+             
             console.log(`   - Using correct endpoint and payload format`);
-            // eslint-disable-next-line no-console
+             
             console.log(`   - Verify data is persisted in MongoDB (should have bound_witnesses and payloads collections)`);
           } else {
             // Using QueryBoundWitness endpoint - should create bound witnesses AND store payloads
-            // eslint-disable-next-line no-console
+             
             console.log(`✓ Successfully inserted ${insertedCount} payload(s) into Archivist via ${endpoint}`);
             if (responseBoundWitness) {
-              // eslint-disable-next-line no-console
+               
               console.log(`   - Bound witness created in response`);
               
               // Extract bound witness hash for Diviner queries
@@ -416,28 +416,28 @@ export class ArchivistService {
                     // BoundWitnessWrapper.parse() creates a wrapper that can calculate the hash
                     const wrapper = (BoundWitnessWrapper as any).parse(responseBoundWitness);
                     archivistBoundWitnessHash = await wrapper.hash();
-                    // eslint-disable-next-line no-console
+                     
                     console.log(`   - Calculated bound witness hash using SDK: ${archivistBoundWitnessHash}`);
                   } catch (hashError: any) {
-                    // eslint-disable-next-line no-console
+                     
                     console.warn(`   ⚠ Failed to calculate bound witness hash: ${hashError.message || hashError}`);
-                    // eslint-disable-next-line no-console
+                     
                     console.warn(`   ⚠ Bound witness object keys: ${Object.keys(bw).join(', ')}`);
                   }
                 }
                 
                 if (archivistBoundWitnessHash) {
-                  // eslint-disable-next-line no-console
+                   
                   console.log(`   - Archivist bound witness hash: ${archivistBoundWitnessHash}`);
-                  // eslint-disable-next-line no-console
+                   
                   console.log(`   - NOTE: Use this hash (not XL1 transaction hash) for Diviner queries`);
                 } else {
-                  // eslint-disable-next-line no-console
+                   
                   console.warn(`   ⚠ Could not extract or calculate bound witness hash`);
                 }
               }
               
-              // eslint-disable-next-line no-console
+               
               console.log(`   - Attempting to manually persist bound witness to MongoDB...`);
               
               // WORKAROUND: MongoDBArchivist.query() creates bound witnesses but doesn't persist them
@@ -460,52 +460,52 @@ export class ArchivistService {
                 );
                 
                 if (boundWitnessResponse.status === 200) {
-                  // eslint-disable-next-line no-console
+                   
                   console.log(`   ✓ Bound witness successfully persisted to MongoDB bound_witnesses collection`);
                 } else {
-                  // eslint-disable-next-line no-console
+                   
                   console.warn(`   ⚠ Bound witness insert returned status ${boundWitnessResponse.status}`);
                 }
               } catch (boundWitnessError: any) {
-                // eslint-disable-next-line no-console
+                 
                 console.warn(`   ⚠ Failed to persist bound witness: ${boundWitnessError.message || boundWitnessError}`);
-                // eslint-disable-next-line no-console
+                 
                 console.warn(`   ⚠ This may cause Diviner queries to fail - bound_witnesses collection may remain empty`);
               }
               
               // Return the Archivist bound witness hash so it can be used for Diviner queries
               return { success: true, inserted: insertedCount, archivistBoundWitnessHash };
             } else {
-              // eslint-disable-next-line no-console
+               
               console.warn(`⚠ No bound witness in response - bound_witnesses collection may remain empty`);
             }
           }
           return { success: true, inserted: insertedCount };
         } else if (insertedCount > 0 && errors && errors.length > 0) {
           // Payloads were inserted but there were also errors - still consider success
-          // eslint-disable-next-line no-console
+           
           console.log(`✓ Successfully inserted ${insertedCount} payload(s) into Archivist (with warnings)`);
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ WARNING: Verify data is actually persisted in MongoDB - endpoint may return success without persisting`);
           return { success: true, inserted: insertedCount };
         } else if (insertedCount === 0 && responseBoundWitness && (!errors || errors.length === 0)) {
           // No payloads in response but got bound witness without errors
           // This might indicate payloads were stored but not returned in response
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ Archivist returned bound witness but no payloads in response - payloads may have been stored`);
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ WARNING: Verify data is actually persisted in MongoDB - endpoint may return success without persisting`);
           return { success: true, inserted: payloads.length };
         } else {
           // No payloads inserted and errors present, or unexpected response format
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ Archivist returned success but no payloads in response`);
           return { success: false, inserted: 0, error: 'No payloads in response' };
         }
         } else if (response.status === 404) {
           // Endpoint/archive doesn't exist - try next endpoint pattern
           const errorMessage = response.data?.message || response.data?.error?.message || 'Module not found';
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ Endpoint failed (404): ${endpointConfig.description} - ${endpoints.length > endpoints.indexOf(endpointConfig) + 1 ? 'trying next pattern...' : 'no more patterns to try'}`);
           lastError = errorMessage;
           
@@ -516,7 +516,7 @@ export class ArchivistService {
         } else {
           // Other error - log and try next endpoint if available
           const errorMessage = response.data?.message || response.data?.error?.message || response.statusText || `HTTP ${response.status}`;
-          // eslint-disable-next-line no-console
+           
           console.error(`✗ Archivist insert returned status ${response.status}: ${errorMessage}`);
           lastError = errorMessage;
           
@@ -528,7 +528,7 @@ export class ArchivistService {
         } catch (error) {
           // Network error - try next endpoint if available
           const errorMessage = error instanceof Error ? error.message : String(error);
-          // eslint-disable-next-line no-console
+           
           console.error(`✗ Archivist insert request failed for ${endpointConfig.description}:`, errorMessage);
           lastError = errorMessage;
           
@@ -542,12 +542,12 @@ export class ArchivistService {
       // All endpoint attempts failed
       const triedPatterns = endpoints.map(e => e.description).join(', ');
       const finalError = lastError || (lastResponse ? `HTTP ${lastResponse.status}` : 'All endpoint attempts failed');
-      // eslint-disable-next-line no-console
+       
       console.error(`✗ Archivist insert failed for all endpoint patterns (tried: ${triedPatterns}): ${finalError}`);
       return { success: false, inserted: 0, error: finalError };
 
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Archivist insert error:', error);
       return {
         success: false,
@@ -568,7 +568,7 @@ export class ArchivistService {
   async verifyLocationProof(proofHash: string): Promise<ProofVerificationResult> {
     // Check if Archivist is disabled via feature flag
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), returning invalid result');
       return {
         isValid: false,
@@ -586,11 +586,11 @@ export class ArchivistService {
           data: dataLakeResult
         };
       } else {
-        // eslint-disable-next-line no-console
+         
         console.log('⚠ Data Lake RPC interface did not return payload');
-        // eslint-disable-next-line no-console
+         
         console.log('Note: Direct HTTP calls always return 404 (not found), so skipping fallback');
-        // eslint-disable-next-line no-console
+         
         console.log('Note: Retry logic with delays is handled by Data Lake service map wrapper');
       }
 
@@ -601,7 +601,7 @@ export class ArchivistService {
         data: null
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to verify proof', error);
       return {
         isValid: false,
@@ -618,13 +618,13 @@ export class ArchivistService {
   async getPayloadByHash(payloadHash: string): Promise<unknown | null> {
     // Check if Archivist is disabled via feature flag
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), skipping payload retrieval');
       return null;
     }
 
     try {
-      // eslint-disable-next-line no-console
+       
       console.log(`[getPayloadByHash] Fetching payload with hash: ${payloadHash}`);
       
       // Use verifyLocationProof with the payload hash (same as xl1-transaction-service.ts line 204)
@@ -632,7 +632,7 @@ export class ArchivistService {
       // Note: verifyLocationProof calls getPayloadFromDataLake which uses QueryBoundWitness
       const archivistResult = await this.verifyLocationProof(payloadHash);
       
-      // eslint-disable-next-line no-console
+       
       console.log(`[getPayloadByHash] verifyLocationProof result:`, {
         isValid: archivistResult.isValid,
         hasData: !!archivistResult.data,
@@ -652,12 +652,12 @@ export class ArchivistService {
           // Check if it's a payload object with schema
           if ('schema' in data && data.schema === 'network.xyo.chaincheck') {
             extractedPayload = data;
-            // eslint-disable-next-line no-console
+             
             console.log(`[getPayloadByHash] Found payload directly in response data`);
           } else if ('data' in data && Array.isArray(data.data)) {
             // Response might be wrapped: { data: [payloads...] }
             const payloads = data.data as unknown[];
-            // eslint-disable-next-line no-console
+             
             console.log(`[getPayloadByHash] Response has data array with ${payloads.length} payload(s)`);
             extractedPayload = payloads.find((p: unknown) => {
               if (typeof p === 'object' && p !== null) {
@@ -667,11 +667,11 @@ export class ArchivistService {
               return false;
             });
             if (extractedPayload) {
-              // eslint-disable-next-line no-console
+               
               console.log(`[getPayloadByHash] Found chaincheck payload in data array`);
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.log(`[getPayloadByHash] Response data structure:`, {
               keys: Object.keys(data),
               hasSchema: 'schema' in data,
@@ -682,20 +682,20 @@ export class ArchivistService {
         }
         
         if (extractedPayload) {
-          // eslint-disable-next-line no-console
+           
           console.log('✓ Successfully extracted chaincheck payload from Archivist response');
           return extractedPayload;
         } else {
-          // eslint-disable-next-line no-console
+           
           console.warn('⚠ Archivist response does not contain chaincheck payload');
-          // eslint-disable-next-line no-console
+           
           console.warn('Response data:', JSON.stringify(responseData, null, 2).substring(0, 500));
           return null;
         }
       } else {
-        // eslint-disable-next-line no-console
+         
         console.warn('✗ Off-chain payload not available in Archivist');
-        // eslint-disable-next-line no-console
+         
         console.warn('verifyLocationProof returned:', {
           isValid: archivistResult.isValid,
           hasData: !!archivistResult.data
@@ -703,10 +703,10 @@ export class ArchivistService {
         return null;
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to get payload by hash:', error);
       if (error instanceof Error) {
-        // eslint-disable-next-line no-console
+         
         console.error('Error stack:', error.stack);
       }
       return null;
@@ -728,13 +728,13 @@ export class ArchivistService {
 
     for (const endpoint of endpoints) {
       try {
-        // eslint-disable-next-line no-console
+         
         console.log('=== ARCHIVIST GET REQUEST ===');
-        // eslint-disable-next-line no-console
+         
         console.log('URL:', endpoint);
-        // eslint-disable-next-line no-console
+         
         console.log('Hash:', proofHash);
-        // eslint-disable-next-line no-console
+         
         console.log('Headers:', {
           'Content-Type': 'application/json',
           'x-api-key': env.xyoApiKey ? '***' : '(not set)',
@@ -750,32 +750,32 @@ export class ArchivistService {
           validateStatus: () => true
         });
 
-        // eslint-disable-next-line no-console
+         
         console.log('=== ARCHIVIST GET RESPONSE ===');
-        // eslint-disable-next-line no-console
+         
         console.log('Status:', response.status);
-        // eslint-disable-next-line no-console
+         
         console.log('Response Data:', JSON.stringify(response.data, null, 2));
 
         if (response.status === 200 && response.data) {
-          // eslint-disable-next-line no-console
+           
           console.log(`✓ Successfully retrieved bound witness from ${endpoint}`);
           return {
             isValid: true,
             data: response.data
           };
         } else {
-          // eslint-disable-next-line no-console
+           
           console.log(`✗ Endpoint ${endpoint} returned status ${response.status}, trying next...`);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.log(`✗ Endpoint ${endpoint} failed:`, error instanceof Error ? error.message : String(error));
         continue; // Try next endpoint
       }
     }
 
-    // eslint-disable-next-line no-console
+     
     console.log('✗ All Archivist GET endpoints failed for hash:', proofHash);
     return null;
   }
@@ -939,24 +939,24 @@ export class ArchivistService {
       const endpoint = endpointConfig.url;
       const archiveName = endpointConfig.archive || 'default';
 
-      // eslint-disable-next-line no-console
+       
       console.log('=== ARCHIVIST QUERYBOUNDWITNESS REQUEST ===');
-      // eslint-disable-next-line no-console
+       
       console.log('Endpoint:', endpoint);
-      // eslint-disable-next-line no-console
+       
       console.log('Pattern:', endpointConfig.description);
-      // eslint-disable-next-line no-console
+       
       console.log('Hash:', proofHash);
-      // eslint-disable-next-line no-console
+       
       console.log('Archive:', archiveName);
       
       if (endpoints.indexOf(endpointConfig) === 0) {
         // Only log full payload for first attempt (to avoid spam)
-        // eslint-disable-next-line no-console
+         
         console.log('Request Payload:', JSON.stringify(queryData, null, 2));
       }
       
-      // eslint-disable-next-line no-console
+       
       console.log('Headers:', {
         ...headers,
         'x-api-key': headers['x-api-key'] ? '***' : '(not set)'
@@ -971,13 +971,13 @@ export class ArchivistService {
         
         lastResponse = response;
 
-      // eslint-disable-next-line no-console
+       
       console.log('=== ARCHIVIST QUERYBOUNDWITNESS RESPONSE ===');
-      // eslint-disable-next-line no-console
+       
       console.log('Endpoint:', endpoint);
-      // eslint-disable-next-line no-console
+       
       console.log('Status:', response.status);
-      // eslint-disable-next-line no-console
+       
       console.log('Response Data:', JSON.stringify(response.data, null, 2));
 
       if (response.status === 200 && response.data) {
@@ -1002,13 +1002,13 @@ export class ArchivistService {
         
         if (responseBoundWitness || (Array.isArray(payloads) && payloads.length > 0)) {
             
-            // eslint-disable-next-line no-console
+             
             console.log('Response structure analysis:');
-            // eslint-disable-next-line no-console
+             
             console.log('- Bound witness:', responseBoundWitness ? 'present' : 'missing');
-            // eslint-disable-next-line no-console
+             
             console.log('- Payloads array length:', Array.isArray(payloads) ? payloads.length : 'not an array');
-            // eslint-disable-next-line no-console
+             
             console.log('- Errors array length:', Array.isArray(errors) ? errors.length : 'not an array');
             
             // If we're querying for a payload hash, check if the payloads array contains our payload
@@ -1030,7 +1030,7 @@ export class ArchivistService {
               });
               
               if (matchingPayload) {
-                // eslint-disable-next-line no-console
+                 
                 console.log(`✓ Found matching payload in payloads array`);
                 return {
                   isValid: true,
@@ -1047,7 +1047,7 @@ export class ArchivistService {
                 }
                 return String(e);
               });
-              // eslint-disable-next-line no-console
+               
               console.log('Errors in response:', errorMessages);
             }
             
@@ -1057,30 +1057,30 @@ export class ArchivistService {
             if (!hasErrorOnly) {
               const boundWitnessData = this.extractBoundWitnessData(response.data);
               if (boundWitnessData) {
-                // eslint-disable-next-line no-console
+                 
                 console.log(`⚠ Retrieved bound witness from ${endpoint}, but payloads array is empty`);
-                // eslint-disable-next-line no-console
+                 
                 console.log('This may indicate the payload is not yet indexed or is in a different archive');
                 return {
                   isValid: true,
                   data: boundWitnessData
                 };
               } else {
-                // eslint-disable-next-line no-console
+                 
                 console.log(`✗ Could not extract bound witness data from ${endpoint}`);
               }
             } else {
-              // eslint-disable-next-line no-console
+               
               console.log(`✗ Endpoint ${endpoint} returned error-only response`);
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.log(`✗ Unexpected response structure from ${endpoint}`);
           }
         } else if (response.status === 404) {
           // Endpoint/archive doesn't exist - try next endpoint pattern
           const errorMessage = response.data?.message || response.data?.error?.message || 'Module not found';
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ Endpoint failed (404): ${endpointConfig.description} - ${endpoints.length > endpoints.indexOf(endpointConfig) + 1 ? 'trying next pattern...' : 'no more patterns to try'}`);
           lastError = errorMessage;
           
@@ -1090,7 +1090,7 @@ export class ArchivistService {
           }
         } else {
           // Other error - log and try next endpoint if available
-          // eslint-disable-next-line no-console
+           
           console.log(`✗ Endpoint ${endpoint} returned status ${response.status}`);
           lastError = `HTTP ${response.status}`;
           
@@ -1102,7 +1102,7 @@ export class ArchivistService {
       } catch (error) {
         // Network error - try next endpoint if available
         const errorMessage = error instanceof Error ? error.message : String(error);
-        // eslint-disable-next-line no-console
+         
         console.log(`✗ Endpoint ${endpoint} failed:`, errorMessage);
         lastError = errorMessage;
         
@@ -1116,7 +1116,7 @@ export class ArchivistService {
     // All endpoint attempts failed
     const triedPatterns = endpoints.map(e => e.description).join(', ');
     const finalError = lastError || (lastResponse ? `HTTP ${lastResponse.status}` : 'All endpoint attempts failed');
-    // eslint-disable-next-line no-console
+     
     console.log(`✗ Archivist QueryBoundWitness query failed for hash ${proofHash} (tried patterns: ${triedPatterns}): ${finalError}`);
     return {
       isValid: false,
@@ -1173,7 +1173,7 @@ export class ArchivistService {
   async validateBoundWitness(proofHash: string): Promise<{ isValid: boolean; errors: string[] }> {
     // Check if Archivist is disabled via feature flag
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), skipping bound witness validation');
       return { isValid: false, errors: ['Archivist is disabled'] };
     }
@@ -1211,7 +1211,7 @@ export class ArchivistService {
       // Basic validation fallback
       return this.basicValidation(boundWitness);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Bound witness validation error:', error);
       return {
         isValid: false,
@@ -1302,7 +1302,7 @@ export class ArchivistService {
         // This ensures we show the actual transaction data that was just submitted
         if (storedData.isMocked !== true && storedData.boundWitness) {
           useStoredData = true;
-          // eslint-disable-next-line no-console
+           
           console.log('Using stored real transaction data (not mocked) for:', proofHash);
         } else if (storedBoundWitnessData && typeof storedBoundWitnessData === 'object') {
           // Also check if storedBoundWitnessData IS the bound witness itself (from XL1 viewer)
@@ -1311,12 +1311,12 @@ export class ArchivistService {
           if (Array.isArray(bw) && bw.length > 0) {
             // It's a bound witness array [boundWitness, payloads]
             useStoredData = true;
-            // eslint-disable-next-line no-console
+             
             console.log('Using bound witness data passed directly (from XL1) for:', proofHash);
           } else if ('addresses' in bw || 'payload_hashes' in bw || 'previous_hashes' in bw) {
             // It's a bound witness object
             useStoredData = true;
-            // eslint-disable-next-line no-console
+             
             console.log('Using bound witness object passed directly (from XL1) for:', proofHash);
           }
         }
@@ -1333,12 +1333,12 @@ export class ArchivistService {
           if (Array.isArray(bw) && bw.length > 0) {
             // boundWitness is [boundWitnessObject, payloadsArray]
             boundWitness = bw[0];
-            // eslint-disable-next-line no-console
+             
             console.log('Extracted bound witness from stored data (array format)');
           } else if (typeof bw === 'object' && bw !== null) {
             // boundWitness is the object itself
             boundWitness = bw;
-            // eslint-disable-next-line no-console
+             
             console.log('Extracted bound witness from stored data (object format)');
           }
         }
@@ -1346,7 +1346,7 @@ export class ArchivistService {
         // Try fetching from Archivist (for older transactions or when stored data is mocked)
         // Only query Archivist if it's not disabled
         if (env.xyoArchivistDisabled) {
-          // eslint-disable-next-line no-console
+           
           console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true) and no stored/XL1 data available, returning empty cryptographic details');
           return {
             signatures: [],
@@ -1358,19 +1358,19 @@ export class ArchivistService {
           };
         }
 
-        // eslint-disable-next-line no-console
+         
         console.log('Attempting to fetch bound witness from Archivist for:', proofHash);
         const verificationResult = await this.verifyLocationProof(proofHash);
         
         if (verificationResult.isValid && verificationResult.data) {
           // Successfully retrieved from Archivist - use real blockchain data
           boundWitness = this.extractBoundWitness(verificationResult.data);
-          // eslint-disable-next-line no-console
+           
           console.log('Successfully retrieved real bound witness from Archivist - using real blockchain data');
           isMocked = false;
         } else {
           // Archivist fetch failed - fall back to stored data if available
-          // eslint-disable-next-line no-console
+           
           console.log('Archivist fetch failed, falling back to stored data if available');
           
           if (storedBoundWitnessData) {
@@ -1487,7 +1487,7 @@ export class ArchivistService {
         isMocked
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Cryptographic details extraction error:', error);
       return {
         signatures: [],
@@ -1511,7 +1511,7 @@ export class ArchivistService {
   async getBoundWitnessChain(proofHash: string, maxDepth: number = 5, storedBoundWitnessData?: unknown): Promise<unknown[]> {
     // Check if Archivist is disabled via feature flag
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), returning empty chain');
       return [];
     }
@@ -1531,14 +1531,14 @@ export class ArchivistService {
           
           // If stored data is real (not mocked), use it
           if (storedData.isMocked !== true && storedData.boundWitness) {
-            // eslint-disable-next-line no-console
+             
             console.log(`Using stored real transaction data for chain hash: ${currentHash}`);
             
             const bw = storedData.boundWitness;
             if (Array.isArray(bw) && bw.length > 0) {
               // boundWitness is [boundWitnessObject, payloadsArray]
               boundWitness = bw[0];
-              // eslint-disable-next-line no-console
+               
               console.log('Extracted bound witness from stored data for chain');
             } else if (typeof bw === 'object' && bw !== null) {
               boundWitness = bw;
@@ -1551,7 +1551,7 @@ export class ArchivistService {
           const verificationResult = await this.verifyLocationProof(currentHash);
           
           if (!verificationResult.isValid || !verificationResult.data) {
-            // eslint-disable-next-line no-console
+             
             console.warn(`Could not retrieve bound witness for hash: ${currentHash}`);
             break;
           }
@@ -1597,7 +1597,7 @@ export class ArchivistService {
         isFirstHash = false; // After first iteration, we're following the chain
         depth++;
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.error(`Error retrieving bound witness chain at depth ${depth}:`, error);
         break;
       }

@@ -57,7 +57,7 @@ export class NetworkService {
       
       return this.createMockNodeInfo(nodeAddress);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error getting witness node info:', error);
       return this.createMockNodeInfo(nodeAddress);
     }
@@ -70,7 +70,7 @@ export class NetworkService {
    */
   async getNetworkStatistics(): Promise<NetworkStatistics> {
     try {
-      // eslint-disable-next-line no-console
+       
       console.log('Getting network statistics from XL1 transactions');
       
       // Extract real data from XL1 transactions
@@ -78,7 +78,7 @@ export class NetworkService {
       
       // If we have real data, use it; otherwise fall back to mock
       if (xl1Stats.totalNodes > 0 || (xl1Stats.deliveries && xl1Stats.deliveries.total > 0)) {
-        // eslint-disable-next-line no-console
+         
         console.log(`Extracted ${xl1Stats.totalNodes} unique nodes and ${xl1Stats.deliveries?.total ?? 0} deliveries from XL1 transactions`);
         
         // Calculate coverage from actual delivery locations
@@ -93,11 +93,11 @@ export class NetworkService {
       }
       
       // Fall back to mock data if no XL1 transactions found
-      // eslint-disable-next-line no-console
+       
       console.log('No XL1 transactions found, using mock statistics');
       return this.createMockNetworkStatistics();
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error getting network statistics:', error);
       return this.createMockNetworkStatistics();
     }
@@ -117,14 +117,14 @@ export class NetworkService {
     maxLon?: number;
   }): Promise<WitnessNodeDetails[]> {
     try {
-      // eslint-disable-next-line no-console
+       
       console.log('Getting witness nodes from XL1 transactions with filters:', filters);
       
       // Extract real node data from XL1 transactions
       const xl1Nodes = await this.extractWitnessNodesFromXL1();
       
       if (xl1Nodes.length > 0) {
-        // eslint-disable-next-line no-console
+         
         console.log(`Extracted ${xl1Nodes.length} witness nodes from XL1 transactions`);
         
         // Apply filters
@@ -146,11 +146,11 @@ export class NetworkService {
       }
       
       // Fall back to mock data if no XL1 transactions found
-      // eslint-disable-next-line no-console
+       
       console.log('No XL1 transactions found, using mock node list');
       return this.createMockNodeList(filters);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error getting witness nodes:', error);
       return this.createMockNodeList(filters);
     }
@@ -423,7 +423,7 @@ export class NetworkService {
         lastUpdated: now
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error extracting network statistics from XL1:', error);
       return {
         totalNodes: 0,
@@ -684,7 +684,7 @@ export class NetworkService {
 
       return nodes;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error extracting witness nodes from XL1:', error);
       return [];
     }
@@ -714,11 +714,11 @@ export class NetworkService {
         }
       });
 
-      // eslint-disable-next-line no-console
+       
       console.log(`[Coverage] Found ${deliveries.length} verified deliveries for coverage calculation`);
 
       if (deliveries.length === 0) {
-        // eslint-disable-next-line no-console
+         
         console.log('[Coverage] No deliveries found, returning 0 coverage');
         return { totalKm2: 0, countries: 0 };
       }
@@ -746,11 +746,11 @@ export class NetworkService {
         }
       });
 
-      // eslint-disable-next-line no-console
+       
       console.log(`[Coverage] Extracted ${locations.length} unique locations from ${deliveries.length} deliveries`);
 
       if (locations.length === 0) {
-        // eslint-disable-next-line no-console
+         
         console.log('[Coverage] No valid locations found after extraction, returning 0 coverage');
         return { totalKm2: 0, countries: 0 };
       }
@@ -763,7 +763,7 @@ export class NetworkService {
         const radiusKm = 10;
         const minServiceAreaKm2 = Math.PI * radiusKm * radiusKm; // ~314 km²
         
-        // eslint-disable-next-line no-console
+         
         console.log(`[Coverage] Single location detected (${locations[0].lat}, ${locations[0].lon}), using minimum service area: ${minServiceAreaKm2.toFixed(0)} km²`);
         
         return {
@@ -793,7 +793,7 @@ export class NetworkService {
         const radiusKm = 10;
         const minServiceAreaKm2 = Math.PI * radiusKm * radiusKm;
         
-        // eslint-disable-next-line no-console
+         
         console.log(`[Coverage] All ${locations.length} locations are effectively the same (span < 0.01°), using minimum service area: ${minServiceAreaKm2.toFixed(0)} km²`);
         
         return {
@@ -812,7 +812,7 @@ export class NetworkService {
       const spread = Math.max(latSpan, lonSpan);
       const countries = spread > 20 ? Math.max(2, Math.floor(spread / 20)) : 1;
 
-      // eslint-disable-next-line no-console
+       
       console.log(`[Coverage] Calculated coverage: ${totalKm2.toFixed(0)} km² across ${countries} country/countries`);
 
       return {
@@ -820,7 +820,7 @@ export class NetworkService {
         countries: Math.max(1, countries)
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error calculating coverage from deliveries:', error);
       return { totalKm2: 0, countries: 0 };
     }

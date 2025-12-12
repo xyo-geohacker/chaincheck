@@ -4,11 +4,11 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } fro
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View
 } from 'react-native';
 
@@ -51,14 +51,16 @@ export const ActiveDeliveriesScreen: React.FC<Props> = ({ navigation }) => {
       headerTitleStyle: { color: '#F7F8FD' },
       headerTintColor: colors.text.accent,
       headerRight: () => (
-        <TouchableOpacity 
+        <Pressable 
           testID="sign-out-button"
           onPress={handleSignOut} 
-          style={styles.logoutButton} 
-          activeOpacity={0.85}
+          style={({ pressed }) => [
+            styles.logoutButton,
+            pressed && styles.logoutButtonPressed
+          ]}
         >
           <Text style={styles.logoutText}>Sign Out</Text>
-        </TouchableOpacity>
+        </Pressable>
       )
     });
   }, [navigation, handleSignOut]);
@@ -280,18 +282,26 @@ const styles = StyleSheet.create({
     color: '#6c7393'
   },
   logoutButton: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
+    // Minimal styling that works with React Navigation's iOS wrapper
+    paddingHorizontal: Platform.OS === 'ios' ? 6 : 12, // Smaller padding on iOS
+    paddingVertical: Platform.OS === 'ios' ? 4 : 8, // Smaller padding on iOS
+    borderRadius: Platform.OS === 'ios' ? 0 : 8, // No border radius on iOS to avoid nested appearance
+    borderWidth: Platform.OS === 'ios' ? 0 : 1, // No border on iOS
     borderColor: colors.border.primary,
-    backgroundColor: '#1b1631'
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : '#1b1631', // Transparent on iOS
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: Platform.OS === 'ios' ? 60 : 80 // Smaller min width on iOS
+  },
+  logoutButtonPressed: {
+    opacity: 0.85,
+    backgroundColor: '#2a1f4a'
   },
   logoutText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9aaeff',
-    letterSpacing: 1
+    color: Platform.OS === 'ios' ? colors.text.accent : '#9aaeff', // Use header tint color on iOS
+    letterSpacing: Platform.OS === 'ios' ? 0 : 1
   },
   emptyState: {
     padding: 40,

@@ -48,6 +48,7 @@ ChainCheck provides a comprehensive delivery verification platform with the foll
 - **Network Statistics**: Real-time XYO Network health, coverage, and witness node information
 - **API Documentation**: Comprehensive Swagger/OpenAPI documentation for API integration
 - **IPFS Integration**: Decentralized storage for delivery photos and signatures via Pinata/IPFS
+- **Ethereum Escrow Payments**: Smart contract-based escrow system for secure payment-on-delivery with automatic fund release upon verification
 
 ## Powered by XYO Network
 
@@ -192,6 +193,18 @@ Before getting started, ensure you have the following prerequisites installed an
    - Add to `backend/.env`:
      - `XYO_WALLET_MNEMONIC=your twelve word mnemonic phrase here`
    - **Note**: Optional if using `MOCK_XL1_TRANSACTIONS=true` for development (mock mode will generate temporary mnemonics)
+
+7. **Ethereum Escrow Configuration** (Required for payment-on-delivery feature)
+   - Deploy the escrow smart contract (see [Development Guide](./DEVELOPMENT_GUIDE.md#10-ethereum-escrow-payment-configuration))
+   - Configure Ethereum RPC endpoint (Infura, Alchemy, or local node)
+   - Set up service wallet (must be contract owner)
+   - Add to `backend/.env`:
+     - `USE_ESCROW=true`
+     - `ENABLE_PAYMENT_ON_VERIFICATION=true`
+     - `ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID`
+     - `ETHEREUM_PRIVATE_KEY=your_private_key_here` (contract owner wallet)
+     - `ETHEREUM_ESCROW_CONTRACT_ADDRESS=0x...` (deployed contract address)
+   - **Note**: Optional feature - only required if using payment-on-delivery. See [Development Guide](./DEVELOPMENT_GUIDE.md#10-ethereum-escrow-payment-configuration) for detailed setup instructions.
 
 #### Web Prerequisites
 

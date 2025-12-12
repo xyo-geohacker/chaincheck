@@ -31,6 +31,14 @@ export interface DeliveryVerificationPayload extends DeliveryLocation {
   signatureHash?: string; // SHA-256 hash of the signature (if provided) for immutable proof
 }
 
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  ESCROWED = 'ESCROWED',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED'
+}
+
 export interface DeliveryRecord {
   id: string;
   orderId: string;

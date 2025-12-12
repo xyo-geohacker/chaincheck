@@ -35,7 +35,7 @@ export class Xl1WalletManager {
     const mnemonic = env.xyoWalletMnemonic ?? HDWalletClass.generateMnemonic();
     
     if (!env.xyoWalletMnemonic && env.mockXl1Transactions) {
-      // eslint-disable-next-line no-console
+       
       console.warn('No XYO_WALLET_MNEMONIC found in environment, using generated mnemonic (mock mode - transactions will not be posted)');
     }
 

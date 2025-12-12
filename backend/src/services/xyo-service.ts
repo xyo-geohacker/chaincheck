@@ -25,7 +25,7 @@ export class XyoService {
   private xl1ViewerService: Xl1ViewerService;
 
   constructor() {
-    // eslint-disable-next-line no-console
+     
     console.log('Initializing XyoService:', {
       archivistUrl: env.xyoArchivistUrl,
       archive: env.xyoArchive || 'chaincheck',
@@ -63,7 +63,7 @@ export class XyoService {
    */
   async getPayloadByHash(payloadHash: string): Promise<unknown | null> {
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), skipping payload retrieval');
       return null;
     }
@@ -81,7 +81,7 @@ export class XyoService {
     try {
       const xl1Result = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
       if (xl1Result && xl1Result.boundWitness) {
-        // eslint-disable-next-line no-console
+         
         console.log('Successfully retrieved bound witness from XL1 blockchain via viewer');
         return {
           isValid: true,
@@ -89,14 +89,14 @@ export class XyoService {
         };
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.debug('XL1 viewer query failed, trying Archivist:', error);
     }
 
     // PRIORITY 2: Fall back to Archivist (for non-XL1 or if XL1 query fails)
     // Skip if Archivist is disabled
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), returning invalid result');
       return {
         isValid: false,
@@ -113,7 +113,7 @@ export class XyoService {
    */
   async validateBoundWitness(proofHash: string): Promise<{ isValid: boolean; errors: string[] }> {
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), skipping bound witness validation');
       return { isValid: false, errors: ['Archivist is disabled'] };
     }
@@ -142,7 +142,7 @@ export class XyoService {
   ): Promise<DivinerVerificationResult> {
     // DivinerService will check the flag internally, but we can also check here for early return
     if (env.xyoDivinerDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Diviner is disabled (XYO_DIVINER_DISABLED=true), returning mock verification');
       return this.divinerService['createMockVerification'](latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
     }
@@ -169,7 +169,7 @@ export class XyoService {
   ): Promise<DivinerVerificationResult> {
     // Check if Diviner is disabled
     if (env.xyoDivinerDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Diviner is disabled (XYO_DIVINER_DISABLED=true), returning mock verification');
       // When Diviner is disabled, return mock data with isMocked: true
       return this.divinerService['createMockVerification'](claimedLatitude, claimedLongitude, claimedTimestamp, proofHash);
@@ -185,7 +185,7 @@ export class XyoService {
     
     // If Diviner returned mock data (API unavailable), try XL1-based verification
     if (divinerResult.isMocked && divinerResult.nodeCount === 0) {
-      // eslint-disable-next-line no-console
+       
       console.log('Diviner unavailable, attempting XL1-based verification');
       return this.verifyLocationFromXL1(proofHash, claimedLatitude, claimedLongitude, claimedTimestamp);
     }
@@ -209,7 +209,7 @@ export class XyoService {
       const xl1Data = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
       
       if (!xl1Data || !xl1Data.boundWitness) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Could not retrieve XL1 transaction, using mock data');
         return this.divinerService['createMockVerification'](latitude, longitude, timestamp, proofHash);
       }
@@ -314,7 +314,7 @@ export class XyoService {
         }
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('XL1-based verification failed, using mock data:', error);
       return this.divinerService['createMockVerification'](latitude, longitude, timestamp, proofHash);
     }
@@ -337,7 +337,7 @@ export class XyoService {
     if (storedBoundWitnessData) {
       const storedData = storedBoundWitnessData as Record<string, unknown>;
       if (storedData.isMocked !== true && storedData.boundWitness) {
-        // eslint-disable-next-line no-console
+         
         console.log('Using stored real transaction data for chain');
         const bw = storedData.boundWitness;
         if (Array.isArray(bw) && bw.length > 0) {
@@ -375,19 +375,19 @@ export class XyoService {
     try {
       const xl1Chain = await this.xl1ViewerService.getBoundWitnessChainFromXL1(proofHash, maxDepth);
       if (xl1Chain.length > 0) {
-        // eslint-disable-next-line no-console
+         
         console.log(`Successfully retrieved ${xl1Chain.length} transactions from XL1 chain via viewer`);
         return xl1Chain;
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.debug('XL1 viewer chain query failed, trying Archivist:', error);
     }
 
     // PRIORITY 3: Fall back to Archivist (for non-XL1 or if XL1 query fails)
     // Skip if Archivist is disabled
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), returning empty chain');
       return [];
     }
@@ -417,7 +417,7 @@ export class XyoService {
       const storedData = storedBoundWitnessData as Record<string, unknown>;
       if (storedData.isMocked !== true && storedData.boundWitness) {
         // Use stored data - it's from the actual XL1 transaction
-        // eslint-disable-next-line no-console
+         
         console.log('Using stored real transaction data for cryptographic details');
         return this.archivistService.getCryptographicDetails(proofHash, storedBoundWitnessData);
       }
@@ -428,20 +428,20 @@ export class XyoService {
     try {
       const xl1Result = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
       if (xl1Result && xl1Result.boundWitness) {
-        // eslint-disable-next-line no-console
+         
         console.log('Successfully retrieved bound witness from XL1 blockchain via viewer for cryptographic details');
         // Extract details from XL1 bound witness
         return this.archivistService.getCryptographicDetails(proofHash, xl1Result.boundWitness);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.debug('XL1 viewer query failed, trying Archivist:', error);
     }
 
     // PRIORITY 3: Fall back to Archivist (for non-XL1 or if XL1 query fails)
     // Skip if Archivist is disabled
     if (env.xyoArchivistDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Archivist is disabled (XYO_ARCHIVIST_DISABLED=true), returning empty cryptographic details');
       return {
         signatures: [],
@@ -522,7 +522,7 @@ export class XyoService {
     // Only query XL1 if we don't already know it's a real transaction (to avoid unnecessary queries)
     if (proofHash && !hasXL1Data) {
       try {
-        // eslint-disable-next-line no-console
+         
         console.log('[Location Accuracy] Checking for XL1 transaction data');
         const xl1Data = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
         
@@ -534,16 +534,16 @@ export class XyoService {
           if ('addresses' in boundWitness && Array.isArray(boundWitness.addresses)) {
             xl1Addresses = boundWitness.addresses as string[];
             
-            // eslint-disable-next-line no-console
+             
             console.log(`[Location Accuracy] Found XL1 transaction with ${xl1Addresses.length} participant addresses`);
           }
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[Location Accuracy] Failed to check XL1 transaction:', error);
       }
     } else if (hasXL1Data) {
-      // eslint-disable-next-line no-console
+       
       console.log('[Location Accuracy] Using real XL1 transaction data (from stored delivery data)');
     }
 
@@ -551,7 +551,7 @@ export class XyoService {
     let nodes = witnessNodes;
     if (nodes.length === 0 && proofHash && hasXL1Data) {
       try {
-        // eslint-disable-next-line no-console
+         
         console.log('[Location Accuracy] Attempting to extract witness nodes from XL1 transaction');
         const xl1Data = await this.xl1ViewerService.getBoundWitnessFromXL1(proofHash);
         
@@ -602,12 +602,12 @@ export class XyoService {
             
             nodes = nodesWithLocation;
             
-            // eslint-disable-next-line no-console
+             
             console.log(`[Location Accuracy] Extracted ${nodes.length} witness nodes from XL1 transaction (${nodes.filter(n => n.location).length} with location data)`);
           }
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[Location Accuracy] Failed to extract witness nodes from XL1 transaction:', error);
       }
     }
@@ -625,7 +625,7 @@ export class XyoService {
           maxLon: longitude + radiusDegrees
         });
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Failed to fetch nearby witness nodes for accuracy calculation:', error);
       }
     }
