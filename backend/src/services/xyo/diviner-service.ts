@@ -23,7 +23,7 @@ export class DivinerService {
   async queryByBoundWitnessHash(boundWitnessHash: string): Promise<DivinerVerificationResult | null> {
     // Check if Diviner is disabled via feature flag
     if (env.xyoDivinerDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Diviner is disabled (XYO_DIVINER_DISABLED=true), skipping bound witness hash query');
       return null;
     }
@@ -47,7 +47,7 @@ export class DivinerService {
 
       for (const endpoint of queryEndpoints) {
         try {
-          // eslint-disable-next-line no-console
+           
           console.log(`Attempting Diviner query by hash: ${endpoint}`);
           
           const response = await axios.get(endpoint, {
@@ -67,7 +67,7 @@ export class DivinerService {
           if (response.status === 200) {
             if (endpoint === `${baseUrl}/`) {
               // Root URL might return API info - log it but don't process as query result
-              // eslint-disable-next-line no-console
+               
               console.log(`Root/base URL returned:`, response.data);
               // Continue to next endpoint (root URL is for discovery, not query results)
               continue;
@@ -75,9 +75,9 @@ export class DivinerService {
             
             if (response.data) {
               // Log the actual response data to verify what we received
-              // eslint-disable-next-line no-console
+               
               console.log(`Diviner query returned status 200 from ${endpoint}`);
-              // eslint-disable-next-line no-console
+               
               console.log(`Response data:`, JSON.stringify(response.data, null, 2));
               
               // Check if response contains a queryHash (indicates query was created, need to poll for results)
@@ -90,7 +90,7 @@ export class DivinerService {
                   const innerData = responseObj.data as Record<string, unknown>;
                   if ('queryHash' in innerData && typeof innerData.queryHash === 'string') {
                     const queryHash = innerData.queryHash;
-                    // eslint-disable-next-line no-console
+                     
                     console.log(`Diviner returned queryHash, polling for results: ${queryHash}`);
                     
                     // Poll for query results using the queryHash
@@ -99,11 +99,11 @@ export class DivinerService {
                     const queryResult = await this.getLocationQueryResult(queryHash);
                     
                     if (queryResult) {
-                      // eslint-disable-next-line no-console
+                       
                       console.log(`✓ Retrieved Diviner query results for hash ${queryHash}`);
                       dataToProcess = queryResult;
                     } else {
-                      // eslint-disable-next-line no-console
+                       
                       console.warn(`⚠ Could not retrieve Diviner query results for hash ${queryHash}`);
                       // Continue to next endpoint
                       continue;
@@ -116,27 +116,27 @@ export class DivinerService {
               
               // Verify that we actually got meaningful data
               if (result.nodeCount === 0) {
-                // eslint-disable-next-line no-console
+                 
                 console.warn(`⚠ Diviner query returned empty result (nodeCount=0) - no location data found`);
                 // Continue to next endpoint to try other patterns
                 continue;
               }
               
-              // eslint-disable-next-line no-console
+               
               console.log(`✓ Successfully queried Diviner by hash: nodeCount=${result.nodeCount}, verified=${result.verified}`);
               return result;
             } else {
-              // eslint-disable-next-line no-console
+               
               console.warn(`⚠ Diviner query returned 200 but no data from ${endpoint}`);
               continue;
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.debug(`Diviner query returned status ${response.status} from ${endpoint}`);
           }
         } catch (error) {
           // Continue to next endpoint
-          // eslint-disable-next-line no-console
+           
           console.debug(`Diviner query to ${endpoint} failed:`, error);
           continue;
         }
@@ -144,7 +144,7 @@ export class DivinerService {
 
       return null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Diviner query by hash failed:', error);
       return null;
     }
@@ -160,7 +160,7 @@ export class DivinerService {
     let timestamp = Date.now();
     let nodeCount = 0;
 
-    // eslint-disable-next-line no-console
+     
     console.log(`Processing Diviner response for hash ${boundWitnessHash}:`, 
       typeof divinerResponse === 'object' && divinerResponse !== null 
         ? JSON.stringify(divinerResponse, null, 2).substring(0, 500) 
@@ -168,7 +168,7 @@ export class DivinerService {
 
     if (Array.isArray(divinerResponse)) {
       nodeCount = divinerResponse.length;
-      // eslint-disable-next-line no-console
+       
       console.log(`Diviner response is array with ${nodeCount} items`);
       // Try to extract location from first result
       if (divinerResponse.length > 0 && typeof divinerResponse[0] === 'object') {
@@ -176,33 +176,33 @@ export class DivinerService {
         latitude = (firstResult.latitude as number) ?? 0;
         longitude = (firstResult.longitude as number) ?? 0;
         timestamp = (firstResult.timestamp as number) ?? Date.now();
-        // eslint-disable-next-line no-console
+         
         console.log(`Extracted location from first result: lat=${latitude}, lon=${longitude}, ts=${timestamp}`);
       } else {
-        // eslint-disable-next-line no-console
+         
         console.warn(`⚠ Diviner array response has no items or first item is not an object`);
       }
     } else if (typeof divinerResponse === 'object' && divinerResponse !== null) {
       const data = divinerResponse as Record<string, unknown>;
-      // eslint-disable-next-line no-console
+       
       console.log(`Diviner response is object, keys:`, Object.keys(data));
       latitude = (data.latitude as number) ?? 0;
       longitude = (data.longitude as number) ?? 0;
       timestamp = (data.timestamp as number) ?? Date.now();
       if (Array.isArray(data.results)) {
         nodeCount = data.results.length;
-        // eslint-disable-next-line no-console
+         
         console.log(`Found results array with ${nodeCount} items`);
       } else if (Array.isArray(data.data)) {
         nodeCount = data.data.length;
-        // eslint-disable-next-line no-console
+         
         console.log(`Found data array with ${nodeCount} items`);
       } else {
-        // eslint-disable-next-line no-console
+         
         console.warn(`⚠ Diviner object response has no results/data array`);
       }
     } else {
-      // eslint-disable-next-line no-console
+       
       console.warn(`⚠ Diviner response is not array or object:`, typeof divinerResponse);
     }
 
@@ -248,7 +248,7 @@ export class DivinerService {
   ): Promise<DivinerVerificationResult> {
     // Check if Diviner is disabled via feature flag
     if (env.xyoDivinerDisabled) {
-      // eslint-disable-next-line no-console
+       
       console.log('Diviner is disabled (XYO_DIVINER_DISABLED=true), returning mock verification');
       return this.createMockVerification(latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
     }
@@ -257,20 +257,20 @@ export class DivinerService {
       // PRIORITY 1: If we have an XL1 transaction hash, try querying Diviner by bound witness hash first
       // This is simpler and more reliable than location-based queries
       if (xl1TransactionHash) {
-        // eslint-disable-next-line no-console
+         
         console.log('Attempting Diviner query by bound witness hash:', xl1TransactionHash);
         const hashQueryResult = await this.queryByBoundWitnessHash(xl1TransactionHash);
         if (hashQueryResult && hashQueryResult.nodeCount > 0 && hashQueryResult.verified) {
-          // eslint-disable-next-line no-console
+           
           console.log(`✓ Successfully queried Diviner by bound witness hash: nodeCount=${hashQueryResult.nodeCount}, verified=${hashQueryResult.verified}`);
           return hashQueryResult;
         } else if (hashQueryResult) {
-          // eslint-disable-next-line no-console
+           
           console.warn(`⚠ Diviner query by hash returned result but not verified: nodeCount=${hashQueryResult?.nodeCount || 0}, verified=${hashQueryResult?.verified || false}`);
-          // eslint-disable-next-line no-console
+           
           console.log('Falling back to location-based query');
         } else {
-          // eslint-disable-next-line no-console
+           
           console.log('Diviner query by hash returned null, falling back to location-based query');
         }
       }
@@ -279,7 +279,7 @@ export class DivinerService {
       // The SDK uses a structured request object, NOT [QueryBoundWitness, Payload[]]
       // Based on LocationDivinerApi.ts and LocationDivinerApi.spec.ts
       try {
-        // eslint-disable-next-line no-console
+         
         console.log('Creating Location Diviner API request (SDK pattern)');
 
         // Build request in SDK's LocationQueryCreationRequest format
@@ -304,7 +304,7 @@ export class DivinerService {
           }
         };
 
-      // eslint-disable-next-line no-console
+       
       console.log('Attempting Location Diviner API request (SDK format)');
       const result = await this.queryDivinerNetworkSdkFormat(locationQueryRequest);
       
@@ -315,9 +315,9 @@ export class DivinerService {
       
       // If query returns null or empty, treat as failed query and use mock data
       if (result === null || result === undefined || (Array.isArray(result) && result.length === 0)) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Diviner API returned null/empty or 404 - API may not be publicly accessible. Using mock verification.');
-        // eslint-disable-next-line no-console
+         
         console.warn('Note: explore.xyo.network uses XL1 viewer/RPC and Archivist, not Diviner APIs directly.');
         return this.createMockVerification(latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
       }
@@ -326,17 +326,17 @@ export class DivinerService {
         return this.processDivinerResponse(result, latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
       } catch (error) {
         // If processDivinerResponse throws (e.g., for invalid response), use mock data
-        // eslint-disable-next-line no-console
+         
         console.warn('Error processing Diviner response, using mock verification:', error);
         return this.createMockVerification(latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
       }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Diviner query error, using fallback:', error);
         return this.createMockVerification(latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Diviner verification error:', error);
       return this.createMockVerification(latitude, longitude, timestamp, xl1TransactionHash, xl1BlockNumber);
     }
@@ -359,11 +359,11 @@ export class DivinerService {
     const queryEndpoint = `${baseUrl}/location/query`;
 
     try {
-      // eslint-disable-next-line no-console
+       
       console.log('=== LOCATION DIVINER API REQUEST (SDK FORMAT) ===');
-      // eslint-disable-next-line no-console
+       
       console.log('URL:', queryEndpoint);
-      // eslint-disable-next-line no-console
+       
       console.log('Request:', JSON.stringify(request, null, 2));
 
       // SDK sends { ...request } as body (see LocationDivinerApi.ts line 24)
@@ -379,11 +379,11 @@ export class DivinerService {
         })
       });
 
-      // eslint-disable-next-line no-console
+       
       console.log('=== LOCATION DIVINER API RESPONSE ===');
-      // eslint-disable-next-line no-console
+       
       console.log('Status:', response.status);
-      // eslint-disable-next-line no-console
+       
       console.log('Data:', JSON.stringify(response.data, null, 2));
 
       if (response.status === 200 && response.data) {
@@ -392,7 +392,7 @@ export class DivinerService {
         // SDK uses response transformer that extracts data.data
         // If response is wrapped in { data: { ... } }, extract it
         if (typeof data === 'object' && data !== null && 'data' in data && typeof data.data === 'object') {
-          // eslint-disable-next-line no-console
+           
           console.log('Response wrapped in data object, extracting inner data');
           data = data.data;
         }
@@ -404,7 +404,7 @@ export class DivinerService {
         // SDK returns LocationQueryCreationResponse with { hash, ...request }
         // We may need to poll for results using getLocationQuery(hash)
         if (data.hash) {
-          // eslint-disable-next-line no-console
+           
           console.log('Location query created, hash:', data.hash);
           // Try to get the query results
           try {
@@ -413,7 +413,7 @@ export class DivinerService {
               return queryResult;
             }
           } catch (error) {
-            // eslint-disable-next-line no-console
+             
             console.warn('Failed to get location query result, using creation response:', error);
           }
         }
@@ -423,7 +423,7 @@ export class DivinerService {
 
       return null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Location Diviner API query failed:', error);
       return null;
     }
@@ -437,7 +437,7 @@ export class DivinerService {
     const queryEndpoint = `${baseUrl}/location/query/${hash}`;
 
     try {
-      // eslint-disable-next-line no-console
+       
       console.log(`Getting location query result for hash: ${hash}`);
       
       const response = await axios.get(queryEndpoint, {
@@ -458,19 +458,19 @@ export class DivinerService {
         // SDK uses response transformer that extracts data.data
         // If response is wrapped in { data: { ... } }, extract it
         if (typeof data === 'object' && data !== null && 'data' in data && typeof data.data === 'object') {
-          // eslint-disable-next-line no-console
+           
           console.log('Query result wrapped in data object, extracting inner data');
           data = data.data;
         }
         
-        // eslint-disable-next-line no-console
+         
         console.log('Location query result:', JSON.stringify(data, null, 2));
         return data;
       }
 
       return null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to get location query result:', error);
       return null;
     }
@@ -510,9 +510,9 @@ export class DivinerService {
     for (const queryEndpoint of queryEndpoints) {
       try {
         // Pretty-print the outgoing Diviner request for debugging
-        // eslint-disable-next-line no-console
+         
         console.log('=== DIVINER REQUEST ===');
-        // eslint-disable-next-line no-console
+         
         console.log(
           JSON.stringify(
             {
@@ -524,7 +524,7 @@ export class DivinerService {
           )
         );
 
-        let queryResponse = await axios.post(queryEndpoint, queryData, {
+        const queryResponse = await axios.post(queryEndpoint, queryData, {
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': env.xyoApiKey,
@@ -542,9 +542,9 @@ export class DivinerService {
         });
 
         // Pretty-print the raw Diviner response for debugging
-        // eslint-disable-next-line no-console
+         
         console.log('=== DIVINER RESPONSE ===');
-        // eslint-disable-next-line no-console
+         
         console.log(
           JSON.stringify(
             {
@@ -561,7 +561,7 @@ export class DivinerService {
         // For root/base URL, it might return API info rather than query results
         if (queryEndpoint === `${baseUrl}/` && queryResponse.status === 200) {
           // Root URL might return API info - log it but try next endpoint
-          // eslint-disable-next-line no-console
+           
           console.log(`Root/base URL returned API info:`, queryResponse.data);
           continue;
         }
@@ -571,14 +571,14 @@ export class DivinerService {
           // Check if response is actually meaningful (not just an empty object or null)
           const data = queryResponse.data;
           if (data === null || data === undefined) {
-            // eslint-disable-next-line no-console
+             
             console.warn('Diviner query returned null/undefined data');
             continue; // Try next endpoint
           }
           
           // Check if it's an empty array
           if (Array.isArray(data) && data.length === 0) {
-            // eslint-disable-next-line no-console
+             
             console.warn('Diviner query returned empty array');
             continue; // Try next endpoint
           }
@@ -589,26 +589,26 @@ export class DivinerService {
 
         // If 404, try next endpoint
         if (queryResponse.status === 404) {
-          // eslint-disable-next-line no-console
+           
           console.debug(`Diviner endpoint ${queryEndpoint} returned 404, trying next endpoint`);
           continue;
         }
 
         // For other error statuses, log and try next endpoint
         if (queryResponse.status !== 200) {
-          // eslint-disable-next-line no-console
+           
           console.debug(`Diviner endpoint ${queryEndpoint} returned status ${queryResponse.status}, trying next endpoint`);
           continue;
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.debug(`Diviner POST to ${queryEndpoint} failed, trying next endpoint:`, error);
         continue;
       }
     }
 
     // All endpoints failed - return null to trigger fallback
-    // eslint-disable-next-line no-console
+     
     console.warn('All Diviner POST endpoints failed, returning null for fallback');
     return null;
   }
@@ -626,13 +626,13 @@ export class DivinerService {
   ): DivinerVerificationResult {
     let nodeCount = 0;
     let confidence = 85;
-    let locationMatch = true;
+    const locationMatch = true;
 
     // Validate that we have a meaningful response
     // Note: This should not happen as we check before calling this method,
     // but this is a safety check
     if (!divinerResponse || (Array.isArray(divinerResponse) && divinerResponse.length === 0)) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Empty Diviner response in processDivinerResponse - this should have been caught earlier');
       // Return a result indicating this is invalid (caller should use mock data)
       // We can't call createMockVerification here as it's async and this method is sync
@@ -654,7 +654,7 @@ export class DivinerService {
     } else if (typeof divinerResponse === 'object' && divinerResponse !== null) {
       // Handle object responses - try to extract node count from response structure
       // This is a fallback for different response formats
-      // eslint-disable-next-line no-console
+       
       console.log('Diviner returned object response (not array), processing...');
     }
 

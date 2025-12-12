@@ -73,7 +73,7 @@ export class ConfigurationService {
             envValueStr !== '' && 
             !envValueStr.includes('localhost') && 
             dbValueStr.includes('localhost')) {
-          // eslint-disable-next-line no-console
+           
           console.log(`[Config] Preferring .env value over database for ${category}.${defaultItem.key}: ${envValueStr} (db had: ${dbValueStr})`);
           
           return {
@@ -189,7 +189,7 @@ export class ConfigurationService {
       });
       return true;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to delete configuration:', error);
       return false;
     }
@@ -368,7 +368,7 @@ export class ConfigurationService {
     const fileValue = this.readEnvFileValue(backendEnvPath, key);
     
     if (fileValue !== undefined) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from backend/.env: ${fileValue}`);
       return fileValue;
     }
@@ -376,7 +376,7 @@ export class ConfigurationService {
     // Fallback to process.env (for values not in .env file or if file read fails)
     const envValue = process.env[key];
     if (envValue) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from process.env: ${envValue}`);
     }
     return envValue;
@@ -411,7 +411,7 @@ export class ConfigurationService {
       }
     } catch (error) {
       // File doesn't exist or can't be read - return undefined
-      // eslint-disable-next-line no-console
+       
       console.debug(`[Config] Could not read ${filePath} for key ${key}:`, error instanceof Error ? error.message : String(error));
       return undefined;
     }
@@ -429,7 +429,7 @@ export class ConfigurationService {
     const fileValue = this.readEnvFileValue(mobileEnvPath, key);
     
     if (fileValue !== undefined) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from mobile/.env: ${fileValue}`);
       return fileValue;
     }
@@ -437,10 +437,10 @@ export class ConfigurationService {
     // Fallback to process.env
     const envValue = process.env[key];
     if (envValue) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from process.env: ${envValue}`);
     } else {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] ${key} not found in mobile/.env or process.env, path tried: ${mobileEnvPath}`);
     }
     return envValue;
@@ -456,7 +456,7 @@ export class ConfigurationService {
     const localValue = this.readEnvFileValue(webEnvLocalPath, key);
     
     if (localValue !== undefined) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from web/.env.local: ${localValue}`);
       return localValue;
     }
@@ -466,7 +466,7 @@ export class ConfigurationService {
     const fileValue = this.readEnvFileValue(webEnvPath, key);
     
     if (fileValue !== undefined) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from web/.env: ${fileValue}`);
       return fileValue;
     }
@@ -474,10 +474,10 @@ export class ConfigurationService {
     // Fallback to process.env
     const envValue = process.env[key];
     if (envValue) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] Read ${key} from process.env: ${envValue}`);
     } else {
-      // eslint-disable-next-line no-console
+       
       console.log(`[Config] ${key} not found in web/.env.local, web/.env, or process.env`);
     }
     return envValue;

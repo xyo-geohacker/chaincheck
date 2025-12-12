@@ -32,21 +32,21 @@ class Logger {
 
   debug(message: string, context?: LogContext): void {
     if (this.shouldLog('debug')) {
-      // eslint-disable-next-line no-console
+       
       console.debug(this.formatMessage('debug', message, context));
     }
   }
 
   info(message: string, context?: LogContext): void {
     if (this.shouldLog('info')) {
-      // eslint-disable-next-line no-console
+       
       console.log(this.formatMessage('info', message, context));
     }
   }
 
   warn(message: string, context?: LogContext): void {
     if (this.shouldLog('warn')) {
-      // eslint-disable-next-line no-console
+       
       console.warn(this.formatMessage('warn', message, context));
     }
   }
@@ -62,7 +62,7 @@ class Logger {
             }
           : { error: String(error) })
       };
-      // eslint-disable-next-line no-console
+       
       console.error(this.formatMessage('error', message, errorContext));
     }
   }

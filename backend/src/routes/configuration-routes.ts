@@ -30,7 +30,7 @@ router.get('/configuration/:category', authenticateConfigToken, async (req, res)
       configuration: config
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to get configuration:', error);
     return res.status(500).json({
       error: 'Failed to get configuration',
@@ -57,7 +57,7 @@ router.get('/configuration', authenticateConfigToken, async (req, res) => {
       }
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to get all configuration:', error);
     return res.status(500).json({
       error: 'Failed to get configuration',
@@ -106,7 +106,7 @@ router.put('/configuration/:category', authenticateConfigToken, async (req, res)
       });
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to update configuration:', error);
     return res.status(500).json({
       error: 'Failed to update configuration',
@@ -143,7 +143,7 @@ router.delete('/configuration/:category/:key', authenticateConfigToken, async (r
       });
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to delete configuration:', error);
     return res.status(500).json({
       error: 'Failed to delete configuration',
@@ -162,7 +162,7 @@ router.post('/configuration/initialize', authenticateConfigToken, async (req, re
       message: 'Default configuration initialized'
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to initialize configuration:', error);
     return res.status(500).json({
       error: 'Failed to initialize configuration',

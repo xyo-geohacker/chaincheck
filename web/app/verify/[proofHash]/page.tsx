@@ -7,6 +7,7 @@ import { ArchivistPayloadPanel } from '@components/ArchivistPayloadPanel';
 import { CollapsibleSection } from '@components/CollapsibleSection';
 import { DeliveryMap } from '@components/DeliveryMap';
 import { DriverVerificationBadge } from '@components/DriverVerificationBadge';
+import { PaymentEscrowPanel } from '@components/PaymentEscrowPanel';
 import { ProofTimeline } from '@components/ProofTimeline';
 import { TamperDetectionPanel } from '@components/TamperDetectionPanel';
 import { VerificationCard } from '@components/VerificationCard';
@@ -356,6 +357,35 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
           )}
         </div>
       </div>
+
+      {/* Payment & Escrow Panel */}
+      {delivery.requiresPaymentOnDelivery && (
+        <div className="grid gap-6 lg:grid-cols-12">
+          <div className="lg:col-span-6">
+            <PaymentEscrowPanel 
+              deliveryId={delivery.id}
+              paymentData={{
+                requiresPaymentOnDelivery: delivery.requiresPaymentOnDelivery,
+                paymentCurrency: delivery.paymentCurrency,
+                buyerWalletAddress: delivery.buyerWalletAddress,
+                sellerWalletAddress: delivery.sellerWalletAddress,
+                paymentAmount: delivery.paymentAmount,
+                paymentStatus: delivery.paymentStatus,
+                paymentTransactionHash: delivery.paymentTransactionHash,
+                paymentBlockNumber: delivery.paymentBlockNumber,
+                paymentError: delivery.paymentError,
+                escrowContractAddress: delivery.escrowContractAddress,
+                escrowDepositTxHash: delivery.escrowDepositTxHash,
+                escrowDepositBlock: delivery.escrowDepositBlock,
+                escrowReleaseTxHash: delivery.escrowReleaseTxHash,
+                escrowReleaseBlock: delivery.escrowReleaseBlock,
+                escrowRefundTxHash: delivery.escrowRefundTxHash,
+                escrowRefundBlock: delivery.escrowRefundBlock
+              }}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

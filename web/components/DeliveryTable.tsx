@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import type { DeliveryRecord } from '@shared/types/delivery.types';
+import type { DeliveryRecord, PaymentStatus } from '@shared/types/delivery.types';
 import { DeliveryStatus } from '@shared/types/delivery.types';
 
 type Props = {
@@ -14,7 +14,7 @@ function formatStatus(status: DeliveryRecord['status']) {
   return status.replace(/_/g, ' ');
 }
 
-function getStatusColor(status: DeliveryRecord['status']) {
+function getStatusColor(status: DeliveryStatus) {
   switch (status) {
     case DeliveryStatus.DELIVERED:
       return 'border-emerald-400/60 bg-emerald-400/20 text-emerald-200';
@@ -29,6 +29,36 @@ function getStatusColor(status: DeliveryRecord['status']) {
     default:
       return 'border-[#3b2e6f] bg-[#1b1631] text-[#9b7bff]';
   }
+}
+
+function getPaymentStatusColor(status: PaymentStatus | null | undefined): string {
+  switch (status) {
+    case 'PAID':
+      return 'border-emerald-400/60 bg-emerald-400/20 text-emerald-200';
+    case 'ESCROWED':
+      return 'border-blue-400/60 bg-blue-400/20 text-blue-200';
+    case 'PENDING':
+      return 'border-amber-300/60 bg-amber-300/20 text-amber-100';
+    case 'FAILED':
+      return 'border-rose-400/60 bg-rose-400/20 text-rose-200';
+    case 'REFUNDED':
+      return 'border-purple-400/60 bg-purple-400/20 text-purple-200';
+    default:
+      return 'border-[#3b2e6f] bg-[#1b1631] text-[#9b7bff]';
+  }
+}
+
+function formatPaymentStatus(status: PaymentStatus | null | undefined): string {
+  if (!status) return 'Pending';
+  // Handle all payment statuses
+  const statusMap: Record<PaymentStatus, string> = {
+    'PENDING': 'Pending',
+    'ESCROWED': 'Escrowed',
+    'PAID': 'Paid',
+    'FAILED': 'Failed',
+    'REFUNDED': 'Refunded'
+  };
+  return statusMap[status] || status.charAt(0) + status.slice(1).toLowerCase();
 }
 
 export function DeliveryTable({ deliveries, initialStatusFilter = 'all' }: Props) {
@@ -194,15 +224,16 @@ export function DeliveryTable({ deliveries, initialStatusFilter = 'all' }: Props
               <th className="px-6 py-3">Driver</th>
               <th className="px-6 py-3">Recipient</th>
               <th className="px-6 py-3">Address</th>
-              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3 whitespace-nowrap">Status</th>
+              <th className="px-6 py-3 whitespace-nowrap">Payment</th>
               <th className="px-6 py-3">Verified</th>
-              <th className="px-6 py-3 text-right">Details</th>
+              <th className="px-6 py-3 text-right whitespace-nowrap">Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1f1a36] text-slate-200">
             {filteredDeliveries.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-slate-400">
+                <td colSpan={8} className="px-6 py-10 text-center text-slate-400">
                   No deliveries match your filters. Try adjusting your search criteria.
                 </td>
               </tr>
@@ -215,12 +246,30 @@ export function DeliveryTable({ deliveries, initialStatusFilter = 'all' }: Props
                   <td className="px-6 py-4 text-sm text-slate-400 max-w-xs truncate">
                     {delivery.deliveryAddress}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide border ${getStatusColor(delivery.status)}`}
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide border ${getStatusColor(delivery.status)}`}
                     >
                       {formatStatus(delivery.status)}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {delivery.requiresPaymentOnDelivery || delivery.paymentStatus ? (
+                      <span
+                        className={`inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide border ${getPaymentStatusColor(delivery.paymentStatus || 'PENDING')}`}
+                        title={
+                          delivery.paymentAmount && delivery.paymentCurrency
+                            ? `${delivery.paymentAmount} ${delivery.paymentCurrency}`
+                            : delivery.requiresPaymentOnDelivery
+                            ? 'Payment required on delivery'
+                            : undefined
+                        }
+                      >
+                        {formatPaymentStatus(delivery.paymentStatus || 'PENDING')}
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 text-xs">—</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-300">
                     {delivery.verifiedAt ? (
@@ -242,9 +291,9 @@ export function DeliveryTable({ deliveries, initialStatusFilter = 'all' }: Props
                       <span className="text-slate-500">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
                     <Link
-                      className="text-sm font-semibold text-[#7aa7ff] transition hover:text-[#9b7bff]"
+                      className="inline-block text-sm font-semibold text-[#7aa7ff] transition hover:text-[#9b7bff]"
                       href={
                         delivery.proofHash && delivery.verifiedAt
                           ? `/verify/${delivery.proofHash}`

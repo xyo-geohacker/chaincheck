@@ -11,7 +11,7 @@ export class IpfsService {
       throw new Error('Pinata API credentials are not configured');
     }
 
-    // eslint-disable-next-line no-console
+     
     console.log(`IPFS upload - Filename: ${filename}, Buffer size: ${buffer.length} bytes`);
 
     const formData = new FormData();
@@ -40,7 +40,7 @@ export class IpfsService {
       maxContentLength: Infinity
     });
 
-    // eslint-disable-next-line no-console
+     
     console.log('IPFS upload response:', {
       success: Boolean(response.data?.IpfsHash),
       hash: response.data?.IpfsHash,

@@ -43,9 +43,33 @@ model Delivery {
   status            DeliveryStatus @default(PENDING)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  
+  // Payment fields
+  requiresPaymentOnDelivery Boolean @default(false) // Whether payment is required upon delivery verification
+  paymentCurrency       String?  // Payment currency (e.g., "XL1", "USD", "ETH")
+  buyerWalletAddress    String?
+  sellerWalletAddress   String?
+  paymentAmount         Float?   // Amount in payment currency (e.g., 1.0 XL1 or 100.00 USD)
+  paymentStatus         PaymentStatus @default(PENDING)
+  paymentTransactionHash String? @unique
+  paymentBlockNumber    Int?
+  paymentError          String?  // Error message if payment fails
+  
+  // Escrow fields (for smart contract escrow)
+  escrowContractAddress String?  // Address of escrow contract for this delivery
+  escrowDepositTxHash   String?  // Transaction hash when buyer deposited to escrow
+  escrowDepositBlock    Int?     // Block number of escrow deposit
+  escrowReleaseTxHash   String?  // Transaction hash when escrow released to seller
+  escrowReleaseBlock    Int?     // Block number of escrow release
+  escrowRefundTxHash    String?  // Transaction hash when escrow refunded to buyer
+  escrowRefundBlock     Int?     // Block number of escrow refund
 
   @@index([driverId])
   @@index([proofHash])
+  @@index([buyerWalletAddress])
+  @@index([sellerWalletAddress])
+  @@index([paymentStatus])
+  @@index([escrowContractAddress])
 }
 
 enum DeliveryStatus {
@@ -54,6 +78,14 @@ enum DeliveryStatus {
   DELIVERED
   FAILED
   DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING    // Payment not yet initiated
+  ESCROWED   // Payment held in escrow (optional, for future smart contract integration)
+  PAID       // Payment successfully transferred
+  FAILED     // Payment transfer failed
+  REFUNDED   // Payment refunded to buyer
 }
 
 model Configuration {

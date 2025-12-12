@@ -1,0 +1,386 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "buyer",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "EscrowCreated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "buyer",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "EscrowRefunded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "EscrowReleased",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					}
+				],
+				"name": "autoRefund",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					}
+				],
+				"name": "canAutoRefund",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					}
+				],
+				"name": "deposit",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"name": "escrows",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "buyer",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "released",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "refunded",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "createdAt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "releaseDeadline",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					}
+				],
+				"name": "getEscrow",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "buyer",
+								"type": "address"
+							},
+							{
+								"internalType": "address",
+								"name": "seller",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "amount",
+								"type": "uint256"
+							},
+							{
+								"internalType": "bool",
+								"name": "released",
+								"type": "bool"
+							},
+							{
+								"internalType": "bool",
+								"name": "refunded",
+								"type": "bool"
+							},
+							{
+								"internalType": "uint256",
+								"name": "createdAt",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "releaseDeadline",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct DeliveryEscrow.Escrow",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					}
+				],
+				"name": "refund",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "deliveryId",
+						"type": "bytes32"
+					}
+				],
+				"name": "release",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "Funds are locked until delivery verification, then released to seller",
+			"kind": "dev",
+			"methods": {
+				"autoRefund(bytes32)": {
+					"params": {
+						"deliveryId": "Delivery identifier"
+					}
+				},
+				"canAutoRefund(bytes32)": {
+					"params": {
+						"deliveryId": "Delivery identifier"
+					},
+					"returns": {
+						"_0": "true if past deadline and not released/refunded"
+					}
+				},
+				"deposit(bytes32,address)": {
+					"params": {
+						"deliveryId": "Unique delivery identifier (hashed to bytes32)",
+						"seller": "Seller wallet address"
+					}
+				},
+				"getEscrow(bytes32)": {
+					"params": {
+						"deliveryId": "Delivery identifier"
+					},
+					"returns": {
+						"_0": "Escrow struct with all details"
+					}
+				},
+				"refund(bytes32)": {
+					"params": {
+						"deliveryId": "Delivery identifier"
+					}
+				},
+				"release(bytes32)": {
+					"params": {
+						"deliveryId": "Delivery identifier"
+					}
+				}
+			},
+			"title": "DeliveryEscrow",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"autoRefund(bytes32)": {
+					"notice": "Auto-refund if past deadline (anyone can call)"
+				},
+				"canAutoRefund(bytes32)": {
+					"notice": "Check if escrow can be auto-refunded (past deadline)"
+				},
+				"deposit(bytes32,address)": {
+					"notice": "Create escrow and deposit funds"
+				},
+				"getEscrow(bytes32)": {
+					"notice": "Get escrow details"
+				},
+				"refund(bytes32)": {
+					"notice": "Refund escrow to buyer"
+				},
+				"release(bytes32)": {
+					"notice": "Release escrow to seller (called by backend service after verification)"
+				}
+			},
+			"notice": "Escrow contract for delivery payments",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"DeliveryEscrow.sol": "DeliveryEscrow"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"DeliveryEscrow.sol": {
+			"keccak256": "0xe5d68b3ec0f0be2ba854102da73397db5e44b3035024bea83907155acd9ba544",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6f03e90d8797d9413a5041c2c12314a5dbdd71cf035e29a1f5b9b6990867d9ce",
+				"dweb:/ipfs/QmXgRdjXPs1ZWp9ZkcRswMkbby3hV4D2pvujCeD4ayreat"
+			]
+		}
+	},
+	"version": 1
+}

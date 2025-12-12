@@ -9,6 +9,7 @@ import walletRouter from './routes/wallet-routes.js';
 import configurationRouter from './routes/configuration-routes.js';
 import serverStatusRouter from './routes/server-status-routes.js';
 import analyticsRouter from './routes/analytics-routes.js';
+import paymentRouter from './routes/payment-routes.js';
 import { env } from './lib/env.js';
 import { apiLimiter, authLimiter, configurationLimiter } from './middleware/rate-limit-middleware.js';
 import { errorHandler } from './middleware/error-handler-middleware.js';
@@ -41,6 +42,7 @@ app.use('/api', configurationLimiter, serverStatusRouter);
 app.use('/api', apiLimiter, deliveriesRouter);
 app.use('/api', apiLimiter, walletRouter);
 app.use('/api', apiLimiter, analyticsRouter);
+app.use('/api', apiLimiter, paymentRouter);
 
 // Swagger/OpenAPI Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
