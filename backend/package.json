@@ -20,7 +20,8 @@
     "test-payment": "tsx scripts/test-payment.ts",
     "deploy-escrow": "tsx scripts/deploy-escrow.ts",
     "customer-deposit": "tsx scripts/customer-deposit.ts",
-    "hash-delivery-id": "tsx scripts/hash-delivery-id.ts"
+    "hash-delivery-id": "tsx scripts/hash-delivery-id.ts",
+    "build-shared-types": "../scripts/build-shared-types.sh"
   },
   "keywords": [
     "chaincheck",
