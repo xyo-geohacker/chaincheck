@@ -56,7 +56,7 @@ jobs:
         component:
           - name: backend
             directory: ./backend
-            command: npx tsc --noEmit
+            command: tsc --noEmit
           - name: web
             directory: ./web
             command: npm run typecheck
@@ -65,7 +65,7 @@ jobs:
             command: npm run typecheck
           - name: shared
             directory: ./shared
-            command: npx tsc --noEmit || echo "No tsconfig.json found"
+            command: tsc --noEmit || echo "No tsconfig.json found"
 
     defaults:
       run:
