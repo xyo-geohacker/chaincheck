@@ -6,6 +6,14 @@ export enum DeliveryStatus {
   DISPUTED = 'DISPUTED'
 }
 
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  ESCROWED = 'ESCROWED',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED'
+}
+
 export interface DeliveryLocation {
   latitude: number;
   longitude: number;
@@ -46,5 +54,23 @@ export interface DeliveryRecord {
   createdAt: string;
   updatedAt: string;
   driverNfcVerified?: boolean; // Whether driver has been verified via NFC card scan
+  // Payment fields
+  requiresPaymentOnDelivery?: boolean;
+  paymentCurrency?: string | null;
+  buyerWalletAddress?: string | null;
+  sellerWalletAddress?: string | null;
+  paymentAmount?: number | null;
+  paymentStatus?: PaymentStatus | null;
+  paymentTransactionHash?: string | null;
+  paymentBlockNumber?: number | null;
+  paymentError?: string | null;
+  // Escrow fields
+  escrowContractAddress?: string | null;
+  escrowDepositTxHash?: string | null;
+  escrowDepositBlock?: number | null;
+  escrowReleaseTxHash?: string | null;
+  escrowReleaseBlock?: number | null;
+  escrowRefundTxHash?: string | null;
+  escrowRefundBlock?: number | null;
 }
 

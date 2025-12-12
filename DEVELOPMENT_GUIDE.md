@@ -1912,6 +1912,25 @@ To interact with the XL1 blockchain, an XL1 wallet is required. The wallet mnemo
 
 ### Development Mode (All Services)
 
+**Option 1: Start All Services with Script (Recommended)**
+
+Use the convenience script to start all services at once:
+
+```bash
+./scripts/restart-services.sh
+```
+
+This script will:
+- Stop any existing dev servers
+- Start the backend (port 4000)
+- Start the web dashboard (port 3000)
+- Start the mobile app (Expo)
+- Display all service URLs
+
+Press `Ctrl+C` to stop all services.
+
+**Option 2: Start Services Manually**
+
 **Terminal 1 - Backend:**
 ```bash
 cd backend
