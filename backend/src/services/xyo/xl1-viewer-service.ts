@@ -25,7 +25,7 @@ export class Xl1ViewerService {
       const connection = await this.createRpcConnection();
       
       if (!connection || !connection.viewer) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Viewer not available on connection, cannot read from XL1 directly');
         return null;
       }
@@ -34,38 +34,38 @@ export class Xl1ViewerService {
       
       // Use viewer.transactionByHash() to get transaction directly from XL1
       // This matches the explore.xyo.network pattern
-      // eslint-disable-next-line no-console
+       
       console.log(`\n=== XL1 VIEWER REQUEST ===`);
-      // eslint-disable-next-line no-console
+       
       console.log(`Method: transactionByHash`);
-      // eslint-disable-next-line no-console
+       
       console.log(`Transaction Hash: ${proofHash}`);
-      // eslint-disable-next-line no-console
+       
       console.log(`========================\n`);
       
       const result = await viewer.transactionByHash(proofHash);
       
-      // eslint-disable-next-line no-console
+       
       console.log(`\n=== XL1 VIEWER RESPONSE ===`);
-      // eslint-disable-next-line no-console
+       
       console.log(`Transaction Hash: ${proofHash}`);
       if (result) {
         try {
-          // eslint-disable-next-line no-console
+           
           console.log(`Result:`, JSON.stringify(result, null, 2));
         } catch {
-          // eslint-disable-next-line no-console
+           
           console.log(`Result:`, result);
         }
       } else {
-        // eslint-disable-next-line no-console
+         
         console.log(`Result: null (transaction not found)`);
       }
-      // eslint-disable-next-line no-console
+       
       console.log(`========================\n`);
       
       if (!result || !Array.isArray(result) || result.length === 0) {
-        // eslint-disable-next-line no-console
+         
         console.warn(`Transaction not found in XL1 blockchain: ${proofHash}`);
         return null;
       }
@@ -84,7 +84,7 @@ export class Xl1ViewerService {
           const calculatedHash = await wrapper.hash();
           boundWitness = { ...boundWitness, _hash: calculatedHash };
         } catch (hashError) {
-          // eslint-disable-next-line no-console
+           
           console.warn('Failed to calculate hash for bound witness:', hashError);
           // Continue without hash - caller can use transaction hash as fallback
         }
@@ -100,11 +100,11 @@ export class Xl1ViewerService {
       // Actual block number is typically present if different from nbf or if exp has passed
       const actualBlockNumber = blockNumber && blockNumber !== nbf ? blockNumber : null;
       
-      // eslint-disable-next-line no-console
+       
       console.log('\n=== TRANSACTION SUMMARY ===');
-      // eslint-disable-next-line no-console
+       
       console.log('Successfully retrieved transaction from XL1 blockchain via viewer');
-      // eslint-disable-next-line no-console
+       
       console.log('Block info:', { nbf, exp, blockNumber, actualBlockNumber });
       
       return {
@@ -115,7 +115,7 @@ export class Xl1ViewerService {
         actualBlockNumber
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to get bound witness from XL1 via viewer:', error);
       return null;
     }
@@ -140,7 +140,7 @@ export class Xl1ViewerService {
       const connection = await this.createRpcConnection();
       
       if (!connection || !connection.viewer) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Viewer not available, cannot read chain from XL1');
         return chain;
       }
@@ -149,46 +149,46 @@ export class Xl1ViewerService {
 
       while (currentHash && depth < maxDepth) {
         try {
-          // eslint-disable-next-line no-console
+           
           console.log(`\n=== XL1 VIEWER CHAIN REQUEST ===`);
-          // eslint-disable-next-line no-console
+           
           console.log(`Depth: ${depth}`);
-          // eslint-disable-next-line no-console
+           
           console.log(`Method: transactionByHash`);
-          // eslint-disable-next-line no-console
+           
           console.log(`Transaction Hash: ${currentHash}`);
           if (trackingAddress) {
-            // eslint-disable-next-line no-console
+             
             console.log(`Tracking address: ${trackingAddress}`);
           }
-          // eslint-disable-next-line no-console
+           
           console.log(`========================\n`);
           
           const result = await viewer.transactionByHash(currentHash);
           
-          // eslint-disable-next-line no-console
+           
           console.log(`\n=== XL1 VIEWER CHAIN RESPONSE ===`);
-          // eslint-disable-next-line no-console
+           
           console.log(`Depth: ${depth}`);
-          // eslint-disable-next-line no-console
+           
           console.log(`Transaction Hash: ${currentHash}`);
           if (result) {
             try {
-              // eslint-disable-next-line no-console
+               
               console.log(`Result:`, JSON.stringify(result, null, 2));
             } catch {
-              // eslint-disable-next-line no-console
+               
               console.log(`Result:`, result);
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.log(`Result: null (transaction not found)`);
           }
-          // eslint-disable-next-line no-console
+           
           console.log(`========================\n`);
           
           if (!result || !Array.isArray(result) || result.length === 0) {
-            // eslint-disable-next-line no-console
+             
             console.warn(`Transaction not found in XL1 blockchain: ${currentHash}`);
             break;
           }
@@ -205,7 +205,7 @@ export class Xl1ViewerService {
               const calculatedHash = await wrapper.hash();
               boundWitness = { ...boundWitness, _hash: calculatedHash };
             } catch (hashError) {
-              // eslint-disable-next-line no-console
+               
               console.warn(`Failed to calculate hash for bound witness at depth ${depth}:`, hashError);
               // Continue without hash - frontend can use transaction hash as fallback
             }
@@ -228,7 +228,7 @@ export class Xl1ViewerService {
               
               if (addressIndex === -1) {
                 // Tracking address not found in this transaction, use first address
-                // eslint-disable-next-line no-console
+                 
                 console.warn(`Tracking address ${trackingAddress} not found in transaction addresses, using first address`);
                 addressIndex = 0;
                 // Update tracking address to the first address for next iteration
@@ -247,7 +247,7 @@ export class Xl1ViewerService {
             // Get the previous hash for this address
             const previousHash = addressIndex < previousHashes.length ? previousHashes[addressIndex] : null;
             
-            // eslint-disable-next-line no-console
+             
             console.log(`Using address index ${addressIndex} (address: ${trackingAddress}) for previous_hashes`);
             
             // Check if previous hash is null, empty, or all zeros (chain start)
@@ -269,17 +269,17 @@ export class Xl1ViewerService {
 
           depth++;
         } catch (error) {
-          // eslint-disable-next-line no-console
+           
           console.error(`Error retrieving bound witness chain from XL1 at depth ${depth}:`, error);
           break;
         }
       }
 
-      // eslint-disable-next-line no-console
+       
       console.log(`Retrieved ${chain.length} transactions from XL1 chain`);
       return chain;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to get bound witness chain from XL1:', error);
       return chain;
     }
@@ -340,7 +340,7 @@ export class Xl1ViewerService {
         const connection = await this.createRpcConnection();
         
         if (!connection || !connection.viewer) {
-          // eslint-disable-next-line no-console
+           
           console.warn('Viewer not available, cannot check blocks for transaction');
           return null;
         }
@@ -430,7 +430,7 @@ export class Xl1ViewerService {
       // Transaction hasn't been committed yet (still in expected range)
       return null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to get actual block number for transaction:', error);
       return null;
     }
@@ -446,7 +446,7 @@ export class Xl1ViewerService {
       const connection = await this.createRpcConnection();
       
       if (!connection || !connection.viewer) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Viewer not available, cannot query block by number');
         return null;
       }
@@ -456,31 +456,31 @@ export class Xl1ViewerService {
       // Try to find a method to query blocks by number
       // Some viewers may have blockByNumber, others may require iterating through blocks
       if (typeof viewer.blockByNumber === 'function') {
-        // eslint-disable-next-line no-console
+         
         console.log(`\n=== XL1 VIEWER REQUEST ===`);
-        // eslint-disable-next-line no-console
+         
         console.log(`Method: blockByNumber`);
-        // eslint-disable-next-line no-console
+         
         console.log(`Block Number: ${blockNumber}`);
-        // eslint-disable-next-line no-console
+         
         console.log(`========================\n`);
         
         const result = await viewer.blockByNumber(blockNumber);
         
-        // eslint-disable-next-line no-console
+         
         console.log(`\n=== XL1 VIEWER RESPONSE ===`);
-        // eslint-disable-next-line no-console
+         
         console.log(`Block Number: ${blockNumber}`);
         if (result) {
           try {
-            // eslint-disable-next-line no-console
+             
             console.log(`Result:`, JSON.stringify(result, null, 2));
           } catch {
-            // eslint-disable-next-line no-console
+             
             console.log(`Result:`, result);
           }
         }
-        // eslint-disable-next-line no-console
+         
         console.log(`========================\n`);
         
         if (result && Array.isArray(result)) {
@@ -491,13 +491,13 @@ export class Xl1ViewerService {
           };
         }
       } else {
-        // eslint-disable-next-line no-console
+         
         console.warn('viewer.blockByNumber() is not available - block number queries may not be supported');
       }
 
       return null;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to get block by number:', error);
       return null;
     }
@@ -517,7 +517,7 @@ export class Xl1ViewerService {
       
       const endpoint = env.xyoChainRpcUrl;
       if (!endpoint) {
-        // eslint-disable-next-line no-console
+         
         console.warn('XYO_CHAIN_RPC_URL not configured, cannot create viewer connection');
         return null;
       }
@@ -532,13 +532,13 @@ export class Xl1ViewerService {
       }
 
       if (!HttpRpcXyoConnection) {
-        // eslint-disable-next-line no-console
+         
         console.warn('HttpRpcXyoConnection not found in @xyo-network/xl1-rpc');
         return null;
       }
 
       // Create connection without account (read-only for viewer)
-      const HttpRpcXyoConnectionClass = HttpRpcXyoConnection as any;
+      const HttpRpcXyoConnectionClass = HttpRpcXyoConnection;
       const connection = new HttpRpcXyoConnectionClass({ endpoint });
       
       // Check if viewer is available
@@ -556,15 +556,15 @@ export class Xl1ViewerService {
             // Check again after brief delay
             if (connection._viewer) {
               connection.viewer = connection._viewer;
-            } else if (typeof (connection as any).getViewer === 'function') {
-              connection.viewer = await (connection as any).getViewer();
+            } else if (typeof (connection).getViewer === 'function') {
+              connection.viewer = await (connection).getViewer();
             } else {
-              // eslint-disable-next-line no-console
+               
               console.warn('Viewer not available on connection after initialization');
               return null;
             }
           } catch {
-            // eslint-disable-next-line no-console
+             
             console.warn('Failed to initialize viewer on connection');
             return null;
           }
@@ -573,7 +573,7 @@ export class Xl1ViewerService {
 
       // Verify viewer has the methods we need
       if (!connection.viewer || typeof connection.viewer.transactionByHash !== 'function') {
-        // eslint-disable-next-line no-console
+         
         console.warn('Viewer does not have transactionByHash method');
         return null;
       }
@@ -581,23 +581,23 @@ export class Xl1ViewerService {
       // Log available viewer methods for debugging
       if (connection.viewer) {
         const viewerMethods = Object.getOwnPropertyNames(Object.getPrototypeOf(connection.viewer))
-          .filter(name => typeof (connection.viewer as any)[name] === 'function' && name !== 'constructor');
-        // eslint-disable-next-line no-console
+          .filter(name => typeof (connection.viewer)[name] === 'function' && name !== 'constructor');
+         
         console.log('Available viewer methods:', viewerMethods);
         
         // Check for blockByNumber method
-        if (typeof (connection.viewer as any).blockByNumber === 'function') {
-          // eslint-disable-next-line no-console
+        if (typeof (connection.viewer).blockByNumber === 'function') {
+           
           console.log('✓ viewer.blockByNumber() is available');
         } else {
-          // eslint-disable-next-line no-console
+           
           console.log('⚠ viewer.blockByNumber() is not available - block number queries may not be supported');
         }
       }
 
       return connection;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to create RPC connection for viewer:', error);
       return null;
     }

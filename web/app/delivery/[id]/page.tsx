@@ -5,6 +5,7 @@ import type { DeliveryRecord } from '@shared/types/delivery.types';
 import { DeliveryStatus } from '@shared/types/delivery.types';
 import { DeliveryMap } from '@components/DeliveryMap';
 import { ProofTimeline } from '@components/ProofTimeline';
+import { PaymentEscrowPanel } from '@components/PaymentEscrowPanel';
 import { fetchDeliveryById } from '@lib/api';
 
 type DeliveryPageProps = {
@@ -200,6 +201,35 @@ export default async function DeliveryPage({ params }: DeliveryPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Payment & Escrow Panel */}
+      {delivery.requiresPaymentOnDelivery && (
+        <div className="grid gap-6 lg:grid-cols-12 -mt-2">
+          <div className="lg:col-span-6">
+            <PaymentEscrowPanel 
+              deliveryId={delivery.id}
+              paymentData={{
+                requiresPaymentOnDelivery: delivery.requiresPaymentOnDelivery,
+                paymentCurrency: delivery.paymentCurrency,
+                buyerWalletAddress: delivery.buyerWalletAddress,
+                sellerWalletAddress: delivery.sellerWalletAddress,
+                paymentAmount: delivery.paymentAmount,
+                paymentStatus: delivery.paymentStatus,
+                paymentTransactionHash: delivery.paymentTransactionHash,
+                paymentBlockNumber: delivery.paymentBlockNumber,
+                paymentError: delivery.paymentError,
+                escrowContractAddress: delivery.escrowContractAddress,
+                escrowDepositTxHash: delivery.escrowDepositTxHash,
+                escrowDepositBlock: delivery.escrowDepositBlock,
+                escrowReleaseTxHash: delivery.escrowReleaseTxHash,
+                escrowReleaseBlock: delivery.escrowReleaseBlock,
+                escrowRefundTxHash: delivery.escrowRefundTxHash,
+                escrowRefundBlock: delivery.escrowRefundBlock
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Verification Status */}
       {!delivery.proofHash && (

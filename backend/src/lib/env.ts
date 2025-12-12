@@ -56,5 +56,21 @@ export const env = {
   // Optional explicit chain ID (e.g. dd381fbb392c85160d8b0453e446757b12384046)
   xyoChainId: process.env.XYO_CHAIN_ID,
   xyoChainRpcUrl: process.env.XYO_CHAIN_RPC_URL ?? 'http://localhost:8080/rpc',
+  // Payment Configuration
+  enablePaymentOnVerification: process.env.ENABLE_PAYMENT_ON_VERIFICATION === 'true',
+  // Payment mock mode: 
+  // - true if PAYMENT_MOCK_MODE='true' 
+  // - true if MOCK_XL1_TRANSACTIONS='true' (fallback)
+  // - true by default (safety - prevents accidental real transactions)
+  paymentMockMode: process.env.PAYMENT_MOCK_MODE === 'true' || 
+                   (process.env.PAYMENT_MOCK_MODE === undefined && process.env.MOCK_XL1_TRANSACTIONS === 'true') ||
+                   process.env.PAYMENT_MOCK_MODE === undefined,
+  // Ethereum Configuration for Payments
+  ethereumRpcUrl: process.env.ETHEREUM_RPC_URL, // e.g., 'https://mainnet.infura.io/v3/YOUR_PROJECT_ID' or 'https://sepolia.infura.io/v3/YOUR_PROJECT_ID'
+  ethereumPrivateKey: process.env.ETHEREUM_PRIVATE_KEY, // Private key for the payment service wallet (keep secure!)
+  ethereumChainId: process.env.ETHEREUM_CHAIN_ID ? Number(process.env.ETHEREUM_CHAIN_ID) : undefined, // 1 for mainnet, 11155111 for Sepolia, etc.
+  // Escrow Configuration
+  ethereumEscrowContractAddress: process.env.ETHEREUM_ESCROW_CONTRACT_ADDRESS, // Deployed escrow contract address
+  useEscrow: process.env.USE_ESCROW === 'true', // Feature flag: use escrow vs direct transfer
 } as const;
 

@@ -105,25 +105,25 @@ function checkDeliveryNfcVerification(boundWitnessData: unknown): boolean {
 router.get(
   '/payloads/:hash',
   async (req, res, next) => {
-    // eslint-disable-next-line no-console
+     
     console.log(`[PAYLOADS ROUTE MIDDLEWARE] Route matched! Hash: ${req.params.hash}`);
-    // eslint-disable-next-line no-console
+     
     console.log(`[PAYLOADS ROUTE MIDDLEWARE] Request URL: ${req.url}`);
-    // eslint-disable-next-line no-console
+     
     console.log(`[PAYLOADS ROUTE MIDDLEWARE] Request path: ${req.path}`);
-    // eslint-disable-next-line no-console
+     
     console.log(`[PAYLOADS ROUTE MIDDLEWARE] Request params:`, req.params);
     next();
   },
   async (req, res) => {
     const { hash } = req.params;
 
-    // eslint-disable-next-line no-console
+     
     console.log(`[PAYLOADS ROUTE HANDLER] Route handler called! Hash: ${hash}`);
 
     // Validate hash format (should be 64 character hex string)
     if (!hash || hash.length < 1) {
-      // eslint-disable-next-line no-console
+       
       console.warn(`[PAYLOADS ROUTE] Invalid hash parameter: ${hash}`);
       return res.status(400).json({ success: false, error: 'Invalid hash parameter' });
     }
@@ -132,19 +132,19 @@ router.get(
     // Use the archivist service's getPayloadByHash method (uses verifyLocationProof internally)
     const payload = await xyoService.getPayloadByHash(hash);
     if (payload) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[PAYLOADS ROUTE] ✓ Successfully retrieved payload from Archivist for hash: ${hash}`);
       return res.json({ success: true, data: payload });
     } else {
-      // eslint-disable-next-line no-console
+       
       console.warn(`[PAYLOADS ROUTE] ⚠ Payload not found in Archivist for hash: ${hash}`);
       return res.status(404).json({ success: false, error: 'Payload not found in Archivist' });
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('[PAYLOADS ROUTE] Fetch payload error:', error);
     if (error instanceof Error) {
-      // eslint-disable-next-line no-console
+       
       console.error('[PAYLOADS ROUTE] Error stack:', error.stack);
     }
     return res.status(500).json({ success: false, error: 'Failed to fetch payload from Archivist' });
@@ -212,7 +212,7 @@ router.get(
 
     return res.json({ deliveries });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('List deliveries error:', error);
     return res.status(500).json({ error: 'Failed to fetch deliveries' });
   }
@@ -396,7 +396,7 @@ router.post(
     const finalSignatureHash = signatureHash ?? delivery.signatureHash ?? undefined;
     
     // Log hash availability for debugging
-    // eslint-disable-next-line no-console
+     
     console.log('[VERIFICATION] Hash availability:', {
       photoHashFromRequest: photoHash ? `${photoHash.substring(0, 16)}...` : 'not provided',
       photoHashFromDB: delivery.photoHash ? `${delivery.photoHash.substring(0, 16)}...` : 'not in DB',
@@ -408,7 +408,7 @@ router.post(
 
     // Step 1: Create XL1 transaction first to get blockchain proof
     // CRITICAL: Only mark delivery as verified if XL1 transaction succeeds
-    // eslint-disable-next-line no-console
+     
     console.log('Creating XL1 transaction for delivery verification...');
     let proof: LocationProofDetails;
     try {
@@ -444,7 +444,7 @@ router.post(
       });
     } catch (xl1Error) {
       // XL1 transaction failed - do NOT mark delivery as verified
-      // eslint-disable-next-line no-console
+       
       console.error('XL1 transaction failed - delivery will NOT be marked as verified:', xl1Error);
       // Re-throw to be handled by outer catch block
       throw xl1Error;
@@ -470,13 +470,13 @@ router.post(
     let divinerVerification = null;
     if (proof.archivistBoundWitnessHash) {
       try {
-        // eslint-disable-next-line no-console
+         
         console.log('Querying Diviner for cross-reference verification...', {
           archivistBoundWitnessHash: proof.archivistBoundWitnessHash,
           xl1TransactionHash: proof.xl1TransactionHash,
           xl1BlockNumber: proof.xl1BlockNumber
         });
-        // eslint-disable-next-line no-console
+         
         console.log('  ✓ Using Archivist bound witness hash for Diviner query (correct)');
         divinerVerification = await xyoService.queryLocationDiviner(
           lat,
@@ -491,11 +491,11 @@ router.post(
         // This happens when the Diviner uses incorrect endpoint format (e.g., /archive/chaincheck/block/)
         // Extract location data directly from Archivist payloads as fallback
         if (!divinerVerification || (divinerVerification && (divinerVerification.nodeCount === 0 || divinerVerification.isMocked))) {
-          // eslint-disable-next-line no-console
+           
           console.warn('⚠ Diviner query returned null or empty results - likely failed to query Archivist');
-          // eslint-disable-next-line no-console
+           
           console.warn('  - Diviner may be using incorrect Archivist endpoint format (/archive/chaincheck/block/)');
-          // eslint-disable-next-line no-console
+           
           console.warn('  - Using location data from Archivist payloads as fallback');
           
           // Extract location from Archivist response payloads
@@ -503,7 +503,7 @@ router.post(
           if (archivistResponse?.offChainPayload) {
             const payload = archivistResponse.offChainPayload as Record<string, unknown>;
             const payloadData = payload.data as Record<string, unknown> | undefined;
-            // eslint-disable-next-line no-console
+             
             console.log('  - Archivist payload structure:', {
               hasPayload: !!payload,
               hasData: !!payloadData,
@@ -536,38 +536,38 @@ router.post(
                   xl1BlockNumber: proof.xl1BlockNumber
                 }
               };
-              // eslint-disable-next-line no-console
+               
               console.log('  ✓ Created verification result from Archivist payload data:', {
                 latitude: payloadData.latitude,
                 longitude: payloadData.longitude,
                 timestamp: ts
               });
             } else {
-              // eslint-disable-next-line no-console
+               
               console.warn('  ⚠ Archivist payload data does not contain location information');
-              // eslint-disable-next-line no-console
+               
               console.warn('    - Payload data keys:', payloadData ? Object.keys(payloadData) : 'no data object');
             }
           } else {
-            // eslint-disable-next-line no-console
+             
             console.warn('  ⚠ No Archivist response payload available for fallback');
-            // eslint-disable-next-line no-console
+             
             console.warn('    - archivistResponse:', archivistResponse ? 'exists' : 'null');
-            // eslint-disable-next-line no-console
+             
             console.warn('    - offChainPayload:', archivistResponse?.offChainPayload ? 'exists' : 'missing');
           }
         }
       } catch (divinerError) {
         // Diviner query failure is non-critical - log but continue
-        // eslint-disable-next-line no-console
+         
         console.warn('Diviner query failed (non-critical):', divinerError);
       }
     } else {
-      // eslint-disable-next-line no-console
+       
       console.warn('⚠ Skipping Diviner query - no Archivist bound witness hash available');
-      // eslint-disable-next-line no-console
+       
       console.warn('  - XL1 transaction hash cannot be used for Diviner queries (different bound witness)');
-      // eslint-disable-next-line no-console
+       
       console.warn('  - Diviner queries the Archivist, which has a different bound witness hash');
     }
 
@@ -581,11 +581,11 @@ router.post(
             ...(nfcSerialNumber && { xyoNfcSerialNumber: nfcSerialNumber })
           }
         });
-        // eslint-disable-next-line no-console
+         
         console.log(`Updated NFC data for driver ${driverId}`);
       } catch (driverUpdateError) {
         // Log but don't fail verification if driver update fails
-        // eslint-disable-next-line no-console
+         
         console.warn('Failed to update driver NFC data (non-critical):', driverUpdateError);
       }
     }
@@ -623,6 +623,62 @@ router.post(
 
     const verificationUrl = `${process.env.WEB_URL ?? ''}/verify/${proof.proofHash}`;
 
+    // Release payment if payment-on-verification is enabled and payment is required
+    let paymentResult = null;
+    if (env.enablePaymentOnVerification && 
+        updatedDelivery.requiresPaymentOnDelivery) {
+      try {
+        // Use escrow if enabled, otherwise use direct transfer
+        if (env.useEscrow) {
+          const { EthereumEscrowService } = await import('../services/ethereum-escrow-service.js');
+          const escrowService = new EthereumEscrowService();
+          
+          // Only release if payment is in ESCROWED status
+          if (updatedDelivery.paymentStatus === 'ESCROWED') {
+            paymentResult = await escrowService.releaseEscrow(updatedDelivery.id);
+            
+            if (paymentResult.success) {
+              // Update delivery with escrow release details
+              await prisma.delivery.update({
+                where: { id: updatedDelivery.id },
+                data: {
+                  paymentStatus: 'PAID',
+                  paymentTransactionHash: paymentResult.transactionHash ?? null,
+                  paymentBlockNumber: paymentResult.blockNumber ?? null,
+                  escrowReleaseTxHash: paymentResult.transactionHash ?? null,
+                  escrowReleaseBlock: paymentResult.blockNumber ?? null,
+                  paymentError: null
+                }
+              });
+            } else {
+              // Update delivery with error
+              await prisma.delivery.update({
+                where: { id: updatedDelivery.id },
+                data: {
+                  paymentError: paymentResult.error ?? 'Escrow release failed'
+                }
+              });
+            }
+          }
+        } else {
+          // Direct transfer (original implementation)
+          const { EthereumPaymentService } = await import('../services/ethereum-payment-service.js');
+          const paymentService = new EthereumPaymentService();
+          paymentResult = await paymentService.releasePayment(updatedDelivery.id);
+        }
+        
+        // Log payment result (don't fail verification if payment fails)
+        if (paymentResult && !paymentResult.success) {
+           
+          console.warn(`Payment release failed for delivery ${updatedDelivery.id}:`, paymentResult.error);
+        }
+      } catch (paymentError) {
+         
+        console.error('Error releasing payment:', paymentError);
+        // Don't fail verification if payment fails - payment can be retried manually
+      }
+    }
+
     return res.json({
       success: true,
       delivery: updatedDelivery,
@@ -632,10 +688,16 @@ router.post(
         verificationUrl,
         archivistResponse: proof.archivistResponse ?? null,
         divinerVerification: divinerVerification
-      }
+      },
+      payment: paymentResult ? {
+        success: paymentResult.success,
+        transactionHash: paymentResult.transactionHash,
+        blockNumber: paymentResult.blockNumber,
+        error: paymentResult.error
+      } : undefined
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Verification error:', error);
 
     // Check if this is an RPC service error (XL1 blockchain unavailable)
@@ -680,15 +742,15 @@ router.post(
           }
         });
 
-        // eslint-disable-next-line no-console
+         
         console.log(`Delivery ${id} status updated to ${newStatus} due to verification failure`);
       } else {
-        // eslint-disable-next-line no-console
+         
         console.warn(`Cannot update delivery ${id} status - delivery not found`);
       }
     } catch (updateError) {
       // Log but don't fail the error response if status update fails
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to update delivery status after verification error:', updateError);
     }
 
@@ -786,7 +848,7 @@ router.post(
         delivery: updatedDelivery
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Photo upload error:', error);
       
       // Provide more specific error messages
@@ -873,7 +935,7 @@ router.post(
       buffer = file.buffer;
       filename = file.originalname;
       
-      // eslint-disable-next-line no-console
+       
       console.log('Signature upload - File received:', {
         originalname: file.originalname,
         mimetype: file.mimetype,
@@ -887,12 +949,12 @@ router.post(
       const isPng = buffer.length >= 8 && buffer.subarray(0, 8).equals(pngSignature);
       
       if (!isPng) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Signature upload - File does not appear to be a valid PNG');
-        // eslint-disable-next-line no-console
+         
         console.warn('First 16 bytes (hex):', buffer.subarray(0, 16).toString('hex'));
       } else {
-        // eslint-disable-next-line no-console
+         
         console.log('Signature upload - Valid PNG file detected');
       }
     } else if (signatureBase64) {
@@ -915,19 +977,19 @@ router.post(
       // Remove any whitespace from base64 string
       base64Data = base64Data.replace(/\s/g, '');
       
-      // eslint-disable-next-line no-console
+       
       console.log('Signature upload - Base64 data length:', base64Data.length);
-      // eslint-disable-next-line no-console
+       
       console.log('Signature upload - Base64 preview (first 50 chars):', base64Data.substring(0, 50));
       
       try {
         buffer = Buffer.from(base64Data, 'base64');
-        // eslint-disable-next-line no-console
+         
         console.log('Signature upload - Buffer created, size:', buffer.length, 'bytes');
         
         // Validate buffer is not empty
         if (buffer.length === 0) {
-          // eslint-disable-next-line no-console
+           
           console.error('Signature upload - Buffer is empty');
           res.status(400).json({ error: 'Invalid signature data: buffer is empty' });
           return;
@@ -939,16 +1001,16 @@ router.post(
         const isPng = buffer.length >= 8 && buffer.subarray(0, 8).equals(pngSignature);
         
         if (!isPng) {
-          // eslint-disable-next-line no-console
+           
           console.warn('Signature upload - Buffer does not appear to be a valid PNG file');
           // Don't fail here, as some image formats might be valid
           // But log for debugging
         } else {
-          // eslint-disable-next-line no-console
+           
           console.log('Signature upload - Valid PNG file detected');
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.error('Signature upload - Failed to create buffer from base64:', error);
         res.status(400).json({ error: 'Invalid base64 signature data' });
         return;
@@ -991,7 +1053,7 @@ router.post(
         delivery: updatedDelivery
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Signature upload error:', error);
       res.status(500).json({ error: 'Failed to upload signature' });
     }
@@ -1079,7 +1141,7 @@ router.get(
 
     return res.json(deliveryWithDriver);
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Fetch delivery error:', error);
     return res.status(500).json({ error: 'Failed to fetch delivery' });
   }
@@ -1150,7 +1212,7 @@ router.get(
         driverNfcVerified
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Fetch delivery error:', error);
       return res.status(500).json({ error: 'Failed to fetch delivery' });
     }
@@ -1168,7 +1230,7 @@ router.get(
     const proof = await xyoService.verifyLocationProof(proofHash);
     return res.json(proof);
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Fetch proof error:', error);
     return res.status(500).json({ error: 'Failed to fetch proof details' });
   }
@@ -1187,7 +1249,7 @@ router.get(
     const validation = await xyoService.validateBoundWitness(proofHash);
     return res.json(validation);
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Validate proof error:', error);
     return res.status(500).json({ error: 'Failed to validate bound witness' });
   }
@@ -1220,7 +1282,7 @@ router.get(
     const chain = await xyoService.getBoundWitnessChain(proofHash, maxDepth, storedBoundWitnessData);
     return res.json({ chain, depth: chain.length });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Get bound witness chain error:', error);
     return res.status(500).json({ error: 'Failed to retrieve bound witness chain' });
   }
@@ -1252,7 +1314,7 @@ router.get(
     const cryptoDetails = await xyoService.getCryptographicDetails(proofHash, storedBoundWitnessData);
     return res.json(cryptoDetails);
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Get cryptographic details error:', error);
     return res.status(500).json({ error: 'Failed to retrieve cryptographic details' });
   }
@@ -1277,7 +1339,7 @@ router.get(
 
     // Extract hash from boundWitnessData if available
     let hashFromBoundWitness: string | null = null;
-    let allHashes: string[] = [];
+    const allHashes: string[] = [];
     
     if (delivery.boundWitnessData && typeof delivery.boundWitnessData === 'object') {
       const bwData = delivery.boundWitnessData as Record<string, unknown>;
@@ -1313,7 +1375,7 @@ router.get(
       verifiedAt: delivery.verifiedAt
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Diagnostic error:', error);
     return res.status(500).json({ error: 'Failed to get diagnostic info' });
   }
@@ -1350,7 +1412,7 @@ router.get(
 
       return res.json(divinerVerification);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Diviner verification error:', error);
       return res.status(500).json({ 
         error: 'Failed to verify location with Diviner',
@@ -1464,7 +1526,7 @@ router.get(
           witnessNodes = divinerVerification.details.witnessNodes as unknown[];
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Could not fetch Diviner data for accuracy calculation, using nearby nodes:', error);
       }
 
@@ -1485,7 +1547,7 @@ router.get(
 
       return res.json(accuracy);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Location accuracy calculation error:', error);
       return res.status(500).json({ 
         error: 'Failed to calculate location accuracy',
@@ -1562,7 +1624,7 @@ router.get(
       const stats = await xyoService.getNetworkStatistics();
       return res.json(stats);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Get network statistics error:', error);
       return res.status(500).json({ error: 'Failed to retrieve network statistics' });
     }
@@ -1587,7 +1649,7 @@ router.get(
       const nodes = await xyoService.getAllWitnessNodes(filters);
       return res.json(nodes);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Get witness nodes error:', error);
       return res.status(500).json({ error: 'Failed to retrieve witness nodes' });
     }
@@ -1605,7 +1667,7 @@ router.get(
       const nodeInfo = await xyoService.getWitnessNodeInfo(nodeAddress);
       return res.json(nodeInfo);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Get witness node info error:', error);
       return res.status(500).json({ error: 'Failed to retrieve witness node information' });
     }
@@ -1629,7 +1691,7 @@ router.get(
         isCommitted: actualBlockNumber !== null
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Get actual block number error:', error);
       return res.status(500).json({ error: 'Failed to retrieve actual block number' });
     }
@@ -1661,7 +1723,7 @@ router.get(
         transactionCount: blockData.transactions.length
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Get block by number error:', error);
       return res.status(500).json({ error: 'Failed to retrieve block information' });
     }

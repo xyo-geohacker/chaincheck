@@ -23,6 +23,14 @@ export interface DeliveryVerificationPayload extends DeliveryLocation {
   signatureHash?: string; // SHA-256 hash of the signature (if provided) for immutable proof
 }
 
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  ESCROWED = 'ESCROWED',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED'
+}
+
 export interface DeliveryRecord {
   id: string;
   orderId: string;
@@ -46,5 +54,23 @@ export interface DeliveryRecord {
   createdAt: string;
   updatedAt: string;
   driverNfcVerified?: boolean; // Whether driver has been verified via NFC card scan
+  // Payment fields
+  requiresPaymentOnDelivery?: boolean;
+  paymentCurrency?: string | null;
+  buyerWalletAddress?: string | null;
+  sellerWalletAddress?: string | null;
+  paymentAmount?: number | null;
+  paymentStatus?: PaymentStatus | null;
+  paymentTransactionHash?: string | null;
+  paymentBlockNumber?: number | null;
+  paymentError?: string | null;
+  // Escrow fields
+  escrowContractAddress?: string | null;
+  escrowDepositTxHash?: string | null;
+  escrowDepositBlock?: number | null;
+  escrowReleaseTxHash?: string | null;
+  escrowReleaseBlock?: number | null;
+  escrowRefundTxHash?: string | null;
+  escrowRefundBlock?: number | null;
 }
 
