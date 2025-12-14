@@ -1,0 +1,217 @@
+# ChainCheck Project Rules
+
+## Project Overview
+ChainCheck is a monorepo reference implementation for integrating XYO Network and XL1 blockchain proof-of-location into delivery verification systems. The project consists of three main applications:
+- **Backend** (`backend/`): Express.js API server with Prisma ORM
+- **Web** (`web/`): Next.js 14 web dashboard (App Router)
+- **Mobile** (`mobile/`): Expo React Native driver app
+- **Shared** (`shared/`): TypeScript type definitions shared across applications
+
+## Technology Stack
+
+### Backend
+- Node.js 18.18.0+ with Express.js
+- TypeScript (strict mode)
+- Prisma ORM with PostgreSQL
+- XYO Network SDK packages (`@xyo-network/xl1-protocol-sdk`, `@xyo-network/xl1-rpc`)
+- Ethereum/Ethers.js for payment escrow
+- Vitest for testing
+- ESLint v9 (flat config format)
+
+### Web
+- Next.js 14 (App Router)
+- React 18
+- TypeScript
+- Tailwind CSS
+- Mapbox GL for maps
+- Jest for testing
+
+### Mobile
+- Expo SDK 51
+- React Native 0.74.5
+- TypeScript
+- React Navigation
+- Jest for testing
+
+## Code Style & Conventions
+
+### TypeScript
+- Use strict TypeScript mode
+- Prefer explicit types over `any`
+- Use type imports for types: `import type { ... }`
+- Use value imports for enums and classes: `import { EnumName }`
+- Shared types are in `shared/types/` - always import from `@shared/types/*`
+- After modifying shared TypeScript files, run `./scripts/build-shared-types.sh` to compile to JavaScript
+
+### File Organization
+- Backend: `src/routes/`, `src/services/`, `src/middleware/`, `src/lib/`
+- Web: `app/` (pages), `components/`, `lib/`
+- Mobile: `src/screens/`, `src/components/`, `src/services/`, `src/store/`
+- Tests: Co-located in `__tests__/` directories
+- Scripts: Project-level scripts in `scripts/` directory
+
+### Naming Conventions
+- Components: PascalCase (e.g., `DeliveryTable.tsx`)
+- Services: PascalCase classes (e.g., `XyoService`)
+- Utilities: camelCase functions (e.g., `formatAddress`)
+- Types/Interfaces: PascalCase (e.g., `DeliveryRecord`)
+- Enums: PascalCase (e.g., `PaymentStatus`, `DeliveryStatus`)
+
+## Important Patterns
+
+### External URLs
+- **Never use Next.js `Link` for external URLs** (Etherscan, etc.)
+- Use regular `<a>` tags with `target="_blank"` and `rel="noopener noreferrer"` for external links
+- Next.js `Link` is only for internal navigation
+
+### Shared Types
+- Types defined in `shared/types/` must be compiled to JavaScript for backend use
+- Backend imports from `.js` files: `from '../../../shared/types/delivery.types.js'`
+- Web/Mobile import from TypeScript: `from '@shared/types/delivery.types'`
+- After modifying shared types, run: `./scripts/build-shared-types.sh` or `cd backend && npm run build-shared-types`
+
+### Environment Variables
+- Backend: `.env` file in `backend/` directory
+- Web: `.env.local` file in `web/` directory
+- Mobile: `.env` file in `mobile/` directory
+- Always check `env.example` files for required variables
+- Never commit `.env` files
+
+### API Client Configuration
+- Web: `web/lib/api.ts` - uses `NEXT_PUBLIC_API_URL`
+- Mobile: `mobile/src/services/api.service.ts` - uses `EXPO_PUBLIC_API_URL` with localhost resolution
+- Both use axios with interceptors for authentication
+
+### Payment & Escrow
+- Payment status enum: `PENDING`, `ESCROWED`, `PAID`, `FAILED`, `REFUNDED`
+- Escrow uses Ethereum smart contracts (`DeliveryEscrow.sol`)
+- Payment service: `EthereumPaymentService` for direct transfers
+- Escrow service: `EthereumEscrowService` for smart contract escrow
+- Check `env.useEscrow` flag to determine which service to use
+
+## Testing
+
+### Test Organization
+- Tests in `__tests__/` directories
+- Test files: `*.test.ts` or `*.test.tsx`
+- Mock external dependencies (axios, expo-constants, etc.)
+- Use `waitFor` for async operations in React Testing Library
+
+### Test Patterns
+- Mock axios instances properly to avoid hoisting issues
+- Use `jest.isolateModules()` when testing module-level initialization
+- Mock `window.location` carefully (use `configurable: true`)
+- Mock Next.js `Link` component with `displayName` property
+
+## Code Quality
+
+### ESLint
+- Backend uses ESLint v9 flat config (`eslint.config.js`)
+- Web uses Next.js ESLint config (`.eslintrc.json`)
+- Relaxed TypeScript strict rules are warnings (not errors) to allow CI/CD to pass
+- Fix linting errors before committing
+
+### Type Checking
+- Run `npm run typecheck` in each directory before committing
+- CI/CD runs type checking for all components
+- Fix TypeScript errors immediately
+
+### Error Handling
+- Use try-catch blocks for async operations
+- Log errors with appropriate log levels
+- Return proper HTTP status codes
+- Don't fail verification if payment fails (payment can be retried)
+
+## Git & CI/CD
+
+### GitHub Actions
+- CI runs on push and pull requests
+- Tests, linting, and type checking run automatically
+- Test coverage reports generated
+- SonarCloud analysis runs on main branch
+
+### Commit Messages
+- Use clear, descriptive commit messages
+- Reference issue numbers when applicable
+
+## Development Workflow
+
+### Starting Services
+- Use `./scripts/restart-services.sh` to start all services
+- Or start individually: `cd backend && npm run dev`, etc.
+
+### Database
+- Use Prisma for all database operations
+- Run migrations: `cd backend && npx prisma migrate dev`
+- Seed database: `cd backend && npm run seed`
+- Prisma Studio: `cd backend && npm run studio`
+
+### Build Process
+- Backend: `cd backend && npm run build`
+- Web: `cd web && npm run build`
+- Mobile: Built via Expo/EAS
+- Shared types: `./scripts/build-shared-types.sh`
+
+## XYO Network Integration
+
+### Service Architecture
+- Main facade: `XyoService` in `backend/src/services/xyo/xyo.service.ts`
+- Specialized services: `XL1TransactionService`, `ArchivistService`, `DivinerService`, etc.
+- Services are modular and can be extracted for partner integration
+
+### Mock Mode
+- Check `MOCK_XL1_TRANSACTIONS` or `PAYMENT_MOCK_MODE` environment variables
+- Mock mode prevents real blockchain transactions
+- Always test in mock mode first
+
+## Security
+
+### Authentication
+- JWT tokens for API authentication
+- Tokens stored in localStorage (web) or AsyncStorage (mobile)
+- Token refresh handled by interceptors
+
+### Secrets
+- Never hardcode secrets
+- Use environment variables
+- Keep `.env` files out of version control
+
+## Documentation
+
+### Code Comments
+- Document complex logic
+- Explain XYO Network-specific concepts
+- Add JSDoc comments for public APIs
+
+### README Files
+- Keep README.md updated
+- Update DEVELOPMENT_GUIDE.md for setup changes
+- Document new features in CHANGELOG.md
+
+## Common Pitfalls to Avoid
+
+1. **Don't use Next.js `Link` for external URLs** - use `<a>` tags
+2. **Don't forget to compile shared types** after modifying `shared/types/*.ts`
+3. **Don't import PaymentStatus as a type** - it's an enum, import as a value
+4. **Don't commit `.env` files** - use `.env.example` as template
+5. **Don't use `any` types** - prefer explicit types or `unknown`
+6. **Don't skip tests** - write tests for new features
+7. **Don't ignore TypeScript errors** - fix them before committing
+
+## When Making Changes
+
+1. **Shared Types**: Modify `.ts` file, then run build script
+2. **Backend Routes**: Add validation middleware, update Swagger docs
+3. **Web Components**: Use Tailwind classes, follow Next.js App Router patterns
+4. **Mobile Screens**: Use React Navigation, handle platform differences
+5. **Database Schema**: Create Prisma migration, update seed data if needed
+6. **New Features**: Add tests, update documentation, update CHANGELOG
+
+## Questions to Ask
+
+- Is this an internal or external link? (Use `Link` vs `<a>`)
+- Does this change affect shared types? (Run build script)
+- Are there tests for this? (Add tests if missing)
+- Does this need environment variables? (Update `env.example`)
+- Is this secure? (No hardcoded secrets, proper validation)
+

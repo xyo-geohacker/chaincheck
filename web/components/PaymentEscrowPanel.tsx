@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 type PaymentStatus = 'PENDING' | 'ESCROWED' | 'PAID' | 'FAILED' | 'REFUNDED';
@@ -213,7 +212,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
           <div>
             <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Escrow Contract</dt>
             <dd className="mt-1">
-              <Link
+              <a
                 href={getEtherscanUrl(data.escrowContractAddress, network) || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -223,7 +222,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
                 <svg className="inline-block ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </Link>
+              </a>
             </dd>
           </div>
         )}
@@ -233,7 +232,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
           <div>
             <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Deposit Transaction</dt>
             <dd className="mt-1">
-              <Link
+              <a
                 href={getEtherscanUrl(data.escrowDepositTxHash, network) || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -243,7 +242,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
                 <svg className="inline-block ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </Link>
+              </a>
               {data.escrowDepositBlock && (
                 <span className="ml-2 text-xs text-slate-400">Block: {data.escrowDepositBlock.toLocaleString()}</span>
               )}
@@ -256,7 +255,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
           <div>
             <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Release Transaction</dt>
             <dd className="mt-1">
-              <Link
+              <a
                 href={getEtherscanUrl(data.escrowReleaseTxHash, network) || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -266,7 +265,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
                 <svg className="inline-block ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </Link>
+              </a>
               {data.escrowReleaseBlock && (
                 <span className="ml-2 text-xs text-slate-400">Block: {data.escrowReleaseBlock.toLocaleString()}</span>
               )}
@@ -279,7 +278,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
           <div>
             <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Refund Transaction</dt>
             <dd className="mt-1">
-              <Link
+              <a
                 href={getEtherscanUrl(data.escrowRefundTxHash, network) || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -289,7 +288,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
                 <svg className="inline-block ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </Link>
+              </a>
               {data.escrowRefundBlock && (
                 <span className="ml-2 text-xs text-slate-400">Block: {data.escrowRefundBlock.toLocaleString()}</span>
               )}
@@ -302,7 +301,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
           <div>
             <dt className="text-xs uppercase tracking-[0.25em] text-[#8ea8ff]">Payment Transaction</dt>
             <dd className="mt-1">
-              <Link
+              <a
                 href={getEtherscanUrl(data.paymentTransactionHash, network) || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -312,7 +311,7 @@ export function PaymentEscrowPanel({ deliveryId, paymentData }: PaymentEscrowPan
                 <svg className="inline-block ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </Link>
+              </a>
               {data.paymentBlockNumber && (
                 <span className="ml-2 text-xs text-slate-400">Block: {data.paymentBlockNumber.toLocaleString()}</span>
               )}
