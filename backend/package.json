@@ -57,7 +57,7 @@
     "@xyo-network/wallet": "^5.2.17",
     "@xyo-network/xl1-protocol": "^1.14.17",
     "@xyo-network/xl1-protocol-sdk": "^1.17.2",
-    "@xyo-network/xl1-rpc": "^1.17.2",
+    "@xyo-network/xl1-rpc": "^1.17.7",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
