@@ -1,3 +1,8 @@
+---
+description: ChainCheck project rules and conventions for monorepo development
+globs: ["**/*"]
+---
+
 # ChainCheck Project Rules
 
 ## Project Overview
@@ -214,4 +219,3 @@ ChainCheck is a monorepo reference implementation for integrating XYO Network an
 - Are there tests for this? (Add tests if missing)
 - Does this need environment variables? (Update `env.example`)
 - Is this secure? (No hardcoded secrets, proper validation)
-

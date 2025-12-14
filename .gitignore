@@ -71,7 +71,9 @@ desktop.ini
 *.code-workspace
 
 # IDE - Cursor
-.cursor/
+# Ignore Cursor settings but allow rules directory to be tracked
+.cursor/*
+!.cursor/rules/
 .cursorignore
 
 # IDE - JetBrains
